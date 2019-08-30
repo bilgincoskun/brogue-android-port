@@ -268,12 +268,12 @@ TouchScreenNextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInput, boole
                 case (SDL_FINGERUP):
                     returnEvent->param1 = cursor_x;
                     returnEvent->param2 = cursor_y;
-                    if(returnEvent->param1 < 1){
-                        if(returnEvent->param2 == 0){
+                    if(returnEvent->param1 < 2){
+                        if(returnEvent->param2 < 2){
                             returnEvent->eventType = KEYSTROKE;
                             returnEvent->param1 = ENTER_KEY;
 
-                        }else if(returnEvent->param2 == (ROWS - 1)){
+                        }else if(returnEvent->param2 > (ROWS - 3)){
                             returnEvent->eventType = KEYSTROKE;
                             returnEvent->param1 = ESCAPE_KEY;
 
