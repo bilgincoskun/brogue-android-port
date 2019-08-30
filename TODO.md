@@ -11,6 +11,8 @@ Since updating only a part of the display is problematic in Android all screen m
 
 * Accept Upper Case Letters in Text Input
 
+* Re-initialize grid and fonts when screen orientation is changed
+
 # Low Priority
 * Allow Remapping Keys
 
