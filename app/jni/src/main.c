@@ -254,6 +254,7 @@ TouchScreenNextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInput, boole
     static int ctrl_time = 0;
     static int long_press_time = 0;
     static boolean long_press_check = false;
+    static virtual_keyboard = false;
     while(returnEvent->eventType==EVENT_ERROR) {
         SDL_Event event;
         while (SDL_PollEvent(&event)) {
@@ -266,6 +267,7 @@ TouchScreenNextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInput, boole
                     long_press_check = true;
                     break;
                 case (SDL_FINGERUP):
+                    virtual_keyboard = false;
                     returnEvent->param1 = cursor_x;
                     returnEvent->param2 = cursor_y;
                     if(returnEvent->param1 < 2){
@@ -278,10 +280,14 @@ TouchScreenNextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInput, boole
                             returnEvent->param1 = ESCAPE_KEY;
 
                         }else{
+                            virtual_keyboard = true;
                             SDL_StartTextInput();
                         }
                     }else{
                         returnEvent->eventType = event.type = MOUSE_UP;
+                    }
+                    if(!virtual_keyboard){
+                        SDL_StopTextInput();
                     }
                     break;
                 case (SDL_FINGERMOTION):
