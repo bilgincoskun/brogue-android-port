@@ -49,7 +49,7 @@ Three finger touch. Note that it is implemented to enter a custom seed.
 
 ### Virtual Keyboard
 
-Except corners left of the screen is reserved for opening virtual keyboard.
+Except corners left edge of the screen is reserved for opening virtual keyboard.
 
 
 # Saves,Recordings and Highscore
