@@ -255,6 +255,8 @@ TouchScreenNextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInput, boole
     static int long_press_time = 0;
     static boolean long_press_check = false;
     static virtual_keyboard = false;
+    returnEvent->shiftKey = false;
+    returnEvent->controlKey = ctrl_pressed;
     while(returnEvent->eventType==EVENT_ERROR) {
         SDL_Event event;
         while (SDL_PollEvent(&event)) {
