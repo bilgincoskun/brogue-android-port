@@ -29,6 +29,29 @@ boolean screen_changed = false;
 boolean ctrl_pressed = false;
 int cell_w, cell_h;
 
+//Config Values
+int custom_cell_width = 0;
+int custom_cell_height = 0;
+
+void load_conf(){
+    if (access("settings.conf", F_OK) != -1) {
+        FILE * cf = fopen("settings.conf","r");
+        char line[200];
+        while(fgets(line,200,cf)!=NULL){
+            char * name = strtok(line," ");
+            char * value = strtok(NULL," ");
+            value = strtok(value,"\n");
+            if(strcmp("custom_cell_width",name)==0) {
+                custom_cell_width = atoi(value);
+            }
+            else if(strcmp("custom_cell_width",name)==0) {
+                    custom_cell_height = atoi(value);
+            }
+        }
+        fclose(cf);
+    }
+}
+
 uint8_t convert_color(short c) {
     c = c * COLOR_MAX / 100;
     return max(0,min(c,COLOR_MAX));
@@ -211,10 +234,19 @@ void TouchScreenGameLoop() {
                      SDL_GetError());
         return;
     }
+    load_conf();
     memset(grid, 0, ROWS * COLS * sizeof(cell));
     memset(font_cache, 0, UCHAR_MAX * sizeof(letter_cache));
-    cell_w = display.w / COLS;
-    cell_h = display.h / ROWS;
+    if(custom_cell_width != 0){
+        cell_w = custom_cell_width;
+    }else {
+        cell_w = display.w / COLS;
+    }
+    if(custom_cell_height != 0){
+       cell_h = custom_cell_height;
+    }else{
+        cell_h = display.h / ROWS;
+    }
     if (init_font() != 0) {
         SDL_Log("Cannot fit font into cells");
         return;

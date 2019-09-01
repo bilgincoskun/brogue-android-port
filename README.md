@@ -51,6 +51,26 @@ Three finger touch. Note that it is implemented to enter a custom seed.
 
 Except corners left edge of the screen is reserved for opening virtual keyboard.
 
+# Configuration File
+
+When the application started it checks if configuration file exists in **/sdcard/Android/org.brogue.brogue/files/settings.conf**. You can use this file for customizing the behaviour of application.
+
+The syntax of this file is very simple,name value pairs separated with a space in every line:
+[NAME1] [VALUE1]<br/>
+[NAME2] [VALUE2]<br/>
+[NAME3] [VALUE3]<br/>
+...
+
+Note that currently the application does not handle erroneous syntax so make sure that configuration is correct.
+
+You can see the supported configurations below:
+
+| Name | Value Type | Default Value | |
+| --- | --- | --- | --- |
+| custom_cell_width | Integer | 0 | When present and value is not 0 it sets the cell width |
+| --- | --- | --- | --- |
+| custom_cell_height | Integer | 0 | When present and value is not 0 it sets the cell height |
+| --- | --- | --- | --- |
 
 # Saves,Recordings and Highscore
 
