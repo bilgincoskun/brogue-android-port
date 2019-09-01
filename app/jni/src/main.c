@@ -32,6 +32,8 @@ int cell_w, cell_h;
 //Config Values
 int custom_cell_width = 0;
 int custom_cell_height = 0;
+boolean double_tap_lock = 1;
+int double_tap_interval = 500;
 
 void load_conf(){
     if (access("settings.conf", F_OK) != -1) {
@@ -46,6 +48,12 @@ void load_conf(){
             }
             else if(strcmp("custom_cell_width",name)==0) {
                     custom_cell_height = atoi(value);
+            }
+            else if(strcmp("double_tap_lock",name)==0) {
+                double_tap_lock = atoi(value);
+            }
+            else if(strcmp("double_tap_interval",name)==0) {
+                double_tap_interval = atoi(value);
             }
         }
         fclose(cf);
@@ -283,6 +291,7 @@ TouchScreenNextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInput, boole
     int new_x,new_y;
     static int ctrl_time = 0;
     static int long_press_time = 0;
+    static int prev_click = 0;
     static boolean long_press_check = false;
     static virtual_keyboard = false;
     returnEvent->shiftKey = false;
@@ -292,10 +301,15 @@ TouchScreenNextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInput, boole
         while (SDL_PollEvent(&event)) {
             switch (event.type) {
                 case (SDL_FINGERDOWN):
-                    cursor_x = returnEvent->param1 = min(COLS - 1,event.tfinger.x * display.w / cell_w);
-                    cursor_y = returnEvent->param2 = min(ROWS -1,event.tfinger.y * display.h / cell_h);
+                    if(!double_tap_lock || SDL_TICKS_PASSED(SDL_GetTicks(),prev_click+double_tap_interval)){
+                        cursor_x = min(COLS - 1,event.tfinger.x * display.w / cell_w);
+                        cursor_y = min(ROWS -1,event.tfinger.y * display.h / cell_h);
+                    }
+                    returnEvent->param1 = cursor_x;
+                    returnEvent->param2 = cursor_y;
                     returnEvent->eventType = event.type = MOUSE_DOWN;
                     long_press_time = SDL_GetTicks();
+                    prev_click = SDL_GetTicks();
                     long_press_check = true;
                     break;
                 case (SDL_FINGERUP):

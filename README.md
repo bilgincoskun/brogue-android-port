@@ -71,6 +71,10 @@ You can see the supported configurations below:
 | --- | --- | --- | --- |
 | custom_cell_height | Integer | 0 | When present and value is not 0 it sets the cell height |
 | --- | --- | --- | --- |
+| boolean double_tap_lock | Integer | 1 | When enabled (1) it will ignore the missclicks within **double_tap_interval** range |
+| --- | --- | --- | --- |
+| double_tap_interval | Integer | 500 | The maximum time between two taps to acknowledge it as double tap |
+| --- | --- | --- | --- |
 
 # Saves,Recordings and Highscore
 
