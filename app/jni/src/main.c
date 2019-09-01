@@ -5,8 +5,6 @@
 #include "platform.h"
 
 #define COLOR_MAX UCHAR_MAX
-#define MAX(x,y)  ((x)>(y)?(x):(y))
-#define MIN(x,y)  ((y)>(x)?(x):(y))
 
 typedef struct {
     uint8_t fr, fg, fb, br, bg, bb;
@@ -33,7 +31,7 @@ int cell_w, cell_h;
 
 uint8_t convert_color(short c) {
     c = c * COLOR_MAX / 100;
-    return MAX(0,MIN(c,COLOR_MAX));
+    return max(0,min(c,COLOR_MAX));
 }
 
 void draw_letter(uint16_t c, SDL_Rect rect, uint8_t r, uint8_t g, uint8_t b) {
@@ -262,8 +260,8 @@ TouchScreenNextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInput, boole
         while (SDL_PollEvent(&event)) {
             switch (event.type) {
                 case (SDL_FINGERDOWN):
-                    cursor_x = returnEvent->param1 = MIN(COLS - 1,event.tfinger.x * display.w / cell_w);
-                    cursor_y = returnEvent->param2 = MIN(ROWS -1,event.tfinger.y * display.h / cell_h);
+                    cursor_x = returnEvent->param1 = min(COLS - 1,event.tfinger.x * display.w / cell_w);
+                    cursor_y = returnEvent->param2 = min(ROWS -1,event.tfinger.y * display.h / cell_h);
                     returnEvent->eventType = event.type = MOUSE_DOWN;
                     long_press_time = SDL_GetTicks();
                     long_press_check = true;
@@ -294,8 +292,8 @@ TouchScreenNextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInput, boole
                     break;
                 case (SDL_FINGERMOTION):
                     if(long_press_check && SDL_TICKS_PASSED(SDL_GetTicks(),long_press_time + 300)){
-                        new_x =  MIN(COLS - 1,event.tfinger.x * display.w / cell_w);
-                        new_y =  MIN(ROWS -1,event.tfinger.y * display.h / cell_h);
+                        new_x =  max(COLS - 1,event.tfinger.x * display.w / cell_w);
+                        new_y =  min(ROWS -1,event.tfinger.y * display.h / cell_h);
                         if(new_x == cursor_x && new_y == cursor_y){
                             returnEvent->param1 = cursor_x;
                             returnEvent->param2 = cursor_y;
