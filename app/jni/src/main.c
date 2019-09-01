@@ -34,7 +34,7 @@ int custom_cell_width = 0;
 int custom_cell_height = 0;
 boolean double_tap_lock = 1;
 int double_tap_interval = 500;
-
+boolean dynamic_colors = 1;
 void load_conf(){
     if (access("settings.conf", F_OK) != -1) {
         FILE * cf = fopen("settings.conf","r");
@@ -54,6 +54,8 @@ void load_conf(){
             }
             else if(strcmp("double_tap_interval",name)==0) {
                 double_tap_interval = atoi(value);
+            }else if(strcmp("dynamic_colors",name)==0){
+                dynamic_colors = atoi(value);
             }
         }
         fclose(cf);
@@ -382,7 +384,7 @@ TouchScreenNextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInput, boole
             //Wait for 1 second to disable CTRL after pressing and another input
             returnEvent->controlKey = ctrl_pressed = false;
         }
-        if (colorsDance) {
+        if (dynamic_colors && colorsDance) {
             shuffleTerrainColors(3, true);
             commitDraws();
         }
