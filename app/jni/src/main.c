@@ -28,6 +28,7 @@ cell grid[COLS][ROWS];
 boolean screen_changed = false;
 boolean ctrl_pressed = false;
 int cell_w, cell_h;
+boolean force_portrait = false;
 
 //Config Values
 int custom_cell_width = 0;
@@ -56,6 +57,8 @@ void load_conf(){
                 double_tap_interval = atoi(value);
             }else if(strcmp("dynamic_colors",name)==0){
                 dynamic_colors = atoi(value);
+            }else if(strcmp("force_portrait",name)==0){
+                force_portrait = atoi(value);
             }
         }
         fclose(cf);
@@ -226,6 +229,10 @@ int init_font() {
 }
 
 void TouchScreenGameLoop() {
+    load_conf();
+    if(force_portrait){
+        SDL_SetHint(SDL_HINT_ORIENTATIONS,"Portrait PortraitUpsideDown");
+    }
     if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
         SDL_Log("Unable to initialize SDL: %s", SDL_GetError());
         return;
@@ -244,9 +251,13 @@ void TouchScreenGameLoop() {
                      SDL_GetError());
         return;
     }
-    load_conf();
     memset(grid, 0, ROWS * COLS * sizeof(cell));
     memset(font_cache, 0, UCHAR_MAX * sizeof(letter_cache));
+    if(force_portrait){
+        int t = display.w;
+        display.w = display.h;
+        display.h = t;
+    }
     if(custom_cell_width != 0){
         cell_w = custom_cell_width;
     }else {
@@ -295,7 +306,7 @@ TouchScreenNextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInput, boole
     static int long_press_time = 0;
     static int prev_click = 0;
     static boolean long_press_check = false;
-    static virtual_keyboard = false;
+    static boolean virtual_keyboard = false;
     returnEvent->shiftKey = false;
     returnEvent->controlKey = ctrl_pressed;
     while(returnEvent->eventType==EVENT_ERROR) {

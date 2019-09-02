@@ -69,8 +69,9 @@ You can see the supported configurations below:
 | --- | --- | --- | --- |
 | custom_cell_width | Integer | 0 | When present and value is not 0 it sets the cell width |
 | custom_cell_height | Integer | 0 | When present and value is not 0 it sets the cell height |
-| dynamic_colors | Boolean | 1 | Disable dynamic colors on water,lava etc.  Suggested for lower power consumption |
-| double_tap_lock | Boolean | 1 | When enabled (1) it will ignore the missclicks within **double_tap_interval** range |
+| force_portrait | Boolean | 0 | By default the app will start in landscape mode. If this option enabled it will force application to use portrait mode |
+| dynamic_colors | Boolean | 1 | Dynamic colors on water,lava etc.  Disabling will lower the power consumption |
+| double_tap_lock | Boolean | 1 | When enabled it will ignore the missclicks within **double_tap_interval** range |
 | double_tap_interval | Integer | 500 | The maximum time between two taps to acknowledge it as double tap |
 
 # Saves,Recordings and Highscore
