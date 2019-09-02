@@ -33,8 +33,8 @@ boolean force_portrait = false;
 //Config Values
 int custom_cell_width = 0;
 int custom_cell_height = 0;
-int custom_screen_width = 0;
-int custom_screen_height = 0;
+//custom_cell_width
+//custom_cell_height
 boolean double_tap_lock = 1;
 int double_tap_interval = 500;
 boolean dynamic_colors = 1;
@@ -42,6 +42,8 @@ void load_conf(){
     if (access("settings.conf", F_OK) != -1) {
         FILE * cf = fopen("settings.conf","r");
         char line[200];
+        int custom_screen_width = 0;
+        int custom_screen_height = 0;
         while(fgets(line,200,cf)!=NULL){
             char * name = strtok(line," ");
             char * value = strtok(NULL," ");
@@ -71,10 +73,10 @@ void load_conf(){
         }
         // override custom cell dimensions if custom screen dimensions are present
         if(custom_screen_width){
-           custom_cell_width = 0;
+           custom_cell_width = custom_screen_width / COLS;
         }
         if(custom_screen_height){
-           custom_cell_height = 0;
+           custom_cell_height = custom_screen_height / ROWS;
         }
         fclose(cf);
     }
@@ -272,12 +274,6 @@ void TouchScreenGameLoop() {
         int t = display.w;
         display.w = display.h;
         display.h = t;
-    }
-    if(custom_screen_width){
-        display.w = custom_screen_width;
-    }
-    if(custom_screen_height){
-        display.h = custom_screen_height;
     }
     if(custom_cell_width != 0){
         cell_w = custom_cell_width;
