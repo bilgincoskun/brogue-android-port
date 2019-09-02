@@ -33,6 +33,8 @@ boolean force_portrait = false;
 //Config Values
 int custom_cell_width = 0;
 int custom_cell_height = 0;
+int custom_screen_width = 0;
+int custom_screen_height = 0;
 boolean double_tap_lock = 1;
 int double_tap_interval = 500;
 boolean dynamic_colors = 1;
@@ -50,6 +52,12 @@ void load_conf(){
             else if(strcmp("custom_cell_height",name)==0) {
                     custom_cell_height = atoi(value);
             }
+            else if(strcmp("custom_screen_width",name)==0) {
+                custom_screen_width = atoi(value);
+            }
+            else if(strcmp("custom_screen_height",name)==0) {
+                    custom_screen_height = atoi(value);
+            }
             else if(strcmp("double_tap_lock",name)==0) {
                 double_tap_lock = atoi(value);
             }
@@ -60,6 +68,13 @@ void load_conf(){
             }else if(strcmp("force_portrait",name)==0){
                 force_portrait = atoi(value);
             }
+        }
+        // override custom cell dimensions if custom screen dimensions are present
+        if(custom_screen_width){
+           custom_cell_width = 0;
+        }
+        if(custom_screen_height){
+           custom_cell_height = 0;
         }
         fclose(cf);
     }
@@ -257,6 +272,12 @@ void TouchScreenGameLoop() {
         int t = display.w;
         display.w = display.h;
         display.h = t;
+    }
+    if(custom_screen_width){
+        display.w = custom_screen_width;
+    }
+    if(custom_screen_height){
+        display.h = custom_screen_height;
     }
     if(custom_cell_width != 0){
         cell_w = custom_cell_width;

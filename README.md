@@ -69,6 +69,8 @@ You can see the supported configurations below:
 | --- | --- | --- | --- |
 | custom_cell_width | Integer | 0 | When present and value is not 0 it sets the cell width |
 | custom_cell_height | Integer | 0 | When present and value is not 0 it sets the cell height |
+| custom_screen_width | Integer | 0 | When present and value is not 0 it sets the screen width.Disables custom_cell_width when active |
+| custom_screen_height | Integer | 0 | When present and value is not 0 it sets the screen height.Disables custom_cell_height when active |
 | force_portrait | Boolean | 0 | By default the app will start in landscape mode. If this option enabled it will force application to use portrait mode |
 | dynamic_colors | Boolean | 1 | Dynamic colors on water,lava etc.  Disabling will lower the power consumption |
 | double_tap_lock | Boolean | 1 | When enabled it will ignore the missclicks within **double_tap_interval** range |
