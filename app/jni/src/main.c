@@ -47,7 +47,7 @@ void load_conf(){
             if(strcmp("custom_cell_width",name)==0) {
                 custom_cell_width = atoi(value);
             }
-            else if(strcmp("custom_cell_width",name)==0) {
+            else if(strcmp("custom_cell_height",name)==0) {
                     custom_cell_height = atoi(value);
             }
             else if(strcmp("double_tap_lock",name)==0) {
