@@ -373,15 +373,15 @@ TouchScreenNextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInput, boole
                         }
                     }
                     break;
-                case (SDL_KEYUP):
+                case (SDL_KEYDOWN):
                     returnEvent->eventType = KEYSTROKE;
                     SDL_Scancode k = event.key.keysym.sym;
                     switch(k){
-                        case SDLK_AC_BACK:
+                        case SDL_SCANCODE_AC_BACK:
                             returnEvent->param1 = ESCAPE_KEY;
                             break;
-                        case  SDLK_BACKSPACE:
-                        case  SDLK_DELETE:
+                        case  SDL_SCANCODE_BACKSPACE:
+                        case  SDL_SCANCODE_DELETE:
                             returnEvent->param1 = DELETE_KEY;
                             break;
                         default:
