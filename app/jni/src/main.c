@@ -385,6 +385,10 @@ TouchScreenNextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInput, boole
                             returnEvent->param1 = DELETE_KEY;
                             break;
                         default:
+                            if(event.key.keysym.mod & (KMOD_SHIFT | KMOD_CAPS)){
+                                k += 'A' - 'a';
+                                returnEvent->shiftKey = true;
+                            }
                             returnEvent->param1 = k;
                             break;
                     }
@@ -425,6 +429,7 @@ void TouchScreenRemap(const char *input_name, const char *output_name) {
 }
 
 boolean TouchScreenModifierHeld(int modifier) {
+    //Shift key check is unnecessary since function is not called with modifier == 0 in anywhere
     return modifier == 1 && ctrl_pressed;
 }
 
