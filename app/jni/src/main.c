@@ -399,7 +399,7 @@ TouchScreenNextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInput, boole
             shuffleTerrainColors(3, true);
             commitDraws();
         }
-        TouchScreenPauseForMilliseconds(100);
+        TouchScreenPauseForMilliseconds(50);
     }
 }
 
