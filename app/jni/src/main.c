@@ -7,11 +7,6 @@
 #define COLOR_MAX UCHAR_MAX
 
 typedef struct {
-    uint8_t fr, fg, fb, br, bg, bb;
-    uint16_t c;
-} cell;
-
-typedef struct {
     SDL_Texture *c;
     int width, height, offset_x, offset_y;
 } letter_cache;
@@ -21,10 +16,10 @@ extern playerCharacter rogue;
 
 SDL_Window *window;
 SDL_Renderer *renderer;
+SDL_Texture * texture;
 SDL_DisplayMode display;
 TTF_Font *font;
 letter_cache font_cache[UCHAR_MAX];
-cell grid[COLS][ROWS];
 boolean screen_changed = false;
 boolean ctrl_pressed = false;
 int cell_w, cell_h;
@@ -196,20 +191,6 @@ void draw_letter(uint16_t c, SDL_Rect rect, uint8_t r, uint8_t g, uint8_t b) {
     SDL_RenderCopy(renderer, lc->c, NULL, &font_rect);
 }
 
-void draw_cell(int x, int y) {
-    cell c = grid[x][y];
-    SDL_Rect rect;
-    rect.x = x * cell_w;
-    rect.y = y * cell_h;
-    rect.w = cell_w;
-    rect.h = cell_h;
-    if(c.br != 0 || c.bg != 0 || c.bb != 0) { //Since background is black do not redraw
-        SDL_SetRenderDrawColor(renderer, c.br, c.bg, c.bb, COLOR_MAX);
-        SDL_RenderFillRect(renderer, &rect);
-    }
-    draw_letter(c.c, rect, c.fr, c.fg, c.fb);
-}
-
 TTF_Font *init_font_size(char *font_path, int size) {
     TTF_Font *current_font = TTF_OpenFont(font_path, size);
     if (TTF_FontLineSkip(current_font) <= (cell_h - 2)){
@@ -268,7 +249,6 @@ void TouchScreenGameLoop() {
                      SDL_GetError());
         return;
     }
-    memset(grid, 0, ROWS * COLS * sizeof(cell));
     memset(font_cache, 0, UCHAR_MAX * sizeof(letter_cache));
     if(force_portrait){
         int t = display.w;
@@ -289,6 +269,9 @@ void TouchScreenGameLoop() {
         SDL_Log("Cannot fit font into cells");
         return;
     }
+
+    texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, display.w, display.h);
+    SDL_SetRenderTarget(renderer,texture);
     rogueMain();
     TTF_CloseFont(font);
     TTF_Quit();
@@ -296,17 +279,12 @@ void TouchScreenGameLoop() {
 }
 boolean TouchScreenPauseForMilliseconds(short milliseconds){
     uint32_t init_time = SDL_GetTicks();
-    //Since dirty rectangles are problematic in Android we have to redraw all screen
     if(screen_changed) {
         screen_changed = false;
-        for (int i = 0; i < COLS; i++) {
-            for (int j = 0; j < ROWS; j++) {
-                draw_cell(i, j);
-            }
-        }
+        SDL_SetRenderTarget(renderer, NULL);
+        SDL_RenderCopy(renderer, texture, NULL, NULL);
         SDL_RenderPresent(renderer);
-        SDL_SetRenderDrawColor(renderer, 0, 0,0 , COLOR_MAX);
-        SDL_RenderClear(renderer); //Optimize black rectangles by setting background as black
+        SDL_SetRenderTarget(renderer, texture);
     }
     uint32_t epoch = SDL_GetTicks() - init_time;
     if(epoch < milliseconds){
@@ -429,17 +407,15 @@ void TouchScreenPlotChar(uchar ch,
                          short foreRed, short foreGreen, short foreBlue,
                          short backRed, short backGreen, short backBlue) {
 
-    cell currentCell = {
-            .fr = convert_color(foreRed),
-            .fg = convert_color(foreGreen),
-            .fb = convert_color(foreBlue),
-            .br = convert_color(backRed),
-            .bg = convert_color(backGreen),
-            .bb = convert_color(backBlue),
-            .c = ch,
-    };
+    SDL_Rect rect;
+    rect.x = xLoc * cell_w;
+    rect.y = yLoc * cell_h;
+    rect.w = cell_w;
+    rect.h = cell_h;
+    SDL_SetRenderDrawColor(renderer, convert_color(backRed), convert_color(backGreen),convert_color(backBlue), COLOR_MAX);
+    SDL_RenderFillRect(renderer, &rect);
+    draw_letter(ch, rect, convert_color(foreRed),convert_color(foreGreen), convert_color(foreBlue));
     screen_changed = true;
-    grid[xLoc][yLoc] = currentCell;
 }
 
 void TouchScreenRemap(const char *input_name, const char *output_name) {
