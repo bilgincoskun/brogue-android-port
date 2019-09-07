@@ -3,6 +3,7 @@
 #include "SDL.h"
 #include "SDL_ttf.h"
 #include "platform.h"
+#include "math.h"
 
 #define COLOR_MAX UCHAR_MAX
 
@@ -18,12 +19,15 @@ SDL_Window *window;
 SDL_Renderer *renderer;
 SDL_Texture * texture;
 SDL_DisplayMode display;
+SDL_Texture * dpad_image;
+SDL_Rect dpad_area;
 TTF_Font *font;
 letter_cache font_cache[UCHAR_MAX];
 boolean screen_changed = false;
 boolean ctrl_pressed = false;
 int cell_w, cell_h;
 boolean force_portrait = false;
+
 
 //Config Values
 int custom_cell_width = 0;
@@ -33,6 +37,11 @@ int custom_cell_height = 0;
 boolean double_tap_lock = 1;
 int double_tap_interval = 500;
 boolean dynamic_colors = 1;
+boolean dpad_enabled = true;
+int dpad_width = 0;
+int dpad_x_pos = 0;
+int dpad_y_pos = 0;
+boolean dpad_move = 0;
 void load_conf(){
     if (access("settings.conf", F_OK) != -1) {
         FILE * cf = fopen("settings.conf","r");
@@ -64,6 +73,16 @@ void load_conf(){
                 dynamic_colors = atoi(value);
             }else if(strcmp("force_portrait",name)==0){
                 force_portrait = atoi(value);
+            }else if(strcmp("dpad_enabled",name)==0){
+                dpad_enabled = atoi(value);
+            }else if(strcmp("dpad_width",name)==0){
+                dpad_width = atoi(value);
+            }else if(strcmp("dpad_x_pos",name)==0){
+                dpad_x_pos = atoi(value);
+            }else if(strcmp("dpad_y_pos",name)==0){
+                dpad_y_pos = atoi(value);
+            }else if(strcmp("dpad_move",name)==0){
+                dpad_move = atoi(value);
             }
         }
         // override custom cell dimensions if custom screen dimensions are present
@@ -272,6 +291,17 @@ void TouchScreenGameLoop() {
 
     texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, display.w, display.h);
     SDL_SetRenderTarget(renderer,texture);
+    if(dpad_enabled){
+        SDL_Surface * dpad_i = SDL_LoadBMP("dpad.bmp");
+        dpad_image = SDL_CreateTextureFromSurface(renderer,dpad_i);
+        SDL_SetTextureAlphaMod(dpad_image,75);
+        SDL_FreeSurface(dpad_i);
+        int area_width = min(cell_w*16,cell_h*20);
+
+        dpad_area.h=dpad_area.w= (dpad_width)?dpad_width:area_width;
+        dpad_area.x =(dpad_x_pos)?dpad_x_pos: 3*cell_w;
+        dpad_area.y = (dpad_y_pos)?dpad_y_pos :(display.h - (area_width + 2*cell_h));
+    }
     rogueMain();
     TTF_CloseFont(font);
     TTF_Quit();
@@ -283,6 +313,9 @@ boolean TouchScreenPauseForMilliseconds(short milliseconds){
         screen_changed = false;
         SDL_SetRenderTarget(renderer, NULL);
         SDL_RenderCopy(renderer, texture, NULL, NULL);
+        if(dpad_enabled){
+            SDL_RenderCopy(renderer, dpad_image, NULL, &dpad_area);
+        }
         SDL_RenderPresent(renderer);
         SDL_SetRenderTarget(renderer, texture);
     }
@@ -304,14 +337,80 @@ TouchScreenNextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInput, boole
     static boolean virtual_keyboard = false;
     returnEvent->shiftKey = false;
     returnEvent->controlKey = ctrl_pressed;
+    float raw_input_x,raw_input_y;
+    static boolean on_dpad = false;
     while(returnEvent->eventType==EVENT_ERROR) {
         SDL_Event event;
         while (SDL_PollEvent(&event)) {
             switch (event.type) {
                 case (SDL_FINGERDOWN):
+                    raw_input_x = event.tfinger.x * display.w;
+                    raw_input_y = event.tfinger.y * display.h;
+                    if(dpad_enabled){
+                        SDL_Point p = {.x = raw_input_x,.y=raw_input_y};
+                        if(SDL_PointInRect(&p,&dpad_area)){
+                            int diff_x = 0,diff_y = 0;
+                            SDL_Rect min_x  = {.x = dpad_area.x,.y = dpad_area.y,.w = dpad_area.w /3,.h=dpad_area.h};
+                            if(SDL_PointInRect(&p,&min_x)){
+                                diff_x = -1;
+                            }
+                            SDL_Rect max_x  = {.x = dpad_area.x+2*dpad_area.w/3,.y = dpad_area.y,.w = dpad_area.w /3,.h=dpad_area.h};
+                            if(SDL_PointInRect(&p,&max_x)){
+                                diff_x = 1;
+                            }
+
+                            SDL_Rect min_y  = {.x = dpad_area.x,.y = dpad_area.y,.w = dpad_area.w,.h=dpad_area.h/3};
+                            if(SDL_PointInRect(&p,&min_y)){
+                                diff_y = -1;
+                            }
+                            SDL_Rect max_y  = {.x = dpad_area.x,.y = dpad_area.y+2*dpad_area.h/3,.w = dpad_area.w,.h=dpad_area.h/3};
+                            if(SDL_PointInRect(&p,&max_y)){
+                                diff_y = 1;
+                            }
+                            if(dpad_move){
+                                on_dpad = true;
+                                diff_y *= -1;
+                                returnEvent->eventType = event.type = KEYSTROKE;
+                                if(diff_x < 0){
+                                    if(diff_y < 0){
+                                        returnEvent->param1 = DOWNLEFT_KEY;
+                                    }else if(diff_y > 0){
+                                        returnEvent->param1 = UPLEFT_KEY;
+                                    }else{
+                                        returnEvent->param1 = LEFT_KEY;
+                                    }
+                                }else if(diff_x > 0){
+                                    if(diff_y < 0){
+                                        returnEvent->param1 = DOWNRIGHT_KEY;
+                                    }else if(diff_y > 0){
+                                        returnEvent->param1 = UPRIGHT_KEY;
+                                    }else{
+                                        returnEvent->param1 = RIGHT_KEY;
+                                    }
+
+
+                                }else if (diff_y<0){
+                                    returnEvent->param1 = DOWN_KEY;
+
+                                }else if(diff_y>0){
+                                    returnEvent->param1 = UP_KEY;
+                                }else{
+                                    returnEvent->param1 = RETURN_KEY;
+                                    on_dpad = false;
+                                }
+                            }else {
+                                cursor_x = max(0, min(COLS - 1, cursor_x + diff_x));
+                                cursor_y = max(0, min(COLS - 1, cursor_y + diff_y));
+                                returnEvent->param1 = cursor_x;
+                                returnEvent->param2 = cursor_y;
+                                returnEvent->eventType = event.type = MOUSE_DOWN;
+                            }
+                            break;
+                        }
+                    }
                     if(!double_tap_lock || SDL_TICKS_PASSED(SDL_GetTicks(),prev_click+double_tap_interval)){
-                        cursor_x = min(COLS - 1,event.tfinger.x * display.w / cell_w);
-                        cursor_y = min(ROWS -1,event.tfinger.y * display.h / cell_h);
+                        cursor_x = min(COLS - 1,raw_input_x / cell_w);
+                        cursor_y = min(ROWS -1,raw_input_y / cell_h);
                     }
                     returnEvent->param1 = cursor_x;
                     returnEvent->param2 = cursor_y;
@@ -321,6 +420,10 @@ TouchScreenNextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInput, boole
                     long_press_check = true;
                     break;
                 case (SDL_FINGERUP):
+                    if(on_dpad){
+                        on_dpad = false;
+                        break;
+                    }
                     virtual_keyboard = false;
                     returnEvent->param1 = cursor_x;
                     returnEvent->param2 = cursor_y;

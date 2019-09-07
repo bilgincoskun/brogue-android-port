@@ -29,6 +29,19 @@ First press selects the cell and second press on the same cell clicks there.
 
 Long press on the same cell both selects and clicks the it.
 
+## On-screen D-pad
+D-pad is enabled by default to help with more precise control.
+
+There are two mods of D-pad: selection mode (default) and movement mode.
+
+### Selection Mode
+
+In selection mode direction keys moves the cursor and the square clicks the selected cell.
+
+### Movement Mode
+
+In this mode movement keys directly moves the PC. The square sends Enter key.
+
 ## Keyboard Input
 
 ### Escape Key
@@ -75,6 +88,11 @@ You can see the supported configurations below:
 | dynamic_colors | Boolean | 1 | Dynamic colors on water,lava etc.  Disabling will lower the power consumption |
 | double_tap_lock | Boolean | 1 | When enabled it will ignore the missclicks within **double_tap_interval** range |
 | double_tap_interval | Integer | 500 | The maximum time between two taps to acknowledge it as double tap |
+| dpad_enabled | Boolean | 1 | Enable on-screen d-pad |
+| dpad_width | Integer | 0 | When it is not 0 it sets the width of the d-pad square. Otherwise width is set to fit into left panel |
+| dpad_x_pos | Integer | 0 | When it is not 0 it sets the x position of the top left corner of the d-pad square. Otherwise position is set to bottom of the left panel |
+| dpad_y_pos | Integer | 0 | When it is not 0 it sets the y position of the top left corner of the d-pad square. Otherwise position is set to bottom of the left panel |
+| dpad_move | Boolean | 0 | It decides the mod of d-pad. When disabled (default) the mode is selection mode and movement mode otherwise. |
 
 # Saves,Recordings and Highscore
 
