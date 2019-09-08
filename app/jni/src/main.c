@@ -20,6 +20,7 @@ SDL_Renderer *renderer;
 SDL_Texture * texture;
 SDL_DisplayMode display;
 SDL_Texture * dpad_image;
+SDL_Texture * dpad_image_move;
 SDL_Rect dpad_area;
 TTF_Font *font;
 letter_cache font_cache[UCHAR_MAX];
@@ -294,7 +295,10 @@ void TouchScreenGameLoop() {
     if(dpad_enabled){
         SDL_Surface * dpad_i = SDL_LoadBMP("dpad.bmp");
         dpad_image = SDL_CreateTextureFromSurface(renderer,dpad_i);
+        dpad_image_move = SDL_CreateTextureFromSurface(renderer,dpad_i);
         SDL_SetTextureAlphaMod(dpad_image,75);
+        SDL_SetTextureColorMod(dpad_image_move,255,255,155);
+        SDL_SetTextureAlphaMod(dpad_image_move,75);
         SDL_FreeSurface(dpad_i);
         int area_width = min(cell_w*16,cell_h*20);
 
@@ -314,7 +318,7 @@ boolean TouchScreenPauseForMilliseconds(short milliseconds){
         SDL_SetRenderTarget(renderer, NULL);
         SDL_RenderCopy(renderer, texture, NULL, NULL);
         if(dpad_enabled){
-            SDL_RenderCopy(renderer, dpad_image, NULL, &dpad_area);
+            SDL_RenderCopy(renderer, dpad_move?dpad_image_move:dpad_image, NULL, &dpad_area);
         }
         SDL_RenderPresent(renderer);
         SDL_SetRenderTarget(renderer, texture);
@@ -435,7 +439,6 @@ TouchScreenNextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInput, boole
                         }else if(returnEvent->param2 > (ROWS - 3)){
                             returnEvent->eventType = KEYSTROKE;
                             returnEvent->param1 = ESCAPE_KEY;
-
                         }else{
                             virtual_keyboard = true;
                             SDL_StartTextInput();

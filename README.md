@@ -36,11 +36,11 @@ There are two mods of D-pad: selection mode (default) and movement mode.
 
 ### Selection Mode
 
-In selection mode direction keys moves the cursor and the square clicks the selected cell.
+In selection mode direction keys moves the cursor and the square clicks the selected cell. D-pad is white.
 
 ### Movement Mode
 
-In this mode movement keys directly moves the PC. The square sends Enter key.
+In this mode movement keys directly moves the PC. The square sends Enter key. D-pad is yellow.
 
 ## Keyboard Input
 
