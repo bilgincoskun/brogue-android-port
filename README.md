@@ -19,15 +19,7 @@ After that you can use gradlew script to build it as usual.
 
 ## Mouse Input
 
-There are two ways to emulate mouse input:
-
-* Two short presses:
-
-First press selects the cell and second press on the same cell clicks there.
-
-* One long press:
-
-Long press on the same cell both selects and clicks the it.
+First touch selects the cell and second touch on the same cell clicks there.
 
 ## On-screen D-pad
 D-pad is enabled by default to help with more precise control.
@@ -40,7 +32,15 @@ In selection mode direction keys moves the cursor and the square clicks the sele
 
 ### Movement Mode
 
-In this mode movement keys directly moves the PC. The square sends Enter key. D-pad is yellow.
+In this mode movement keys directly moves the PC. The square sends Enter key(makes the D-pad mode temporarily selection mode). D-pad is yellow.
+
+### Changing Mode
+
+Changing D-pad mode can be done in two ways:
+
+* Setting dpad_mode in config to change default mode at startup
+
+* Long pressing D-pad to change mode in game.
 
 ## Keyboard Input
 
@@ -92,7 +92,7 @@ You can see the supported configurations below:
 | dpad_width | Integer | 0 | When it is not 0 it sets the width of the d-pad square. Otherwise width is set to fit into left panel |
 | dpad_x_pos | Integer | 0 | When it is not 0 it sets the x position of the top left corner of the d-pad square. Otherwise position is set to bottom of the left panel |
 | dpad_y_pos | Integer | 0 | When it is not 0 it sets the y position of the top left corner of the d-pad square. Otherwise position is set to bottom of the left panel |
-| dpad_move | Boolean | 0 | It decides the mod of d-pad. When disabled (default) the mode is selection mode and movement mode otherwise. |
+| dpad_mode | Boolean | 0 | It decides the mod of d-pad. When 0 the mode is selection mode and movement mode otherwise. |
 
 # Saves,Recordings and Highscore
 
