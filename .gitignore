@@ -81,8 +81,7 @@ lint/outputs/
 lint/tmp/
 # lint/reports/
 
-dependencies
-
+brogue-files
 app/.cxx/
 app/jni/SDL
 app/jni/SDL_ttf
