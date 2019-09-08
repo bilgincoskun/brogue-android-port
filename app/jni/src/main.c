@@ -354,6 +354,28 @@ TouchScreenNextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInput, boole
                     if(dpad_enabled){
                         SDL_Point p = {.x = raw_input_x,.y=raw_input_y};
                         if(SDL_PointInRect(&p,&dpad_area)){
+                            on_dpad = true;
+                            break;
+                        }
+                    }
+                    if(!double_tap_lock || SDL_TICKS_PASSED(SDL_GetTicks(),prev_click+double_tap_interval)){
+                        cursor_x = min(COLS - 1,raw_input_x / cell_w);
+                        cursor_y = min(ROWS -1,raw_input_y / cell_h);
+                    }
+                    returnEvent->param1 = cursor_x;
+                    returnEvent->param2 = cursor_y;
+                    returnEvent->eventType = event.type = MOUSE_DOWN;
+                    long_press_time = SDL_GetTicks();
+                    prev_click = SDL_GetTicks();
+                    long_press_check = true;
+                    break;
+                case (SDL_FINGERUP):
+                    raw_input_x = event.tfinger.x * display.w;
+                    raw_input_y = event.tfinger.y * display.h;
+                    if(dpad_enabled && on_dpad){
+                        on_dpad = false;
+                        SDL_Point p = {.x = raw_input_x,.y=raw_input_y};
+                        if(SDL_PointInRect(&p,&dpad_area)){
                             int diff_x = 0,diff_y = 0;
                             SDL_Rect min_x  = {.x = dpad_area.x,.y = dpad_area.y,.w = dpad_area.w /3,.h=dpad_area.h};
                             if(SDL_PointInRect(&p,&min_x)){
@@ -373,7 +395,6 @@ TouchScreenNextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInput, boole
                                 diff_y = 1;
                             }
                             if(dpad_move){
-                                on_dpad = true;
                                 diff_y *= -1;
                                 returnEvent->eventType = event.type = KEYSTROKE;
                                 if(diff_x < 0){
@@ -401,32 +422,19 @@ TouchScreenNextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInput, boole
                                     returnEvent->param1 = UP_KEY;
                                 }else{
                                     returnEvent->param1 = RETURN_KEY;
-                                    on_dpad = false;
                                 }
                             }else {
                                 cursor_x = max(21, min(COLS - 1, cursor_x + diff_x));
                                 cursor_y = max(3, min(ROWS - 3, cursor_y + diff_y));
                                 returnEvent->param1 = cursor_x;
                                 returnEvent->param2 = cursor_y;
-                                returnEvent->eventType = event.type = MOUSE_DOWN;
+                                returnEvent->eventType = event.type = MOUSE_ENTERED_CELL;
+                                if(!diff_x && !diff_y){
+                                    returnEvent->eventType = event.type = MOUSE_UP;
+                                }
                             }
                             break;
                         }
-                    }
-                    if(!double_tap_lock || SDL_TICKS_PASSED(SDL_GetTicks(),prev_click+double_tap_interval)){
-                        cursor_x = min(COLS - 1,raw_input_x / cell_w);
-                        cursor_y = min(ROWS -1,raw_input_y / cell_h);
-                    }
-                    returnEvent->param1 = cursor_x;
-                    returnEvent->param2 = cursor_y;
-                    returnEvent->eventType = event.type = MOUSE_DOWN;
-                    long_press_time = SDL_GetTicks();
-                    prev_click = SDL_GetTicks();
-                    long_press_check = true;
-                    break;
-                case (SDL_FINGERUP):
-                    if(on_dpad){
-                        break;
                     }
                     virtual_keyboard = false;
                     returnEvent->param1 = cursor_x;
