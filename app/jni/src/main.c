@@ -344,6 +344,7 @@ TouchScreenNextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInput, boole
         while (SDL_PollEvent(&event)) {
             switch (event.type) {
                 case (SDL_FINGERDOWN):
+                    on_dpad = false;
                     raw_input_x = event.tfinger.x * display.w;
                     raw_input_y = event.tfinger.y * display.h;
                     if(dpad_enabled){
@@ -399,8 +400,8 @@ TouchScreenNextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInput, boole
                                     on_dpad = false;
                                 }
                             }else {
-                                cursor_x = max(0, min(COLS - 1, cursor_x + diff_x));
-                                cursor_y = max(0, min(COLS - 1, cursor_y + diff_y));
+                                cursor_x = max(21, min(COLS - 1, cursor_x + diff_x));
+                                cursor_y = max(3, min(ROWS - 3, cursor_y + diff_y));
                                 returnEvent->param1 = cursor_x;
                                 returnEvent->param2 = cursor_y;
                                 returnEvent->eventType = event.type = MOUSE_DOWN;
@@ -421,7 +422,6 @@ TouchScreenNextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInput, boole
                     break;
                 case (SDL_FINGERUP):
                     if(on_dpad){
-                        on_dpad = false;
                         break;
                     }
                     virtual_keyboard = false;
@@ -448,6 +448,9 @@ TouchScreenNextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInput, boole
                     }
                     break;
                 case (SDL_FINGERMOTION):
+                    if(on_dpad){
+                        break;
+                    }
                     if(long_press_check && SDL_TICKS_PASSED(SDL_GetTicks(),long_press_time + 300)){
                         new_x =  max(COLS - 1,event.tfinger.x * display.w / cell_w);
                         new_y =  min(ROWS -1,event.tfinger.y * display.h / cell_h);
