@@ -326,7 +326,11 @@ boolean TouchScreenPauseForMilliseconds(short milliseconds){
     if(epoch < milliseconds){
         SDL_Delay(milliseconds - epoch);
     }
-    return SDL_HasEvents(SDL_FINGERDOWN,SDL_FINGERUP) || SDL_HasEvent(SDL_KEYUP);
+    return SDL_HasEvent(SDL_FINGERDOWN) ||
+           SDL_HasEvent(SDL_FINGERUP) ||
+           SDL_HasEvent(SDL_FINGERMOTION) ||
+           SDL_HasEvent(SDL_MULTIGESTURE) ||
+           SDL_HasEvent(SDL_KEYDOWN);
 }
 void
 TouchScreenNextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInput, boolean colorsDance) {
