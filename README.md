@@ -24,23 +24,15 @@ First touch selects the cell and second touch on the same cell clicks there.
 ## On-screen D-pad
 D-pad is enabled by default to help with more precise control.
 
-There are two mods of D-pad: selection mode (default) and movement mode.
-
-### Selection Mode
-
-In selection mode direction keys moves the cursor and the square clicks the selected cell. D-pad is white.
+There are two mods of D-pad: movement mode (default) and selection mode. You can change between modes via long pressing d-pad.
 
 ### Movement Mode
 
 In this mode movement keys directly moves the PC. The square sends Enter key(makes the D-pad mode temporarily selection mode). D-pad is yellow.
 
-### Changing Mode
+### Selection Mode
 
-Changing D-pad mode can be done in two ways:
-
-* Setting dpad_mode in config to change default mode at startup
-
-* Long pressing D-pad to change mode in game.
+In selection mode direction keys moves the cursor and the square clicks the selected cell. D-pad is white.
 
 ## Keyboard Input
 
@@ -92,7 +84,6 @@ You can see the supported configurations below:
 | dpad_width | Integer | 0 | When it is not 0 it sets the width of the d-pad square. Otherwise width is set to fit into left panel |
 | dpad_x_pos | Integer | 0 | When it is not 0 it sets the x position of the top left corner of the d-pad square. Otherwise position is set to bottom of the left panel |
 | dpad_y_pos | Integer | 0 | When it is not 0 it sets the y position of the top left corner of the d-pad square. Otherwise position is set to bottom of the left panel |
-| dpad_mode | Boolean | 0 | It decides the mod of d-pad. When 0 the mode is selection mode and movement mode otherwise. |
 
 # Saves,Recordings and Highscore
 

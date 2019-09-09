@@ -28,6 +28,7 @@ boolean screen_changed = false;
 boolean ctrl_pressed = false;
 int cell_w, cell_h;
 boolean force_portrait = false;
+boolean dpad_mode = true;
 
 
 //Config Values
@@ -42,7 +43,6 @@ boolean dpad_enabled = true;
 int dpad_width = 0;
 int dpad_x_pos = 0;
 int dpad_y_pos = 0;
-boolean dpad_mode = 0;
 
 void load_conf(){
     if (access("settings.conf", F_OK) != -1) {
@@ -83,8 +83,6 @@ void load_conf(){
                 dpad_x_pos = atoi(value);
             }else if(strcmp("dpad_y_pos",name)==0){
                 dpad_y_pos = atoi(value);
-            }else if(strcmp("dpad_mode",name)==0){
-                dpad_mode = atoi(value);
             }
         }
         // override custom cell dimensions if custom screen dimensions are present
