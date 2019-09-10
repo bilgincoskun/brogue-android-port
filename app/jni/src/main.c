@@ -49,6 +49,7 @@ static int dpad_width = 0;
 static int dpad_x_pos = 0;
 static int dpad_y_pos = 0;
 static boolean allow_dpad_mode_change = true;
+//boolean default_dpad_mode
 
 void load_conf(){
     if (access("settings.conf", F_OK) != -1) {
@@ -86,6 +87,8 @@ void load_conf(){
                 dpad_y_pos = atoi(value);
             }else if(strcmp("allow_dpad_mode_change",name)==0){
                 allow_dpad_mode_change = atoi(value);
+            }else if(strcmp("default_dpad_mode",name)==0){
+                dpad_mode = atoi(value);
             }
         }
         // override custom cell dimensions if custom screen dimensions are present
