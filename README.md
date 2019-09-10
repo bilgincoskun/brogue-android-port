@@ -96,6 +96,6 @@ You can use custom fonts by copying them to **/sdcard/Android/org.brogue.brogue/
 
 However fonts must be:
 
-* Edited according to draw_letter function in main.c
+* Edited according to draw_glyph function in main.c
 
 * Monospace
