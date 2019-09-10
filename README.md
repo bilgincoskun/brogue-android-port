@@ -97,6 +97,7 @@ You can see the supported configurations below:
 | dpad_width | Integer | 0 | When it is not 0 it sets the width of the d-pad square. Otherwise width is set to fit into left panel |
 | dpad_x_pos | Integer | 0 | When it is not 0 it sets the x position of the top left corner of the d-pad square. Otherwise position is set to bottom of the left panel |
 | dpad_y_pos | Integer | 0 | When it is not 0 it sets the y position of the top left corner of the d-pad square. Otherwise position is set to bottom of the left panel |
+| allow_dpad_mode_change | Boolean | 1 | Allow to change d-pad mode by long pressing |
 
 # Saves,Recordings and Highscore
 

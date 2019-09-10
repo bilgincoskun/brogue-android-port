@@ -48,6 +48,7 @@ static boolean dpad_enabled = true;
 static int dpad_width = 0;
 static int dpad_x_pos = 0;
 static int dpad_y_pos = 0;
+static boolean allow_dpad_mode_change = true;
 
 void load_conf(){
     if (access("settings.conf", F_OK) != -1) {
@@ -83,6 +84,8 @@ void load_conf(){
                 dpad_x_pos = atoi(value);
             }else if(strcmp("dpad_y_pos",name)==0){
                 dpad_y_pos = atoi(value);
+            }else if(strcmp("allow_dpad_mode_change",name)==0){
+                allow_dpad_mode_change = atoi(value);
             }
         }
         // override custom cell dimensions if custom screen dimensions are present
@@ -459,7 +462,7 @@ void TouchScreenNextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInput, 
                     break;
                 case SDL_FINGERMOTION:
                     if(long_press_time != 0 && SDL_TICKS_PASSED(SDL_GetTicks(),long_press_time + LONG_PRESS_INTERVAL)){
-                        if(on_dpad){
+                        if(on_dpad && allow_dpad_mode_change){
                             dpad_mode = !dpad_mode;
                             screen_changed = true;
                             pauseForMilliseconds(0);
