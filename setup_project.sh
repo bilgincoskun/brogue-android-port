@@ -22,7 +22,7 @@ rm -rf "$tmp_dir"
 
 echo "Downloading Brogue Files"
 #You can also use original distribution but dont forget to move necessary .h files and .c files to header and src/brogue folders
-git clone https://github.com/bilgincoskun/brogue-libtcod-sdl2-fix brogue-files -q
+git clone https://github.com/bilgincoskun/brogue-libtcod-sdl2-fix brogue-files -b 175-with-fixes -q
 
 echo "Setting Symlinks for Brogue Code"
 ln -sf ../../../brogue-files/include ./app/jni/src

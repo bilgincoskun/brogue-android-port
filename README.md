@@ -1,6 +1,17 @@
 Android port of [Brogue](https://sites.google.com/site/broguegame/) using SDL2
+# Installation
+You can download apks from [here](https://github.com/bilgincoskun/brogue-android-port/releases) 
 
-You can download apk from [here](https://github.com/bilgincoskun/brogue-android-port/releases) 
+Currently there are 3 apks use different versions of Brogue
+
+* 1.7.5 with bug fixes from [here](https://github.com/flend/brogue-windows/) (Suggested version)
+
+* Original v1.7.5 version
+
+* Original 1.7.4 version
+
+Also keep in mind that since there are incompatibilities between versions, changing one version to another might cause problems with the save/recording files.
+
 # Building
 
 Before building it, run **setup_project.sh** to download and copy necessary files into the project.
@@ -14,6 +25,8 @@ These files are:
 * platform independent files of Brogue
 
 After that you can use gradlew script to build it as usual.
+
+The default version is 1.7.5 with bug fixes. To build a different version change to a different branch in brogue-files folder.
 
 # User Input
 
