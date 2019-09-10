@@ -11,7 +11,6 @@
 #define TOP_LOG_HEIGIHT 3
 #define BOTTOM_BUTTONS_HEIGHT 2
 #define FRAME_INTERVAL 50
-#define LONG_PRESS_INTERVAL 300
 
 typedef struct {
     SDL_Texture *c;
@@ -50,6 +49,7 @@ static int dpad_x_pos = 0;
 static int dpad_y_pos = 0;
 static boolean allow_dpad_mode_change = true;
 //boolean default_dpad_mode
+static int long_press_interval = 300;
 
 void load_conf(){
     if (access("settings.conf", F_OK) != -1) {
@@ -89,6 +89,8 @@ void load_conf(){
                 allow_dpad_mode_change = atoi(value);
             }else if(strcmp("default_dpad_mode",name)==0){
                 dpad_mode = atoi(value);
+            }else if(strcmp("long_press_interval",name)==0){
+                long_press_interval = atoi(value);
             }
         }
         // override custom cell dimensions if custom screen dimensions are present
@@ -464,7 +466,7 @@ void TouchScreenNextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInput, 
                     }
                     break;
                 case SDL_FINGERMOTION:
-                    if(long_press_time != 0 && SDL_TICKS_PASSED(SDL_GetTicks(),long_press_time + LONG_PRESS_INTERVAL)){
+                    if(long_press_time != 0 && SDL_TICKS_PASSED(SDL_GetTicks(),long_press_time + long_press_interval)){
                         if(on_dpad && allow_dpad_mode_change){
                             dpad_mode = !dpad_mode;
                             screen_changed = true;
