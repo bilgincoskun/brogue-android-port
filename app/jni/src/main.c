@@ -270,7 +270,7 @@ void TouchScreenGameLoop() {
         SDL_Log("SDL_GetDesktopDisplayMode failed: %s", SDL_GetError());
         return;
     }
-    if (SDL_CreateWindowAndRenderer(display.w, display.h, SDL_WINDOW_FULLSCREEN, &window,
+    if (SDL_CreateWindowAndRenderer(display.w, display.h, SDL_WINDOW_FULLSCREEN | SDL_WINDOW_ALWAYS_ON_TOP, &window,
                                     &renderer)) {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't create window and renderer: %s",
                      SDL_GetError());
@@ -333,7 +333,8 @@ boolean TouchScreenPauseForMilliseconds(short milliseconds){
     if(epoch < milliseconds){
         SDL_Delay(milliseconds - epoch);
     }
-    return SDL_HasEvent(SDL_FINGERDOWN) ||
+    return SDL_HasEvent(SDL_APP_WILLENTERFOREGROUND) ||
+           SDL_HasEvent(SDL_FINGERDOWN) ||
            SDL_HasEvent(SDL_FINGERUP) ||
            SDL_HasEvent(SDL_FINGERMOTION) ||
            SDL_HasEvent(SDL_MULTIGESTURE) ||
@@ -355,6 +356,8 @@ void TouchScreenNextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInput, 
         while (SDL_PollEvent(&event)) {
             float raw_input_x,raw_input_y;
             switch (event.type) {
+                case SDL_APP_WILLENTERFOREGROUND:
+                    screen_changed = true;
                 case SDL_FINGERDOWN:
                     on_dpad = false;
                     raw_input_x = event.tfinger.x * display.w;
