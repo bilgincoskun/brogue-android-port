@@ -494,11 +494,11 @@ void TouchScreenNextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInput, 
                     returnEvent->eventType = KEYSTROKE;
                     SDL_Scancode k = event.key.keysym.sym;
                     switch(k){
-                        case SDL_SCANCODE_AC_BACK:
+                        case SDLK_AC_BACK:
                             returnEvent->param1 = ESCAPE_KEY;
                             break;
-                        case SDL_SCANCODE_BACKSPACE:
-                        case SDL_SCANCODE_DELETE:
+                        case SDLK_BACKSPACE:
+                        case SDLK_DELETE:
                             returnEvent->param1 = DELETE_KEY;
                             break;
                         default:
