@@ -528,8 +528,13 @@ void TouchScreenNextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInput, 
                             break;
                         default:
                             if(event.key.keysym.mod & (KMOD_SHIFT | KMOD_CAPS)){
-                                k += 'A' - 'a';
-                                returnEvent->shiftKey = true;
+                                if('a' <= k && k <= 'z'){
+                                    k += 'A' - 'a';
+                                    returnEvent->shiftKey = true;
+                                }else{
+                                    k += '?' - '/';
+                                }
+
                             }
                             returnEvent->param1 = k;
                             break;
