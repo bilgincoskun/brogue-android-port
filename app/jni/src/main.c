@@ -504,6 +504,18 @@ void TouchScreenNextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInput, 
                         case SDLK_DELETE:
                             returnEvent->param1 = DELETE_KEY;
                             break;
+                        case SDLK_LEFT:
+                            returnEvent->param1 = LEFT_KEY;
+                            break;
+                        case SDLK_RIGHT:
+                            returnEvent->param1 = RIGHT_KEY;
+                            break;
+                        case SDLK_UP:
+                            returnEvent->param1 = UP_KEY;
+                            break;
+                        case SDLK_DOWN:
+                            returnEvent->param1 = DOWN_KEY;
+                            break;
                         default:
                             if(event.key.keysym.mod & (KMOD_SHIFT | KMOD_CAPS)){
                                 k += 'A' - 'a';
