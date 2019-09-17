@@ -496,6 +496,10 @@ void TouchScreenNextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInput, 
                 case SDL_KEYDOWN:
                     returnEvent->eventType = KEYSTROKE;
                     SDL_Scancode k = event.key.keysym.sym;
+                    if (event.key.keysym.mod & KMOD_CTRL){
+                        returnEvent->controlKey = ctrl_pressed = true;
+                        ctrl_time = SDL_GetTicks();
+                    }
                     switch(k){
                         case SDLK_AC_BACK:
                             returnEvent->param1 = ESCAPE_KEY;
