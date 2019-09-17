@@ -49,7 +49,7 @@ static int dpad_x_pos = 0;
 static int dpad_y_pos = 0;
 static boolean allow_dpad_mode_change = true;
 //boolean default_dpad_mode
-static int long_press_interval = 300;
+static int long_press_interval = 750;
 static int dpad_transparency = 75;
 
 void load_conf(){

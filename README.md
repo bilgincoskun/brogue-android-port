@@ -92,7 +92,7 @@ You can see the supported configurations below:
 | force_portrait | Boolean | 0 | By default the app will start in landscape mode. If this option enabled it will force application to use portrait mode |
 | dynamic_colors | Boolean | 1 | Dynamic colors on water,lava etc.  Disabling will lower the power consumption |
 | double_tap_lock | Boolean | 1 | When enabled it will ignore the missclicks within **double_tap_interval** range |
-| double_tap_interval | Integer | 500 | The maximum time between two taps to acknowledge it as a double tap |
+| double_tap_interval | Integer | 500 | Milliseconds.The maximum time between two taps to acknowledge it as a double tap |
 | dpad_enabled | Boolean | 1 | Enable on-screen d-pad |
 | dpad_width | Integer | 0 | When it is not 0 it sets the width of the d-pad square. Otherwise width is set to fit into left panel |
 | dpad_x_pos | Integer | 0 | When it is not 0 it sets the x position of the top left corner of the d-pad square. Otherwise position is set to bottom of the left panel |
@@ -100,7 +100,7 @@ You can see the supported configurations below:
 | allow_dpad_mode_change | Boolean | 1 | Allow to change d-pad mode by long pressing |
 | default_dpad_mode | Boolean | 1 | Decides if the mode of d-pad at the start of the game will be selection mode (0) or movement mode (1) |
 | dpad_transparency | Integer | 75 |  Value is between 0 (non-visible) and 255 (opaque) |
-| long_press_interval | Integer | 300 | The minimum time between press and release to acknowledge it as a long press  |
+| long_press_interval | Integer | 750 | Milliseconds.The minimum time between press and release to acknowledge it as a long press  |
 # Saves,Recordings and Highscore
 
 These files are stored in **/sdcard/Android/org.brogue.brogue/files/** which is accessible by the user.
