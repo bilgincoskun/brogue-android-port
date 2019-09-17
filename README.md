@@ -101,6 +101,7 @@ You can see the supported configurations below:
 | default_dpad_mode | Boolean | 1 | Decides if the mode of d-pad at the start of the game will be selection mode (0) or movement mode (1) |
 | dpad_transparency | Integer | 75 |  Value is between 0 (non-visible) and 255 (opaque) |
 | long_press_interval | Integer | 750 | Milliseconds.The minimum time between press and release to acknowledge it as a long press  |
+| keyboard_always_on | Boolean | 0 | Opens the keyboard at the start of the game and prevents it from closing when touch input is occured. Note that playing back button still closes the keyboard. |
 # Saves,Recordings and Highscore
 
 These files are stored in **/sdcard/Android/org.brogue.brogue/files/** which is accessible by the user.

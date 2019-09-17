@@ -51,6 +51,7 @@ static boolean allow_dpad_mode_change = true;
 //boolean default_dpad_mode
 static int long_press_interval = 750;
 static int dpad_transparency = 75;
+static boolean keyboard_always_on = false;
 
 void load_conf(){
     if (access("settings.conf", F_OK) != -1) {
@@ -94,6 +95,8 @@ void load_conf(){
                 dpad_transparency = atoi(value);
             }else if(strcmp("long_press_interval",name)==0){
                 long_press_interval = atoi(value);
+            }else if(strcmp("keyboard_always_on",name)==0){
+                keyboard_always_on = atoi(value);
             }
         }
         // override custom cell dimensions if custom screen dimensions are present
@@ -314,6 +317,9 @@ void TouchScreenGameLoop() {
         dpad_area.x =(dpad_x_pos)?dpad_x_pos: 3*cell_w;
         dpad_area.y = (dpad_y_pos)?dpad_y_pos :(display.h - (area_width + 2*cell_h));
     }
+    if(keyboard_always_on){
+        SDL_StartTextInput();
+    }
     rogueMain();
     TTF_CloseFont(font);
     TTF_Quit();
@@ -467,7 +473,7 @@ void TouchScreenNextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInput, 
                     }else{
                         returnEvent->eventType = MOUSE_UP;
                     }
-                    if(!virtual_keyboard){
+                    if(!(keyboard_always_on || virtual_keyboard)){
                         SDL_StopTextInput();
                     }
                     break;
