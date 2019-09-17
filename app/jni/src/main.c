@@ -50,6 +50,7 @@ static int dpad_y_pos = 0;
 static boolean allow_dpad_mode_change = true;
 //boolean default_dpad_mode
 static int long_press_interval = 300;
+static int dpad_transparency = 75;
 
 void load_conf(){
     if (access("settings.conf", F_OK) != -1) {
@@ -89,6 +90,8 @@ void load_conf(){
                 allow_dpad_mode_change = atoi(value);
             }else if(strcmp("default_dpad_mode",name)==0){
                 dpad_mode = atoi(value);
+            }else if(strcmp("dpad_transparency",name)==0){
+                dpad_transparency = atoi(value);
             }else if(strcmp("long_press_interval",name)==0){
                 long_press_interval = atoi(value);
             }
@@ -301,10 +304,10 @@ void TouchScreenGameLoop() {
     if(dpad_enabled){
         SDL_Surface * dpad_i = SDL_LoadBMP("dpad.bmp");
         dpad_image_select = SDL_CreateTextureFromSurface(renderer,dpad_i);
-        SDL_SetTextureAlphaMod(dpad_image_select,75);
+        SDL_SetTextureAlphaMod(dpad_image_select,dpad_transparency);
         dpad_image_move = SDL_CreateTextureFromSurface(renderer,dpad_i);
         SDL_SetTextureColorMod(dpad_image_move,255,255,155);
-        SDL_SetTextureAlphaMod(dpad_image_move,75);
+        SDL_SetTextureAlphaMod(dpad_image_move,dpad_transparency);
         SDL_FreeSurface(dpad_i);
         int area_width = min(cell_w*(LEFT_PANEL_WIDTH - 4),cell_h*20);
         dpad_area.h=dpad_area.w= (dpad_width)?dpad_width:area_width;
