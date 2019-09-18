@@ -508,6 +508,7 @@ void TouchScreenNextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInput, 
                     }
                     switch(k){
                         case SDLK_AC_BACK:
+                        case SDLK_ESCAPE:
                             returnEvent->param1 = ESCAPE_KEY;
                             break;
                         case SDLK_BACKSPACE:
@@ -525,6 +526,15 @@ void TouchScreenNextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInput, 
                             break;
                         case SDLK_DOWN:
                             returnEvent->param1 = DOWN_KEY;
+                            break;
+                        case SDLK_SPACE:
+                            returnEvent->param1 = ACKNOWLEDGE_KEY;
+                            break;
+                        case SDLK_RETURN:
+                            returnEvent->param1 = RETURN_KEY;
+                            break;
+                        case SDLK_TAB:
+                            returnEvent->param1 = TAB_KEY;
                             break;
                         default:
                             if(event.key.keysym.mod & (KMOD_SHIFT | KMOD_CAPS)){
