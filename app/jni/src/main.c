@@ -11,6 +11,7 @@
 #define TOP_LOG_HEIGIHT 3
 #define BOTTOM_BUTTONS_HEIGHT 2
 #define FRAME_INTERVAL 50
+#define ZOOM_CHANGED_INTERVAL 300
 
 typedef struct {
     SDL_Texture *c;
@@ -19,6 +20,7 @@ typedef struct {
 
 struct brogueConsole currentConsole;
 extern playerCharacter rogue;
+extern creature player;
 
 static SDL_Window *window;
 static SDL_Renderer *renderer;
@@ -33,6 +35,12 @@ static SDL_Texture * dpad_image_move;
 static SDL_Rect dpad_area;
 static boolean dpad_mode = true;
 static boolean ctrl_pressed = false;
+static double zoom_level = 1.0;
+static SDL_Rect left_panel_box;
+static SDL_Rect log_panel_box;
+static SDL_Rect button_panel_box;
+static SDL_Rect grid_box;
+static SDL_Rect grid_box_zoomed;
 
 //Config Values
 static int custom_cell_width = 0;
@@ -52,6 +60,9 @@ static boolean allow_dpad_mode_change = true;
 static int long_press_interval = 750;
 static int dpad_transparency = 75;
 static boolean keyboard_always_on = false;
+static int zoom_mode = 1;
+static double init_zoom = 1.0;
+static double max_zoom = 4.0;
 
 void load_conf(){
     if (access("settings.conf", F_OK) != -1) {
@@ -97,6 +108,12 @@ void load_conf(){
                 long_press_interval = atoi(value);
             }else if(strcmp("keyboard_always_on",name)==0){
                 keyboard_always_on = atoi(value);
+            }else if(strcmp("zoom_mode",name)==0){
+                zoom_mode = atoi(value);
+            }else if(strcmp("max_zoom",name)==0){
+                max_zoom = atof(value);
+            }else if(strcmp("init_zoom",name)==0){
+                init_zoom = atof(value);
             }
         }
         // override custom cell dimensions if custom screen dimensions are present
@@ -297,6 +314,10 @@ void TouchScreenGameLoop() {
     }else{
         cell_h = display.h / ROWS;
     }
+    left_panel_box = (SDL_Rect) {.x = 0, .y = 0, .w = LEFT_PANEL_WIDTH * cell_w, .h = ROWS * cell_h};
+    log_panel_box = (SDL_Rect) {.x = LEFT_PANEL_WIDTH * cell_w, .y = 0, .w = (COLS - LEFT_PANEL_WIDTH) * cell_w, .h = TOP_LOG_HEIGIHT * cell_h};
+    button_panel_box = (SDL_Rect) {.x = LEFT_PANEL_WIDTH * cell_w, .y = (ROWS - BOTTOM_BUTTONS_HEIGHT)*cell_h, .w = (COLS - LEFT_PANEL_WIDTH) * cell_w, .h = BOTTOM_BUTTONS_HEIGHT * cell_h};
+    grid_box = grid_box_zoomed = (SDL_Rect) {.x = LEFT_PANEL_WIDTH * cell_w,.y = TOP_LOG_HEIGIHT * cell_h,.w = (COLS - LEFT_PANEL_WIDTH) * cell_w,.h=(ROWS - TOP_LOG_HEIGIHT - BOTTOM_BUTTONS_HEIGHT)*cell_h};
     memset(font_cache, 0, UCHAR_MAX * sizeof(glyph_cache));
     if (!init_font()) {
         SDL_Log("Cannot fit font into cells");
@@ -328,10 +349,42 @@ void TouchScreenGameLoop() {
 
 boolean TouchScreenPauseForMilliseconds(short milliseconds){
     uint32_t init_time = SDL_GetTicks();
+    static boolean game_started = false;
     if(screen_changed) {
         screen_changed = false;
         SDL_SetRenderTarget(renderer, NULL);
-        SDL_RenderCopy(renderer, screen_texture, NULL, NULL);
+        if(rogue.depthLevel == 0 || rogue.gameHasEnded || rogue.quit){
+            zoom_level = 1.0;
+            game_started = false;
+        }else if(!game_started){
+           game_started = true;
+            rogue.cursorLoc[0] = COLS / 2;
+            rogue.cursorLoc[1] = ROWS / 2;
+            zoom_level = init_zoom;
+        }
+        if(zoom_mode == 0 || zoom_level == 1.0){
+            SDL_RenderCopy(renderer, screen_texture, NULL, NULL);
+        }else{
+            double width = (COLS - LEFT_PANEL_WIDTH) * cell_w / zoom_level;
+            double height = (ROWS - TOP_LOG_HEIGIHT - BOTTOM_BUTTONS_HEIGHT)*cell_h/zoom_level;
+            int x,y;
+            if(zoom_mode == 1){
+                x = player.xLoc;
+                y = player.yLoc;
+            }else{
+                x = rogue.cursorLoc[0];
+                y = rogue.cursorLoc[1];
+            }
+            int center_x = x*cell_w+left_panel_box.w - width/2;
+            int center_y = y*cell_h+log_panel_box.h-height/2;
+            center_x = max(left_panel_box.w,min(center_x,left_panel_box.w+grid_box.w - width));
+            center_y = max(log_panel_box.h,min(center_y,log_panel_box.h+grid_box.h - height));
+            grid_box_zoomed = (SDL_Rect) {.x = center_x,.y = center_y,.w = width,.h= height};
+            SDL_RenderCopy(renderer,screen_texture,&left_panel_box,&left_panel_box);
+            SDL_RenderCopy(renderer,screen_texture,&log_panel_box,&log_panel_box);
+            SDL_RenderCopy(renderer,screen_texture,&button_panel_box,&button_panel_box);
+            SDL_RenderCopy(renderer,screen_texture,&grid_box_zoomed,&grid_box);
+        }
         if(dpad_enabled){
             SDL_RenderCopy(renderer, dpad_mode?dpad_image_move:dpad_image_select, NULL, &dpad_area);
         }
@@ -356,6 +409,7 @@ void TouchScreenNextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInput, 
     static uint32_t ctrl_time = 0;
     static uint32_t long_press_time = 0;
     static uint32_t prev_click_time = 0;
+    static uint32_t zoom_changed_time = 0;
     static boolean virtual_keyboard = false;
     static boolean on_dpad = false;
     returnEvent->shiftKey = false;
@@ -368,9 +422,16 @@ void TouchScreenNextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInput, 
                 case SDL_APP_WILLENTERFOREGROUND:
                     screen_changed = true;
                 case SDL_FINGERDOWN:
+                    if(event.tfinger.fingerId !=0){
+                        continue;
+                    }
+                    if(!SDL_TICKS_PASSED(SDL_GetTicks(),zoom_changed_time+ZOOM_CHANGED_INTERVAL)){
+                        break;
+                    }
                     on_dpad = false;
                     raw_input_x = event.tfinger.x * display.w;
                     raw_input_y = event.tfinger.y * display.h;
+                    SDL_Point p = {.x = raw_input_x,.y=raw_input_y};
                     if(dpad_enabled){
                         SDL_Point p = {.x = raw_input_x,.y=raw_input_y};
                         if(SDL_PointInRect(&p,&dpad_area)){
@@ -378,6 +439,10 @@ void TouchScreenNextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInput, 
                             long_press_time = SDL_GetTicks();
                             break;
                         }
+                    }
+                    if(zoom_mode != 0 && zoom_level!= 1 && SDL_PointInRect(&p,&grid_box)){
+                        raw_input_x = (raw_input_x-grid_box.x)/zoom_level + grid_box_zoomed.x;
+                        raw_input_y = (raw_input_y-grid_box.y)/zoom_level + grid_box_zoomed.y;
                     }
                     if(!double_tap_lock || SDL_TICKS_PASSED(SDL_GetTicks(),prev_click_time+double_tap_interval)){
                         cursor_x = min(COLS - 1,raw_input_x / cell_w);
@@ -390,6 +455,12 @@ void TouchScreenNextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInput, 
                     prev_click_time = SDL_GetTicks();
                     break;
                 case SDL_FINGERUP:
+                    if(event.tfinger.fingerId !=0){
+                        continue;
+                    }
+                    if(!SDL_TICKS_PASSED(SDL_GetTicks(),zoom_changed_time+ZOOM_CHANGED_INTERVAL)){
+                        break;
+                    }
                     raw_input_x = event.tfinger.x * display.w;
                     raw_input_y = event.tfinger.y * display.h;
                     if(dpad_enabled && on_dpad){
@@ -478,6 +549,9 @@ void TouchScreenNextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInput, 
                     }
                     break;
                 case SDL_FINGERMOTION:
+                    if(!SDL_TICKS_PASSED(SDL_GetTicks(),zoom_changed_time+ZOOM_CHANGED_INTERVAL)){
+                        break;
+                    }
                     if(long_press_time != 0 && SDL_TICKS_PASSED(SDL_GetTicks(),long_press_time + long_press_interval)){
                         if(on_dpad && allow_dpad_mode_change){
                             dpad_mode = !dpad_mode;
@@ -492,7 +566,14 @@ void TouchScreenNextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInput, 
 
 
                 case SDL_MULTIGESTURE:
-                    if(event.mgesture.numFingers==3){
+                    if(event.mgesture.numFingers==2){
+                        zoom_level *= (1.0 + event.mgesture.dDist*3);
+                        zoom_level = max(1.0,min(zoom_level,max_zoom));
+
+                        zoom_changed_time = SDL_GetTicks();
+                        screen_changed = true;
+                    }
+                    else if(event.mgesture.numFingers==3){
                         if(!ctrl_pressed){
                             returnEvent->controlKey = ctrl_pressed = true;
                             ctrl_time = SDL_GetTicks();
