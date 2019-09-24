@@ -358,8 +358,6 @@ boolean TouchScreenPauseForMilliseconds(short milliseconds){
             game_started = false;
         }else if(!game_started){
            game_started = true;
-            rogue.cursorLoc[0] = COLS / 2;
-            rogue.cursorLoc[1] = ROWS / 2;
             zoom_level = init_zoom;
         }
         if(zoom_mode == 0 || zoom_level == 1.0){
@@ -368,12 +366,12 @@ boolean TouchScreenPauseForMilliseconds(short milliseconds){
             double width = (COLS - LEFT_PANEL_WIDTH) * cell_w / zoom_level;
             double height = (ROWS - TOP_LOG_HEIGIHT - BOTTOM_BUTTONS_HEIGHT)*cell_h/zoom_level;
             int x,y;
-            if(zoom_mode == 1){
-                x = player.xLoc;
-                y = player.yLoc;
-            }else{
+            if(zoom_mode == 2 && (rogue.cursorLoc[0] > 0 || rogue.cursorLoc[1] > 0)){
                 x = rogue.cursorLoc[0];
                 y = rogue.cursorLoc[1];
+            }else{
+                x = player.xLoc;
+                y = player.yLoc;
             }
             int center_x = x*cell_w+left_panel_box.w - width/2;
             int center_y = y*cell_h+log_panel_box.h-height/2;
