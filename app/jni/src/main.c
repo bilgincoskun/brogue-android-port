@@ -41,6 +41,7 @@ static SDL_Rect log_panel_box;
 static SDL_Rect button_panel_box;
 static SDL_Rect grid_box;
 static SDL_Rect grid_box_zoomed;
+static boolean game_started = false;
 
 //Config Values
 static int custom_cell_width = 0;
@@ -349,11 +350,10 @@ void TouchScreenGameLoop() {
 
 boolean TouchScreenPauseForMilliseconds(short milliseconds){
     uint32_t init_time = SDL_GetTicks();
-    static boolean game_started = false;
     if(screen_changed) {
         screen_changed = false;
         SDL_SetRenderTarget(renderer, NULL);
-        if(rogue.depthLevel == 0 || rogue.gameHasEnded || rogue.quit){
+        if(rogue.depthLevel == 0 || rogue.gameHasEnded || rogue.quit || player.currentHP <= 0){
             zoom_level = 1.0;
             game_started = false;
         }else if(!game_started){
@@ -566,7 +566,7 @@ void TouchScreenNextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInput, 
 
 
                 case SDL_MULTIGESTURE:
-                    if(event.mgesture.numFingers==2){
+                    if(event.mgesture.numFingers==2 && game_started){
                         zoom_level *= (1.0 + event.mgesture.dDist*3);
                         zoom_level = max(1.0,min(zoom_level,max_zoom));
 
