@@ -64,6 +64,7 @@ static boolean keyboard_always_on = false;
 static int zoom_mode = 1;
 static double init_zoom = 1.0;
 static double max_zoom = 4.0;
+static int filter_mode = 2;
 
 void load_conf(){
     if (access("settings.conf", F_OK) != -1) {
@@ -115,6 +116,8 @@ void load_conf(){
                 max_zoom = atof(value);
             }else if(strcmp("init_zoom",name)==0){
                 init_zoom = atof(value);
+            }else if(strcmp("filter_mode",name)==0){
+                filter_mode = atoi(value);
             }
         }
         // override custom cell dimensions if custom screen dimensions are present
@@ -282,6 +285,8 @@ void TouchScreenGameLoop() {
     if(force_portrait){
         SDL_SetHint(SDL_HINT_ORIENTATIONS,"Portrait PortraitUpsideDown");
     }
+    char render_hint[2] = {filter_mode+'0',0};
+    SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, render_hint);
     if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
         SDL_Log("Unable to initialize SDL: %s", SDL_GetError());
         return;

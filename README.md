@@ -91,6 +91,7 @@ You can see the supported configurations below:
 | custom_screen_height | Integer | 0 | When present and value is not 0 it sets the screen height.Disables custom_cell_height when active |
 | force_portrait | Boolean | 0 | By default the app will start in landscape mode. If this option enabled it will force application to use portrait mode |
 | dynamic_colors | Boolean | 1 | Dynamic colors on water,lava etc.  Disabling will lower the power consumption |
+| filter_mode | Integer | 2 | Selects the algorithm for anti-aliasing: 0 uses nearest pixel sampling, 1 uses linear filtering and 2 uses anistropic filtering. If you get graphical glitches or performance issues, try to lower the value. |
 | double_tap_lock | Boolean | 1 | When enabled it will ignore the missclicks within **double_tap_interval** range |
 | double_tap_interval | Integer | 500 | Milliseconds.The maximum time between two taps to acknowledge it as a double tap |
 | dpad_enabled | Boolean | 1 | Enable on-screen d-pad |
