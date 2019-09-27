@@ -1,7 +1,7 @@
 package org.brogue.brogue;
 
-import org.libsdl.app.SDLActivity;
+import org.brogue.brogueCore.brogueCore;
 
-public class brogueActivity extends SDLActivity
+public class brogueActivity extends brogueCore
 {
 }
