@@ -12,6 +12,7 @@
 #define BOTTOM_BUTTONS_HEIGHT 2
 #define FRAME_INTERVAL 50
 #define ZOOM_CHANGED_INTERVAL 300
+#define ZOOM_TOGGLED_INTERVAL 100
 
 typedef struct {
     SDL_Texture *c;
@@ -44,6 +45,7 @@ static SDL_Rect grid_box_zoomed;
 static boolean game_started = false;
 static rogueEvent current_event;
 static boolean current_event_set = false;
+static boolean zoom_toggled = true;
 
 //Config Values
 static int custom_cell_width = 0;
@@ -289,6 +291,7 @@ void process_events() {
     static uint32_t long_press_time = 0;
     static uint32_t prev_click_time = 0;
     static uint32_t zoom_changed_time = 0;
+    static uint32_t zoom_toggled_time = 0;
     static boolean virtual_keyboard = false;
     static boolean on_dpad = false;
     current_event.shiftKey = false;
@@ -303,6 +306,9 @@ void process_events() {
             case SDL_FINGERDOWN:
                 if(event.tfinger.fingerId !=0){
                     current_event.eventType=EVENT_ERROR;
+                    if(event.tfinger.fingerId == 1){
+                        zoom_toggled_time = SDL_GetTicks();
+                    }
                     break;
                 }
                 if(!SDL_TICKS_PASSED(SDL_GetTicks(),zoom_changed_time+ZOOM_CHANGED_INTERVAL)){
@@ -320,7 +326,7 @@ void process_events() {
                         break;
                     }
                 }
-                if(zoom_mode != 0 && zoom_level!= 1 && SDL_PointInRect(&p,&grid_box)){
+                if(zoom_mode != 0 && zoom_level!= 1 && zoom_toggled && SDL_PointInRect(&p,&grid_box)){
                     raw_input_x = (raw_input_x-grid_box.x)/zoom_level + grid_box_zoomed.x;
                     raw_input_y = (raw_input_y-grid_box.y)/zoom_level + grid_box_zoomed.y;
                 }
@@ -337,6 +343,10 @@ void process_events() {
             case SDL_FINGERUP:
                 if(event.tfinger.fingerId !=0){
                     current_event.eventType=EVENT_ERROR;
+                    if(event.tfinger.fingerId == 1 && !SDL_TICKS_PASSED(SDL_GetTicks(),zoom_toggled_time+ZOOM_TOGGLED_INTERVAL)){
+                        zoom_toggled = !zoom_toggled;
+                        screen_changed = true;
+                    }
                     break;
                 }
                 if(!SDL_TICKS_PASSED(SDL_GetTicks(),zoom_changed_time+ZOOM_CHANGED_INTERVAL)){
@@ -451,9 +461,12 @@ void process_events() {
                 if(event.mgesture.numFingers==2 && game_started){
                     zoom_level *= (1.0 + event.mgesture.dDist*3);
                     zoom_level = max(1.0,min(zoom_level,max_zoom));
-
                     zoom_changed_time = SDL_GetTicks();
                     screen_changed = true;
+                    if(SDL_TICKS_PASSED(SDL_GetTicks(),zoom_toggled_time+ZOOM_TOGGLED_INTERVAL)) {
+                        zoom_toggled = true;
+                        zoom_toggled_time = 0;
+                    }
                 }
                 else if(event.mgesture.numFingers==3){
                     if(!ctrl_pressed){
@@ -607,8 +620,9 @@ boolean TouchScreenPauseForMilliseconds(short milliseconds){
         }else if(!game_started){
            game_started = true;
             zoom_level = init_zoom;
+            zoom_toggled = true;
         }
-        if(zoom_mode == 0 || zoom_level == 1.0){
+        if(zoom_mode == 0 || zoom_level == 1.0 || !zoom_toggled){
             SDL_RenderCopy(renderer, screen_texture, NULL, NULL);
         }else{
             double width = (COLS - LEFT_PANEL_WIDTH) * cell_w / zoom_level;

@@ -34,6 +34,10 @@ The default version is 1.7.5 with bug fixes. To build a different version change
 
 First touch selects the cell and second touch on the same cell clicks there.
 
+## Zooming
+
+The game grid can be zoomed in/out via pinch gesture. You can also toggle on/off zoom by tapping with two fingers.
+
 ## On-screen D-pad
 D-pad is enabled by default to help with more precise control.
 
