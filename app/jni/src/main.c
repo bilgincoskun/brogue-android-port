@@ -23,6 +23,10 @@ struct brogueConsole currentConsole;
 extern playerCharacter rogue;
 extern creature player;
 
+//TODO Less Hacky Solution to Check if Confirmation Message is Shown
+static char drawn_chars[COLS][ROWS];
+static boolean message_shown = false;
+
 static SDL_Window *window;
 static SDL_Renderer *renderer;
 static SDL_Texture * screen_texture;
@@ -47,6 +51,7 @@ static rogueEvent current_event;
 static boolean current_event_set = false;
 static boolean zoom_toggled = true;
 
+
 //Config Values
 static int custom_cell_width = 0;
 static int custom_cell_height = 0;
@@ -69,6 +74,7 @@ static int zoom_mode = 1;
 static double init_zoom = 1.0;
 static double max_zoom = 4.0;
 static int filter_mode = 2;
+static boolean smart_zoom = true;
 
 void load_conf(){
     if (access("settings.conf", F_OK) != -1) {
@@ -122,6 +128,8 @@ void load_conf(){
                 init_zoom = atof(value);
             }else if(strcmp("filter_mode",name)==0){
                 filter_mode = atoi(value);
+            }else if(strcmp("smart_zoom",name)==0){
+                smart_zoom = atoi(value);
             }
         }
         // override custom cell dimensions if custom screen dimensions are present
@@ -294,10 +302,13 @@ void process_events() {
     static uint32_t zoom_toggled_time = 0;
     static boolean virtual_keyboard = false;
     static boolean on_dpad = false;
+    static boolean in_grid = false;
+    static boolean prev_in_grid = false;
     current_event.shiftKey = false;
     current_event.controlKey = ctrl_pressed;
     current_event.eventType=EVENT_ERROR;
     SDL_Event event;
+    prev_in_grid = in_grid;
     while (SDL_PollEvent(&event)) {
         float raw_input_x,raw_input_y;
         switch (event.type) {
@@ -308,6 +319,7 @@ void process_events() {
                     current_event.eventType=EVENT_ERROR;
                     if(event.tfinger.fingerId == 1){
                         zoom_toggled_time = SDL_GetTicks();
+                        in_grid = true;
                     }
                     break;
                 }
@@ -326,9 +338,14 @@ void process_events() {
                         break;
                     }
                 }
-                if(zoom_mode != 0 && zoom_level!= 1 && zoom_toggled && SDL_PointInRect(&p,&grid_box)){
-                    raw_input_x = (raw_input_x-grid_box.x)/zoom_level + grid_box_zoomed.x;
-                    raw_input_y = (raw_input_y-grid_box.y)/zoom_level + grid_box_zoomed.y;
+                if(SDL_PointInRect(&p,&grid_box)){
+                    in_grid = true;
+                    if(zoom_mode != 0 && zoom_level!= 1 && zoom_toggled ){
+                        raw_input_x = (raw_input_x-grid_box.x)/zoom_level + grid_box_zoomed.x;
+                        raw_input_y = (raw_input_y-grid_box.y)/zoom_level + grid_box_zoomed.y;
+                    }
+                }else{
+                    in_grid = false;
                 }
                 if(!double_tap_lock || SDL_TICKS_PASSED(SDL_GetTicks(),prev_click_time+double_tap_interval)){
                     cursor_x = min(COLS - 1,raw_input_x / cell_w);
@@ -346,6 +363,7 @@ void process_events() {
                     if(event.tfinger.fingerId == 1 && !SDL_TICKS_PASSED(SDL_GetTicks(),zoom_toggled_time+ZOOM_TOGGLED_INTERVAL)){
                         zoom_toggled = !zoom_toggled;
                         screen_changed = true;
+                        in_grid = true;
                     }
                     break;
                 }
@@ -467,6 +485,7 @@ void process_events() {
                         zoom_toggled = true;
                         zoom_toggled_time = 0;
                     }
+                    in_grid = true;
                 }
                 else if(event.mgesture.numFingers==3){
                     if(!ctrl_pressed){
@@ -533,6 +552,10 @@ void process_events() {
         current_event.controlKey = ctrl_pressed = false;
     }
     current_event_set = (current_event.eventType != EVENT_ERROR);
+    if(smart_zoom && ((!in_grid && prev_in_grid)||message_shown) ){
+        zoom_toggled = false;
+        message_shown = false;
+    }
 }
 
 
@@ -676,6 +699,14 @@ void TouchScreenPlotChar(uchar ch,
                          short xLoc, short yLoc,
                          short foreRed, short foreGreen, short foreBlue,
                          short backRed, short backGreen, short backBlue) {
+    //TODO Less Hacky Solution to Check if Confirmation Message is Shown
+    drawn_chars[xLoc][yLoc] = ch;
+    if(ch == 's' && xLoc >= 5 && drawn_chars[xLoc-1][yLoc] == 'e' && drawn_chars[xLoc-2][yLoc] == 'Y')
+        for(int i=0;i<xLoc-1;i++){
+            if(drawn_chars[i][yLoc] == 'N' && drawn_chars[i+1][yLoc] == 'o') {
+                message_shown = true;
+            }
+        }
 
     SDL_Rect rect;
     rect.x = xLoc * cell_w;

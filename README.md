@@ -110,6 +110,7 @@ You can see the supported configurations below:
 | zoom_mode | Integer | 1 | 0 disables zoom, 1 zooms to player character (default), 2 zooms to cursor (falls back to zoom_mode 1 if the cursor is not present on the screen)|
 | init_zoom | Decimal | 1.0 | Default zooming at the start of the game |
 | max_zoom | Decimal | 4.0 | Maximum allowed zoom level |
+| smart_zoom | Boolean | 1 | Zooms out when an area outside of the game-grid is selected or a confirmation message pops up |
 # Saves,Recordings and Highscore
 
 These files are stored in **/sdcard/Android/org.brogue.brogue/files/** which is accessible by the user.
