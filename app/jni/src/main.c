@@ -561,6 +561,7 @@ void process_events() {
 
 void TouchScreenGameLoop() {
     load_conf();
+    SDL_SetHint(SDL_HINT_RENDER_BATCHING, "1");
     if(force_portrait){
         SDL_SetHint(SDL_HINT_ORIENTATIONS,"Portrait PortraitUpsideDown");
     }
