@@ -754,7 +754,8 @@ boolean TouchScreenPauseForMilliseconds(short milliseconds){
             double width = (COLS - LEFT_PANEL_WIDTH) * cell_w / zoom_level;
             double height = (ROWS - TOP_LOG_HEIGIHT - BOTTOM_BUTTONS_HEIGHT)*cell_h/zoom_level;
             int x,y;
-            if(zoom_mode == 2 && (rogue.cursorLoc[0] > 0 || rogue.cursorLoc[1] > 0)){
+            if(zoom_mode == 2 && rogue.cursorLoc[0] >= 0 && rogue.cursorLoc[1] >= 0 &&
+                !rogue.automationActive && !rogue.autoPlayingLevel && rogue.disturbed){
                 x = rogue.cursorLoc[0];
                 y = rogue.cursorLoc[1];
             }else{
