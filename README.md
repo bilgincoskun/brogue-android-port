@@ -111,6 +111,7 @@ You can see the supported configurations below:
 | init_zoom | Decimal | 2.0 | Default zooming at the start of the game |
 | init_zoom_toggle | Boolean | 0 | Start the game as zoomed |
 | max_zoom | Decimal | 4.0 | Maximum allowed zoom level |
+| smart_zoom | Boolean | 1 | Zoom out when a menu, logs or a confirmation dialog open |
 # Saves,Recordings and Highscore
 
 These files are stored in **/sdcard/Android/org.brogue.brogue/files/** which is accessible by the user.

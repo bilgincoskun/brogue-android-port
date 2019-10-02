@@ -1,6 +1,7 @@
 #include <limits.h>
 #include <math.h>
 #include <unistd.h>
+#include <string.h>
 #include "SDL.h"
 #include "SDL_ttf.h"
 #include "platform.h"
@@ -69,6 +70,7 @@ static int zoom_mode = 1;
 static double init_zoom = 2.0;
 static boolean init_zoom_toggle = false;
 static double max_zoom = 4.0;
+static boolean smart_zoom = true;
 static int filter_mode = 2;
 
 void load_conf(){
@@ -123,6 +125,8 @@ void load_conf(){
                 init_zoom = atof(value);
             }else if(strcmp("init_zoom_toggle",name)==0){
                 init_zoom_toggle = atoi(value);
+            }else if(strcmp("smart_zoom",name)==0){
+                smart_zoom = atoi(value);
             }else if(strcmp("filter_mode",name)==0){
                 filter_mode = atoi(value);
             }
@@ -286,6 +290,104 @@ boolean init_font() {
         }
     }
 }
+
+//Hacky solution to check if a confirmation message or a menu is shown
+#define static_string_len(s) (sizeof(s)/sizeof(s[0]) - 2)
+boolean overlay_shown_zoom_out(int16_t c,uint8_t x,uint8_t y){
+    //write if c > 0, only check otherwise
+    static char char_buffer[ROWS][COLS+1] = {0}; //COLS + 1 to use rows as strings
+
+    static char no_message[] = "No";
+    static uint8_t no_message_len = static_string_len(no_message);
+    static char * no_message_pos = NULL;
+
+    static char yes_message[] = "Yes";
+    static uint8_t yes_message_len = static_string_len(yes_message);
+    static char * yes_message_pos = NULL;
+
+    static char inventory_message[] = "-- press (a-z) for more info --";
+    static uint8_t inventory_message_len = static_string_len(inventory_message);
+    static char * inventory_message_pos = NULL;
+
+    static char log_message[] = "--MORE--";
+    static uint8_t log_message_len = static_string_len(log_message);
+    static char * log_message_pos = NULL;
+
+    static char menu_message[] = "Quit without saving";
+    static uint8_t menu_message_len = static_string_len(menu_message);
+    static char * menu_message_pos = NULL;
+
+    if(!smart_zoom){
+        return false;
+    }
+    if(c > 0){
+        char * new_pos;
+        char_buffer[y][x] = c;
+        switch(c){
+            case '-':
+                if(x >= inventory_message_len){
+                    new_pos =  &char_buffer[y][x-inventory_message_len];
+                    if(strncmp(new_pos,inventory_message,inventory_message_len) == 0){
+                        inventory_message_pos = new_pos;
+                        return true;
+                    }
+                }
+                if(x >= log_message_len){
+                    new_pos =  &char_buffer[y][x-log_message_len];
+                    if(strncmp(new_pos,log_message,log_message_len) == 0){
+                        log_message_pos = new_pos;
+                    }
+                }
+                break;
+            case 's':
+                if(x >= yes_message_len + no_message_len){
+                    new_pos =  &char_buffer[y][x-yes_message_len];
+                    if(strncmp(new_pos,yes_message,yes_message_len) == 0){
+                        for(int i = x - yes_message_len;i>=1;i++){
+                            if(char_buffer[y][i] == 'o' && char_buffer[y][i-1] == 'N') {
+                                yes_message_pos = new_pos;
+                                no_message_pos = &char_buffer[y][i-1];
+                                return true;
+
+                            }
+                        }
+                    }
+                }
+                break;
+            case 'g':
+                if(x >= menu_message_len){
+                    new_pos =  &char_buffer[y][x-menu_message_len];
+                    if(strncmp(new_pos,menu_message,menu_message_len) == 0){
+                        menu_message_pos = new_pos;
+                        return true;
+                    }
+                }
+                break;
+        }
+    }else{
+        if(inventory_message_pos && strncmp(inventory_message_pos,inventory_message,inventory_message_len) == 0){
+            return true;
+        }
+        inventory_message_pos = NULL;
+        if(log_message_pos && strncmp(log_message_pos,log_message,log_message_len) == 0){
+            return true;
+        }
+        log_message_pos = NULL;
+        if(yes_message_pos && no_message_pos &&
+            strncmp(no_message_pos,no_message,no_message_len) == 0 &&
+            strncmp(yes_message_pos,yes_message,yes_message_len) == 0){
+            return true;
+        }
+        yes_message_pos = NULL;
+        no_message_pos  = NULL;
+        if(menu_message_pos && strncmp(menu_message_pos,menu_message,menu_message_len) == 0){
+            return true;
+        }
+        menu_message_pos = NULL;
+    }
+    return false;
+}
+
 
 void process_events() {
     static int16_t cursor_x = 0;
@@ -535,9 +637,21 @@ void process_events() {
         //Wait for 1 second to disable CTRL after pressing and another input
         current_event.controlKey = ctrl_pressed = false;
     }
+    static boolean overlay_zoom_out_prev = false;
+    static boolean overlay_zoom_out_current = false;
+    static toggle_before_overlay = false;
+    overlay_zoom_out_prev = overlay_zoom_out_current;
+    overlay_zoom_out_current = overlay_shown_zoom_out(-1,0,0);
+    if(!overlay_zoom_out_current && overlay_zoom_out_prev){
+        zoom_toggle = toggle_before_overlay;
+    }else if(overlay_zoom_out_current && overlay_zoom_out_prev){
+       zoom_toggle = false;
+    }else if(overlay_zoom_out_current && !overlay_zoom_out_prev){
+        toggle_before_overlay = zoom_toggle;
+        zoom_toggle = false;
+    }
     current_event_set = (current_event.eventType != EVENT_ERROR);
 }
-
 
 void TouchScreenGameLoop() {
     load_conf();
@@ -681,6 +795,7 @@ void TouchScreenPlotChar(uchar ch,
                          short foreRed, short foreGreen, short foreBlue,
                          short backRed, short backGreen, short backBlue) {
 
+    overlay_shown_zoom_out(ch,xLoc,yLoc);
     SDL_Rect rect;
     rect.x = xLoc * cell_w;
     rect.y = yLoc * cell_h;
