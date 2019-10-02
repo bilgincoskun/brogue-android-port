@@ -45,7 +45,7 @@ static SDL_Rect grid_box_zoomed;
 static boolean game_started = false;
 static rogueEvent current_event;
 static boolean current_event_set = false;
-static boolean zoom_toggled = true;
+static boolean zoom_toggle = false;
 
 //Config Values
 static int custom_cell_width = 0;
@@ -66,7 +66,8 @@ static int long_press_interval = 750;
 static int dpad_transparency = 75;
 static boolean keyboard_always_on = false;
 static int zoom_mode = 1;
-static double init_zoom = 1.0;
+static double init_zoom = 2.0;
+static boolean init_zoom_toggle = false;
 static double max_zoom = 4.0;
 static int filter_mode = 2;
 
@@ -120,6 +121,8 @@ void load_conf(){
                 max_zoom = atof(value);
             }else if(strcmp("init_zoom",name)==0){
                 init_zoom = atof(value);
+            }else if(strcmp("init_zoom_toggle",name)==0){
+                init_zoom_toggle = atoi(value);
             }else if(strcmp("filter_mode",name)==0){
                 filter_mode = atoi(value);
             }
@@ -326,7 +329,7 @@ void process_events() {
                         break;
                     }
                 }
-                if(zoom_mode != 0 && zoom_level!= 1 && zoom_toggled && SDL_PointInRect(&p,&grid_box)){
+                if(zoom_mode != 0 && zoom_level!= 1 && zoom_toggle && SDL_PointInRect(&p,&grid_box)){
                     raw_input_x = (raw_input_x-grid_box.x)/zoom_level + grid_box_zoomed.x;
                     raw_input_y = (raw_input_y-grid_box.y)/zoom_level + grid_box_zoomed.y;
                 }
@@ -344,7 +347,7 @@ void process_events() {
                 if(event.tfinger.fingerId !=0){
                     current_event.eventType=EVENT_ERROR;
                     if(event.tfinger.fingerId == 1 && !SDL_TICKS_PASSED(SDL_GetTicks(),zoom_toggled_time+ZOOM_TOGGLED_INTERVAL)){
-                        zoom_toggled = !zoom_toggled;
+                        zoom_toggle = !zoom_toggle;
                         screen_changed = true;
                     }
                     break;
@@ -464,7 +467,7 @@ void process_events() {
                     zoom_changed_time = SDL_GetTicks();
                     screen_changed = true;
                     if(SDL_TICKS_PASSED(SDL_GetTicks(),zoom_toggled_time+ZOOM_TOGGLED_INTERVAL)) {
-                        zoom_toggled = true;
+                        zoom_toggle = true;
                         zoom_toggled_time = 0;
                     }
                 }
@@ -621,9 +624,9 @@ boolean TouchScreenPauseForMilliseconds(short milliseconds){
         }else if(!game_started){
            game_started = true;
             zoom_level = init_zoom;
-            zoom_toggled = true;
+            zoom_toggle = init_zoom_toggle;
         }
-        if(zoom_mode == 0 || zoom_level == 1.0 || !zoom_toggled){
+        if(zoom_mode == 0 || zoom_level == 1.0 || !zoom_toggle){
             SDL_RenderCopy(renderer, screen_texture, NULL, NULL);
         }else{
             double width = (COLS - LEFT_PANEL_WIDTH) * cell_w / zoom_level;

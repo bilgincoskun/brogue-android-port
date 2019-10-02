@@ -108,7 +108,8 @@ You can see the supported configurations below:
 | long_press_interval | Integer | 750 | Milliseconds.The minimum time between press and release to acknowledge it as a long press  |
 | keyboard_always_on | Boolean | 0 | Opens the keyboard at the start of the game and prevents it from closing when touch input is occured. Note that playing back button still closes the keyboard. |
 | zoom_mode | Integer | 1 | 0 disables zoom, 1 zooms to player character (default), 2 zooms to cursor (falls back to zoom_mode 1 if the cursor is not present on the screen)|
-| init_zoom | Decimal | 1.0 | Default zooming at the start of the game |
+| init_zoom | Decimal | 2.0 | Default zooming at the start of the game |
+| init_zoom_toggle | Boolean | 0 | Start the game as zoomed |
 | max_zoom | Decimal | 4.0 | Maximum allowed zoom level |
 # Saves,Recordings and Highscore
 
