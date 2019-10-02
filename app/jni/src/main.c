@@ -47,7 +47,6 @@ static boolean game_started = false;
 static rogueEvent current_event;
 static boolean current_event_set = false;
 static boolean zoom_toggle = false;
-static boolean in_log_panel_box = false;
 
 //Config Values
 static int custom_cell_width = 0;
@@ -337,7 +336,6 @@ boolean overlay_shown_zoom_out(int16_t c,uint8_t x,uint8_t y){
                     new_pos =  &char_buffer[y][x-log_message_len];
                     if(strncmp(new_pos,log_message,log_message_len) == 0){
                         log_message_pos = new_pos;
-                        in_log_panel_box = false;
                     }
                 }
                 break;
@@ -367,9 +365,6 @@ boolean overlay_shown_zoom_out(int16_t c,uint8_t x,uint8_t y){
                 break;
         }
     }else{
-        if(in_log_panel_box){
-            return true;
-        }
         if(inventory_message_pos && strncmp(inventory_message_pos,inventory_message,inventory_message_len) == 0){
             return true;
         }
@@ -404,9 +399,6 @@ void process_events() {
     static uint32_t zoom_toggled_time = 0;
     static boolean virtual_keyboard = false;
     static boolean on_dpad = false;
-    static boolean overlay_zoom_out_prev = false;
-    static boolean overlay_zoom_out_current = false;
-    static toggle_before_overlay = false;
     current_event.shiftKey = false;
     current_event.controlKey = ctrl_pressed;
     current_event.eventType=EVENT_ERROR;
@@ -438,9 +430,6 @@ void process_events() {
                         long_press_time = SDL_GetTicks();
                         break;
                     }
-                }
-                if(SDL_PointInRect(&p,&log_panel_box) && !overlay_zoom_out_prev){
-                    in_log_panel_box = true;
                 }
                 if(zoom_mode != 0 && zoom_level!= 1 && zoom_toggle && SDL_PointInRect(&p,&grid_box)){
                     raw_input_x = (raw_input_x-grid_box.x)/zoom_level + grid_box_zoomed.x;
@@ -648,6 +637,9 @@ void process_events() {
         //Wait for 1 second to disable CTRL after pressing and another input
         current_event.controlKey = ctrl_pressed = false;
     }
+    static boolean overlay_zoom_out_prev = false;
+    static boolean overlay_zoom_out_current = false;
+    static toggle_before_overlay = false;
     overlay_zoom_out_prev = overlay_zoom_out_current;
     overlay_zoom_out_current = overlay_shown_zoom_out(-1,0,0);
     if(!overlay_zoom_out_current && overlay_zoom_out_prev){
