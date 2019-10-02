@@ -321,7 +321,7 @@ boolean overlay_shown_zoom_out(int16_t c,uint8_t x,uint8_t y){
     if(!smart_zoom){
         return false;
     }
-    if(c > 0){
+    if(c >= 0){
         char * new_pos;
         char_buffer[y][x] = c;
         switch(c){
