@@ -348,10 +348,10 @@ boolean overlay_shown_zoom_out(int16_t c,uint8_t x,uint8_t y){
                 if(x >= yes_message_len + no_message_len){
                     new_pos =  &char_buffer[y][x-yes_message_len];
                     if(strncmp(new_pos,yes_message,yes_message_len) == 0){
-                        for(int i = x - yes_message_len;i>=1;i++){
-                            if(char_buffer[y][i] == 'o' && char_buffer[y][i-1] == 'N') {
+                        for(int i = 0;i<x-yes_message_len;i++){
+                            if(char_buffer[y][i+1] == 'o' && char_buffer[y][i] == 'N') {
                                 yes_message_pos = new_pos;
-                                no_message_pos = &char_buffer[y][i-1];
+                                no_message_pos = &char_buffer[y][i];
                                 return true;
 
                             }
