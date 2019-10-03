@@ -347,6 +347,8 @@ void process_events() {
     static uint32_t zoom_toggled_time = 0;
     static boolean virtual_keyboard = false;
     static boolean on_dpad = false;
+    static bool_store toggle_before = unset;
+    static boolean in_left_panel = true;
     current_event.shiftKey = false;
     current_event.controlKey = ctrl_pressed;
     current_event.eventType=EVENT_ERROR;
@@ -382,6 +384,16 @@ void process_events() {
                         on_dpad = true;
                         long_press_time = SDL_GetTicks();
                         break;
+                    }
+                }
+                if(smart_zoom){
+                    if(SDL_PointInRect(&p,&left_panel_box)){
+                        in_left_panel = true;
+                        if(toggle_before == unset) {
+                            toggle_before = zoom_toggle ? set_true : set_false;
+                        }
+                    }else{
+                        in_left_panel = false;
                     }
                 }
                 if(zoom_mode != 0 && zoom_level!= 1 && zoom_toggle && SDL_PointInRect(&p,&grid_box)){
@@ -583,9 +595,8 @@ void process_events() {
         //Wait for 1 second to disable CTRL after pressing and another input
         current_event.controlKey = ctrl_pressed = false;
     }
-    static bool_store toggle_before = unset;
     boolean overlay_zoom_out = overlay_shown_zoom_out(-1,0,0);
-    if(overlay_zoom_out){
+    if(in_left_panel || overlay_zoom_out){
         if(toggle_before == unset){
            toggle_before = zoom_toggle?set_true:set_false;
         }
