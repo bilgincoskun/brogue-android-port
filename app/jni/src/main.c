@@ -20,6 +20,11 @@ typedef struct {
     int width, height, offset_x, offset_y;
 } glyph_cache;
 
+typedef enum{
+   set_false,
+   set_true,
+   unset,
+} bool_store;
 struct brogueConsole currentConsole;
 extern playerCharacter rogue;
 extern creature player;
@@ -624,7 +629,6 @@ void process_events() {
                             }else{
                                 k += '?' - '/';
                             }
-
                         }
                         current_event.param1 = k;
                         break;
@@ -636,18 +640,16 @@ void process_events() {
         //Wait for 1 second to disable CTRL after pressing and another input
         current_event.controlKey = ctrl_pressed = false;
     }
-    static boolean overlay_zoom_out_prev = false;
-    static boolean overlay_zoom_out_current = false;
-    static toggle_before_overlay = false;
-    overlay_zoom_out_prev = overlay_zoom_out_current;
-    overlay_zoom_out_current = overlay_shown_zoom_out(-1,0,0);
-    if(!overlay_zoom_out_current && overlay_zoom_out_prev){
-        zoom_toggle = toggle_before_overlay;
-    }else if(overlay_zoom_out_current && overlay_zoom_out_prev){
-       zoom_toggle = false;
-    }else if(overlay_zoom_out_current && !overlay_zoom_out_prev){
-        toggle_before_overlay = zoom_toggle;
+    static bool_store toggle_before = unset;
+    boolean overlay_zoom_out = overlay_shown_zoom_out(-1,0,0);
+    if(overlay_zoom_out){
+        if(toggle_before == unset){
+           toggle_before = zoom_toggle?set_true:set_false;
+        }
         zoom_toggle = false;
+    }else if(toggle_before != unset){
+        zoom_toggle = toggle_before == set_true?true:false;
+        toggle_before = unset;
     }
     current_event_set = (current_event.eventType != EVENT_ERROR);
 }
