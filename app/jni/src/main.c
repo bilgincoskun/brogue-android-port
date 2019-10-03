@@ -413,6 +413,11 @@ void process_events() {
                     current_event.eventType=EVENT_ERROR;
                     if(event.tfinger.fingerId == 1){
                         zoom_toggled_time = SDL_GetTicks();
+                    }else if(event.tfinger.fingerId == 2){
+                        if(!ctrl_pressed){
+                            current_event.controlKey = ctrl_pressed = true;
+                            ctrl_time = SDL_GetTicks();
+                        }
                     }
                     break;
                 }
@@ -448,7 +453,7 @@ void process_events() {
             case SDL_FINGERUP:
                 if(event.tfinger.fingerId !=0){
                     current_event.eventType=EVENT_ERROR;
-                    if(event.tfinger.fingerId == 1 && !SDL_TICKS_PASSED(SDL_GetTicks(),zoom_toggled_time+ZOOM_TOGGLED_INTERVAL)){
+                    if(!ctrl_pressed && event.tfinger.fingerId == 1 && !SDL_TICKS_PASSED(SDL_GetTicks(),zoom_toggled_time+ZOOM_TOGGLED_INTERVAL)){
                         zoom_toggle = !zoom_toggle;
                         screen_changed = true;
                     }
@@ -571,12 +576,6 @@ void process_events() {
                     if(SDL_TICKS_PASSED(SDL_GetTicks(),zoom_toggled_time+ZOOM_TOGGLED_INTERVAL)) {
                         zoom_toggle = true;
                         zoom_toggled_time = 0;
-                    }
-                }
-                else if(event.mgesture.numFingers==3){
-                    if(!ctrl_pressed){
-                        current_event.controlKey = ctrl_pressed = true;
-                        ctrl_time = SDL_GetTicks();
                     }
                 }
                 break;
