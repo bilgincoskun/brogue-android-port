@@ -299,96 +299,39 @@ boolean init_font() {
 //Hacky solution to check if a confirmation message or a menu is shown
 #define static_string_len(s) (sizeof(s)/sizeof(s[0]) - 2)
 boolean overlay_shown_zoom_out(int16_t c,uint8_t x,uint8_t y){
-    //write if c > 0, only check otherwise
+    //write if c >= 0, check otherwise
     static char char_buffer[ROWS][COLS+1] = {0}; //COLS + 1 to use rows as strings
-
-    static char no_message[] = "No";
-    static uint8_t no_message_len = static_string_len(no_message);
-    static char * no_message_pos = NULL;
-
-    static char yes_message[] = "Yes";
-    static uint8_t yes_message_len = static_string_len(yes_message);
-    static char * yes_message_pos = NULL;
-
-    static char inventory_message[] = "-- press (a-z) for more info --";
-    static uint8_t inventory_message_len = static_string_len(inventory_message);
-    static char * inventory_message_pos = NULL;
-
-    static char log_message[] = "--MORE--";
-    static uint8_t log_message_len = static_string_len(log_message);
-    static char * log_message_pos = NULL;
-
-    static char menu_message[] = "Quit without saving";
-    static uint8_t menu_message_len = static_string_len(menu_message);
-    static char * menu_message_pos = NULL;
-
     if(!smart_zoom){
         return false;
     }
     if(c >= 0){
-        char * new_pos;
         char_buffer[y][x] = c;
-        switch(c){
-            case '-':
-                if(x >= inventory_message_len){
-                    new_pos =  &char_buffer[y][x-inventory_message_len];
-                    if(strncmp(new_pos,inventory_message,inventory_message_len) == 0){
-                        inventory_message_pos = new_pos;
-                        return true;
-                    }
-                }
-                if(x >= log_message_len){
-                    new_pos =  &char_buffer[y][x-log_message_len];
-                    if(strncmp(new_pos,log_message,log_message_len) == 0){
-                        log_message_pos = new_pos;
-                    }
-                }
-                break;
-            case 's':
-                if(x >= yes_message_len + no_message_len){
-                    new_pos =  &char_buffer[y][x-yes_message_len];
-                    if(strncmp(new_pos,yes_message,yes_message_len) == 0){
-                        for(int i = 0;i<x-yes_message_len;i++){
-                            if(char_buffer[y][i+1] == 'o' && char_buffer[y][i] == 'N') {
-                                yes_message_pos = new_pos;
-                                no_message_pos = &char_buffer[y][i];
-                                return true;
-
-                            }
-                        }
-                    }
-                }
-                break;
-            case 'g':
-                if(x >= menu_message_len){
-                    new_pos =  &char_buffer[y][x-menu_message_len];
-                    if(strncmp(new_pos,menu_message,menu_message_len) == 0){
-                        menu_message_pos = new_pos;
-                        return true;
-                    }
-                }
-                break;
-        }
     }else{
-        if(inventory_message_pos && strncmp(inventory_message_pos,inventory_message,inventory_message_len) == 0){
-            return true;
+        for(int i=0;i<ROWS;i++){
+            char * word_pos;
+            if((word_pos = strstr(char_buffer[i],"No")) &&
+                    (word_pos = strstr(word_pos,"Yes"))
+                    ){
+                return true;
+            }
+            if((word_pos = strstr(char_buffer[i],"Quit")) &&
+               (word_pos = strstr(word_pos,"without")) &&
+               (word_pos = strstr(word_pos,"saving"))
+               ){
+                return true;
+            }
+            if((word_pos = strstr(char_buffer[i],"--MORE--"))){
+                return true;
+            }
+            if((word_pos = strstr(char_buffer[i],"press")) &&
+               (word_pos = strstr(word_pos,"(a-z)")) &&
+               (word_pos = strstr(word_pos,"for")) &&
+               (word_pos = strstr(word_pos,"more")) &&
+               (word_pos = strstr(word_pos,"info"))
+                    ){
+                return true;
+            }
         }
-        inventory_message_pos = NULL;
-        if(log_message_pos && strncmp(log_message_pos,log_message,log_message_len) == 0){
-            return true;
-        }
-        log_message_pos = NULL;
-        if(yes_message_pos && no_message_pos &&
-            strncmp(no_message_pos,no_message,no_message_len) == 0 &&
-            strncmp(yes_message_pos,yes_message,yes_message_len) == 0){
-            return true;
-        }
-        yes_message_pos = NULL;
-        no_message_pos  = NULL;
-        if(menu_message_pos && strncmp(menu_message_pos,menu_message,menu_message_len) == 0){
-            return true;
-        }
-        menu_message_pos = NULL;
     }
     return false;
 }
