@@ -50,7 +50,6 @@ static SDL_Rect grid_box;
 static SDL_Rect grid_box_zoomed;
 static boolean game_started = false;
 static rogueEvent current_event;
-static boolean current_event_set = false;
 static boolean zoom_toggle = false;
 
 //Config Values
@@ -150,6 +149,10 @@ void load_conf(){
 uint8_t convert_color(short c) {
     c = c * COLOR_MAX / 100;
     return max(0,min(c,COLOR_MAX));
+}
+
+boolean is_zoomed(){
+    return zoom_mode != 0 && zoom_level != 1.0 && zoom_toggle;
 }
 
 void draw_glyph(uint16_t c, SDL_Rect rect, uint8_t r, uint8_t g, uint8_t b) {
@@ -296,9 +299,8 @@ boolean init_font() {
     }
 }
 
-//Hacky solution to check if a confirmation message or a menu is shown
-#define static_string_len(s) (sizeof(s)/sizeof(s[0]) - 2)
-boolean overlay_shown_zoom_out(int16_t c,uint8_t x,uint8_t y){
+//Hacky solution to check if confirmation message, menu, inventory or logs are shown
+boolean check_dialog_popup(int16_t c, uint8_t x, uint8_t y){
     //write if c >= 0, check otherwise
     static char char_buffer[ROWS][COLS+1] = {0}; //COLS + 1 to use rows as strings
     if(!smart_zoom){
@@ -320,9 +322,6 @@ boolean overlay_shown_zoom_out(int16_t c,uint8_t x,uint8_t y){
                ){
                 return true;
             }
-            if((word_pos = strstr(char_buffer[i],"--MORE--"))){
-                return true;
-            }
             if((word_pos = strstr(char_buffer[i],"press")) &&
                (word_pos = strstr(word_pos,"(a-z)")) &&
                (word_pos = strstr(word_pos,"for")) &&
@@ -331,33 +330,35 @@ boolean overlay_shown_zoom_out(int16_t c,uint8_t x,uint8_t y){
                     ){
                 return true;
             }
+            if((word_pos = strstr(char_buffer[i],"--MORE--"))){
+                return true;
+            }
         }
     }
     return false;
 }
 
 
-void process_events() {
+boolean process_events() {
     static int16_t cursor_x = 0;
     static int16_t cursor_y = 0;
     static uint32_t ctrl_time = 0;
-    static uint32_t long_press_time = 0;
-    static uint32_t prev_click_time = 0;
+    static uint32_t finger_down_time = 0;
     static uint32_t zoom_changed_time = 0;
     static uint32_t zoom_toggled_time = 0;
     static boolean virtual_keyboard = false;
     static boolean on_dpad = false;
-    static bool_store toggle_before = unset;
+    static bool_store prev_zoom_toggle = unset;
     static boolean in_left_panel = true;
+    if(current_event.eventType!=EVENT_ERROR){
+        return true;
+    }
     current_event.shiftKey = false;
     current_event.controlKey = ctrl_pressed;
-    current_event.eventType=EVENT_ERROR;
     SDL_Event event;
     while (SDL_PollEvent(&event)) {
         float raw_input_x,raw_input_y;
         switch (event.type) {
-            case SDL_APP_WILLENTERFOREGROUND:
-                screen_changed = true;
             case SDL_FINGERDOWN:
                 if(event.tfinger.fingerId !=0){
                     current_event.eventType=EVENT_ERROR;
@@ -379,36 +380,32 @@ void process_events() {
                 raw_input_y = event.tfinger.y * display.h;
                 SDL_Point p = {.x = raw_input_x,.y=raw_input_y};
                 if(dpad_enabled){
-                    SDL_Point p = {.x = raw_input_x,.y=raw_input_y};
                     if(SDL_PointInRect(&p,&dpad_area)){
                         on_dpad = true;
-                        long_press_time = SDL_GetTicks();
+                        finger_down_time = SDL_GetTicks();
                         break;
                     }
                 }
-                if(smart_zoom){
-                    if(SDL_PointInRect(&p,&left_panel_box)){
-                        in_left_panel = true;
-                        if(toggle_before == unset) {
-                            toggle_before = zoom_toggle ? set_true : set_false;
-                        }
-                    }else{
-                        in_left_panel = false;
+                if(smart_zoom && SDL_PointInRect(&p,&left_panel_box)){
+                    in_left_panel = true;
+                    if(prev_zoom_toggle == unset) {
+                        prev_zoom_toggle = zoom_toggle ? set_true : set_false;
                     }
+                }else{
+                    in_left_panel = false;
                 }
-                if(zoom_mode != 0 && zoom_level!= 1 && zoom_toggle && SDL_PointInRect(&p,&grid_box)){
+                if(is_zoomed() && SDL_PointInRect(&p,&grid_box)){
                     raw_input_x = (raw_input_x-grid_box.x)/zoom_level + grid_box_zoomed.x;
                     raw_input_y = (raw_input_y-grid_box.y)/zoom_level + grid_box_zoomed.y;
                 }
-                if(!double_tap_lock || SDL_TICKS_PASSED(SDL_GetTicks(),prev_click_time+double_tap_interval)){
+                if(!double_tap_lock || SDL_TICKS_PASSED(SDL_GetTicks(),finger_down_time+double_tap_interval)){
                     cursor_x = min(COLS - 1,raw_input_x / cell_w);
                     cursor_y = min(ROWS -1,raw_input_y / cell_h);
                 }
                 current_event.param1 = cursor_x;
                 current_event.param2 = cursor_y;
                 current_event.eventType = MOUSE_DOWN;
-                long_press_time = SDL_GetTicks();
-                prev_click_time = SDL_GetTicks();
+                finger_down_time = SDL_GetTicks();
                 break;
             case SDL_FINGERUP:
                 if(event.tfinger.fingerId !=0){
@@ -426,7 +423,7 @@ void process_events() {
                 raw_input_y = event.tfinger.y * display.h;
                 if(dpad_enabled && on_dpad){
                     on_dpad = false;
-                    if(long_press_time == 0){
+                    if(finger_down_time == 0){
                         break;
                     }
                     SDL_Point p = {.x = raw_input_x,.y=raw_input_y};
@@ -509,24 +506,20 @@ void process_events() {
                     SDL_StopTextInput();
                 }
                 break;
-            case SDL_FINGERMOTION:
+            case SDL_FINGERMOTION: //For long press check
                 if(!SDL_TICKS_PASSED(SDL_GetTicks(),zoom_changed_time+ZOOM_CHANGED_INTERVAL)){
                     current_event.eventType = EVENT_ERROR;
                     break;
                 }
-                if(long_press_time != 0 && SDL_TICKS_PASSED(SDL_GetTicks(),long_press_time + long_press_interval)){
+                if(finger_down_time != 0 && SDL_TICKS_PASSED(SDL_GetTicks(),finger_down_time + long_press_interval)){
                     if(on_dpad && allow_dpad_mode_change){
                         dpad_mode = !dpad_mode;
                         screen_changed = true;
                         pauseForMilliseconds(0);
                     }
-                    long_press_time = 0;
+                    finger_down_time = 0;
                 }
-
                 break;
-
-
-
             case SDL_MULTIGESTURE:
                 if(event.mgesture.numFingers==2 && game_started){
                     zoom_level *= (1.0 + event.mgesture.dDist*3);
@@ -595,17 +588,17 @@ void process_events() {
         //Wait for 1 second to disable CTRL after pressing and another input
         current_event.controlKey = ctrl_pressed = false;
     }
-    boolean overlay_zoom_out = overlay_shown_zoom_out(-1,0,0);
-    if(in_left_panel || overlay_zoom_out){
-        if(toggle_before == unset){
-           toggle_before = zoom_toggle?set_true:set_false;
+    boolean dialog_popup = check_dialog_popup(-1, 0, 0);
+    if(in_left_panel || dialog_popup){
+        if(prev_zoom_toggle == unset){
+           prev_zoom_toggle = zoom_toggle?set_true:set_false;
         }
         zoom_toggle = false;
-    }else if(toggle_before != unset){
-        zoom_toggle = toggle_before == set_true?true:false;
-        toggle_before = unset;
+    }else if(prev_zoom_toggle != unset){
+        zoom_toggle = prev_zoom_toggle == set_true?true:false;
+        prev_zoom_toggle = unset;
     }
-    current_event_set = (current_event.eventType != EVENT_ERROR);
+    return current_event.eventType != EVENT_ERROR;
 }
 
 void TouchScreenGameLoop() {
@@ -635,9 +628,9 @@ void TouchScreenGameLoop() {
         return;
     }
     if(force_portrait){
-        int t = display.w;
+        int tmp = display.w;
         display.w = display.h;
-        display.h = t;
+        display.h = tmp;
     }
     if(custom_cell_width != 0){
         cell_w = custom_cell_width;
@@ -665,12 +658,12 @@ void TouchScreenGameLoop() {
         dpad_image_select = SDL_CreateTextureFromSurface(renderer,dpad_i);
         SDL_SetTextureAlphaMod(dpad_image_select,dpad_transparency);
         dpad_image_move = SDL_CreateTextureFromSurface(renderer,dpad_i);
-        SDL_SetTextureColorMod(dpad_image_move,255,255,155);
+        SDL_SetTextureColorMod(dpad_image_move,COLOR_MAX,COLOR_MAX,155);
         SDL_SetTextureAlphaMod(dpad_image_move,dpad_transparency);
         SDL_FreeSurface(dpad_i);
         int area_width = min(cell_w*(LEFT_PANEL_WIDTH - 4),cell_h*20);
-        dpad_area.h=dpad_area.w= (dpad_width)?dpad_width:area_width;
-        dpad_area.x =(dpad_x_pos)?dpad_x_pos: 3*cell_w;
+        dpad_area.h = dpad_area.w = (dpad_width)?dpad_width:area_width;
+        dpad_area.x = (dpad_x_pos)?dpad_x_pos: 3*cell_w;
         dpad_area.y = (dpad_y_pos)?dpad_y_pos :(display.h - (area_width + 2*cell_h));
     }
     if(keyboard_always_on){
@@ -691,11 +684,11 @@ boolean TouchScreenPauseForMilliseconds(short milliseconds){
             zoom_level = 1.0;
             game_started = false;
         }else if(!game_started){
-           game_started = true;
+            game_started = true;
             zoom_level = init_zoom;
             zoom_toggle = init_zoom_toggle;
         }
-        if(zoom_mode == 0 || zoom_level == 1.0 || !zoom_toggle){
+        if(!is_zoomed()){
             SDL_RenderCopy(renderer, screen_texture, NULL, NULL);
         }else{
             double width = (COLS - LEFT_PANEL_WIDTH) * cell_w / zoom_level;
@@ -729,13 +722,11 @@ boolean TouchScreenPauseForMilliseconds(short milliseconds){
     if(epoch < milliseconds){
         SDL_Delay(milliseconds - epoch);
     }
-    process_events();
-    return current_event_set;
+    return process_events();
 }
 
 void TouchScreenNextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInput, boolean colorsDance) {
-    while(!current_event_set){
-        process_events();
+    while(!process_events()){
         if (dynamic_colors && colorsDance) {
             shuffleTerrainColors(3, true);
             commitDraws();
@@ -743,7 +734,7 @@ void TouchScreenNextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInput, 
         TouchScreenPauseForMilliseconds(FRAME_INTERVAL);
     }
     *returnEvent = current_event;
-    current_event_set = false;
+    current_event.eventType = EVENT_ERROR; //unset the event
 }
 
 void TouchScreenPlotChar(uchar ch,
@@ -751,7 +742,7 @@ void TouchScreenPlotChar(uchar ch,
                          short foreRed, short foreGreen, short foreBlue,
                          short backRed, short backGreen, short backBlue) {
 
-    overlay_shown_zoom_out(ch,xLoc,yLoc);
+    check_dialog_popup(ch, xLoc, yLoc);
     SDL_Rect rect;
     rect.x = xLoc * cell_w;
     rect.y = yLoc * cell_h;
