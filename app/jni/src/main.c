@@ -337,7 +337,38 @@ boolean check_dialog_popup(int16_t c, uint8_t x, uint8_t y){
     }
     return false;
 }
+void create_assets(){
+    if (SDL_CreateWindowAndRenderer(display.w, display.h, SDL_WINDOW_FULLSCREEN | SDL_WINDOW_ALWAYS_ON_TOP, &window,
+                                    &renderer)) {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't create window and renderer: %s",
+                     SDL_GetError());
+        return;
+    }
+    memset(font_cache, 0, UCHAR_MAX * sizeof(glyph_cache));
+    screen_texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, display.w, display.h);
+    SDL_SetRenderTarget(renderer,screen_texture);
+    if(dpad_enabled){
+        SDL_Surface * dpad_i = SDL_LoadBMP("dpad.bmp");
+        dpad_image_select = SDL_CreateTextureFromSurface(renderer,dpad_i);
+        SDL_SetTextureAlphaMod(dpad_image_select,dpad_transparency);
+        dpad_image_move = SDL_CreateTextureFromSurface(renderer,dpad_i);
+        SDL_SetTextureColorMod(dpad_image_move,COLOR_MAX,COLOR_MAX,155);
+        SDL_SetTextureAlphaMod(dpad_image_move,dpad_transparency);
+        SDL_FreeSurface(dpad_i);
+        int area_width = min(cell_w*(LEFT_PANEL_WIDTH - 4),cell_h*20);
+        dpad_area.h = dpad_area.w = (dpad_width)?dpad_width:area_width;
+        dpad_area.x = (dpad_x_pos)?dpad_x_pos: 3*cell_w;
+        dpad_area.y = (dpad_y_pos)?dpad_y_pos :(display.h - (area_width + 2*cell_h));
+    }
+    if(keyboard_always_on){
+        SDL_StartTextInput();
+    }
+}
 
+void destroy_assets(){
+    SDL_DestroyRenderer(renderer);
+    SDL_DestroyWindow(window);
+}
 
 boolean process_events() {
     static int16_t cursor_x = 0;
@@ -621,12 +652,7 @@ void TouchScreenGameLoop() {
         SDL_Log("SDL_GetDesktopDisplayMode failed: %s", SDL_GetError());
         return;
     }
-    if (SDL_CreateWindowAndRenderer(display.w, display.h, SDL_WINDOW_FULLSCREEN | SDL_WINDOW_ALWAYS_ON_TOP, &window,
-                                    &renderer)) {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't create window and renderer: %s",
-                     SDL_GetError());
-        return;
-    }
+
     if(force_portrait){
         int tmp = display.w;
         display.w = display.h;
@@ -646,30 +672,13 @@ void TouchScreenGameLoop() {
     log_panel_box = (SDL_Rect) {.x = LEFT_PANEL_WIDTH * cell_w, .y = 0, .w = (COLS - LEFT_PANEL_WIDTH) * cell_w, .h = TOP_LOG_HEIGIHT * cell_h};
     button_panel_box = (SDL_Rect) {.x = LEFT_PANEL_WIDTH * cell_w, .y = (ROWS - BOTTOM_BUTTONS_HEIGHT)*cell_h, .w = (COLS - LEFT_PANEL_WIDTH) * cell_w, .h = BOTTOM_BUTTONS_HEIGHT * cell_h};
     grid_box = grid_box_zoomed = (SDL_Rect) {.x = LEFT_PANEL_WIDTH * cell_w,.y = TOP_LOG_HEIGIHT * cell_h,.w = (COLS - LEFT_PANEL_WIDTH) * cell_w,.h=(ROWS - TOP_LOG_HEIGIHT - BOTTOM_BUTTONS_HEIGHT)*cell_h};
-    memset(font_cache, 0, UCHAR_MAX * sizeof(glyph_cache));
+    create_assets();
     if (!init_font()) {
         SDL_Log("Cannot fit font into cells");
         return;
     }
-    screen_texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, display.w, display.h);
-    SDL_SetRenderTarget(renderer,screen_texture);
-    if(dpad_enabled){
-        SDL_Surface * dpad_i = SDL_LoadBMP("dpad.bmp");
-        dpad_image_select = SDL_CreateTextureFromSurface(renderer,dpad_i);
-        SDL_SetTextureAlphaMod(dpad_image_select,dpad_transparency);
-        dpad_image_move = SDL_CreateTextureFromSurface(renderer,dpad_i);
-        SDL_SetTextureColorMod(dpad_image_move,COLOR_MAX,COLOR_MAX,155);
-        SDL_SetTextureAlphaMod(dpad_image_move,dpad_transparency);
-        SDL_FreeSurface(dpad_i);
-        int area_width = min(cell_w*(LEFT_PANEL_WIDTH - 4),cell_h*20);
-        dpad_area.h = dpad_area.w = (dpad_width)?dpad_width:area_width;
-        dpad_area.x = (dpad_x_pos)?dpad_x_pos: 3*cell_w;
-        dpad_area.y = (dpad_y_pos)?dpad_y_pos :(display.h - (area_width + 2*cell_h));
-    }
-    if(keyboard_always_on){
-        SDL_StartTextInput();
-    }
     rogueMain();
+    destroy_assets();
     TTF_CloseFont(font);
     TTF_Quit();
     SDL_Quit();
