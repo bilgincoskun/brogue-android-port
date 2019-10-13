@@ -322,9 +322,7 @@ boolean check_dialog_popup(int16_t c, uint8_t x, uint8_t y){
                ){
                 return true;
             }
-            if((word_pos = strstr(char_buffer[i],"press")) &&
-               (word_pos = strstr(word_pos,"(a-z)")) &&
-               (word_pos = strstr(word_pos,"for")) &&
+            if((word_pos = strstr(char_buffer[i],"for")) &&
                (word_pos = strstr(word_pos,"more")) &&
                (word_pos = strstr(word_pos,"info"))
                     ){
