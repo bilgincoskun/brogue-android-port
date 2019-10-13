@@ -347,6 +347,8 @@ void create_assets(){
     memset(font_cache, 0, UCHAR_MAX * sizeof(glyph_cache));
     screen_texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, display.w, display.h);
     SDL_SetRenderTarget(renderer,screen_texture);
+    SDL_SetRenderDrawColor(renderer,0,0,0,COLOR_MAX);
+    SDL_RenderClear(renderer);
     if(dpad_enabled){
         SDL_Surface * dpad_i = SDL_LoadBMP("dpad.bmp");
         dpad_image_select = SDL_CreateTextureFromSurface(renderer,dpad_i);
