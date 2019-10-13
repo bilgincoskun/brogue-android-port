@@ -633,7 +633,6 @@ boolean process_events() {
 }
 
 void TouchScreenGameLoop() {
-    load_conf();
     SDL_SetHint(SDL_HINT_RENDER_BATCHING, "1");
     if(force_portrait){
         SDL_SetHint(SDL_HINT_ORIENTATIONS,"Portrait PortraitUpsideDown");
@@ -780,12 +779,17 @@ struct brogueConsole TouchScreenConsole = {
         TouchScreenModifierHeld
 };
 
-int main() {
-    chdir(SDL_AndroidGetExternalStoragePath());
+void brogue_main(){
     currentConsole = TouchScreenConsole;
     rogue.nextGame = NG_NOTHING;
     rogue.nextGamePath[0] = '\0';
     rogue.nextGameSeed = 0;
     currentConsole.gameLoop();
+}
+
+int main() {
+    chdir(SDL_AndroidGetExternalStoragePath());
+    load_conf();
+    brogue_main();
     exit(0); //FIXME returning does not close the app
 }
