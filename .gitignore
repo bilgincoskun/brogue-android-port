@@ -88,3 +88,6 @@ app/jni/SDL_ttf
 app/jni/src/brogue
 app/jni/src/include
 app/src/main/java/org/libsdl/
+
+sign_info.json
+release_apks/
