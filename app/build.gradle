@@ -7,6 +7,13 @@ else {
     apply plugin: 'com.android.library'
 }
 
+def version_code_env = System.getenv("version_code")
+def version_name_env = System.getenv("version_name")
+
+def version_code =  version_code_env != null ? Integer.parseInt(version_code_env): 1
+def version_name =  version_name_env != null ? version_name_env : "0.1"
+
+
 android {
     compileSdkVersion 26
     defaultConfig {
@@ -15,8 +22,8 @@ android {
         }
         minSdkVersion 16
         targetSdkVersion 26
-        versionCode 1
-        versionName "0.7"
+        versionCode version_code
+        versionName version_name
         externalNativeBuild {
             ndkBuild {
                 arguments "APP_PLATFORM=android-16"
