@@ -779,17 +779,22 @@ struct brogueConsole TouchScreenConsole = {
         TouchScreenModifierHeld
 };
 
-void brogue_main(){
+int brogue_main(void *data){
     currentConsole = TouchScreenConsole;
     rogue.nextGame = NG_NOTHING;
     rogue.nextGamePath[0] = '\0';
     rogue.nextGameSeed = 0;
     currentConsole.gameLoop();
+    return 0;
 }
 
 int main() {
     chdir(SDL_AndroidGetExternalStoragePath());
     load_conf();
-    brogue_main();
+    SDL_Thread *thread = SDL_CreateThreadWithStackSize(brogue_main,"Brogue",8*1024*1024,NULL);
+    if(thread != NULL){
+        int result;
+        SDL_WaitThread(thread,&result);
+    }
     exit(0); //FIXME returning does not close the app
 }
