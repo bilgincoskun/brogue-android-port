@@ -49,7 +49,7 @@ There are two mods of D-pad: movement mode (default) and selection mode. You can
 
 ### Movement Mode
 
-In this mode movement keys directly moves the PC. The square sends Enter key(makes the D-pad mode temporarily selection mode). D-pad is yellow.
+In this mode movement keys directly moves the PC. The square sends Enter key (makes the D-pad mode temporarily selection mode). One exception is that the square sends Space key instead of Enter key when the game is playing a record. D-pad is yellow.
 
 ### Selection Mode
 
@@ -67,7 +67,11 @@ There are two ways to send escape key:
 
 ### Enter Key
 
-Top left corner of the screen is reserved for enter key
+Top left corner of the screen is reserved for enter key (when It is not playing a record)
+
+### Space Key (in Playback Mode)
+
+Top left corner sends space key instead of enter key when It is playing a record.
 
 ### Control Key
 

@@ -503,6 +503,8 @@ boolean process_events() {
                                 current_event.param1 = DOWN_KEY;
                             }else if(diff_y>0){
                                 current_event.param1 = UP_KEY;
+                            }else if(rogue.playbackMode){
+                                current_event.param1 = ACKNOWLEDGE_KEY;
                             }else{
                                 current_event.param1 = RETURN_KEY;
                             }
@@ -525,7 +527,11 @@ boolean process_events() {
                 if(current_event.param1 < 2){
                     if(current_event.param2 < 2){
                         current_event.eventType = KEYSTROKE;
+                    if(rogue.playbackMode){
+                        current_event.param1 = ACKNOWLEDGE_KEY;
+                    }else {
                         current_event.param1 = ENTER_KEY;
+                    }
 
                     }else if(current_event.param2 > (ROWS - 3)){
                         current_event.eventType = KEYSTROKE;
