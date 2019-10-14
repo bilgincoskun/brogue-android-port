@@ -78,8 +78,10 @@ static boolean smart_zoom = true;
 static int filter_mode = 2;
 
 void load_conf(){
-    if (access("settings.conf", F_OK) != -1) {
-        FILE * cf = fopen("settings.conf","r");
+    const char settings_file[] = "settings.conf";
+    FILE * cf;
+    if (access(settings_file, F_OK) != -1) {
+        cf = fopen(settings_file,"r");
         char line[MAX_LINE_LENGTH];
         int custom_screen_width = 0;
         int custom_screen_height = 0;
@@ -142,8 +144,10 @@ void load_conf(){
         if(custom_screen_height){
            custom_cell_height = custom_screen_height / ROWS;
         }
-        fclose(cf);
+    }else{
+        cf = fopen(settings_file,"w");
     }
+    fclose(cf);
 }
 
 uint8_t convert_color(short c) {
