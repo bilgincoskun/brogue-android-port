@@ -8,6 +8,7 @@
 
 #define COLOR_MAX UCHAR_MAX
 #define MAX_LINE_LENGTH 200
+#define MAX_ERROR_LENGTH 200
 #define LEFT_PANEL_WIDTH 20
 #define TOP_LOG_HEIGIHT 3
 #define BOTTOM_BUTTONS_HEIGHT 2
@@ -79,6 +80,59 @@ static double max_zoom = 4.0;
 static boolean smart_zoom = true;
 static int filter_mode = 2;
 
+void create_assets(){
+    if (SDL_CreateWindowAndRenderer(display.w, display.h, SDL_WINDOW_FULLSCREEN | SDL_WINDOW_ALWAYS_ON_TOP, &window,
+                                    &renderer)) {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't create window and renderer: %s",
+                     SDL_GetError());
+        return;
+    }
+    memset(font_cache, 0, UCHAR_MAX * sizeof(glyph_cache));
+    screen_texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, display.w, display.h);
+    SDL_SetRenderTarget(renderer,screen_texture);
+    SDL_SetRenderDrawColor(renderer,0,0,0,COLOR_MAX);
+    SDL_RenderClear(renderer);
+    if(dpad_enabled){
+        SDL_Surface * dpad_i = SDL_LoadBMP("dpad.bmp");
+        dpad_image_select = SDL_CreateTextureFromSurface(renderer,dpad_i);
+        SDL_SetTextureAlphaMod(dpad_image_select,dpad_transparency);
+        dpad_image_move = SDL_CreateTextureFromSurface(renderer,dpad_i);
+        SDL_SetTextureColorMod(dpad_image_move,COLOR_MAX,COLOR_MAX,155);
+        SDL_SetTextureAlphaMod(dpad_image_move,dpad_transparency);
+        SDL_FreeSurface(dpad_i);
+        int area_width = min(cell_w*(LEFT_PANEL_WIDTH - 4),cell_h*20);
+        dpad_area.h = dpad_area.w = (dpad_width)?dpad_width:area_width;
+        dpad_area.x = (dpad_x_pos)?dpad_x_pos: 3*cell_w;
+        dpad_area.y = (dpad_y_pos)?dpad_y_pos :(display.h - (area_width + 2*cell_h));
+    }
+    if(keyboard_always_on){
+        SDL_StartTextInput();
+    }
+}
+
+void destroy_assets(){
+    SDL_DestroyRenderer(renderer);
+    SDL_DestroyWindow(window);
+}
+
+
+void critical_error(const char* error_title,const char* error_message,...){
+    char buffer[MAX_ERROR_LENGTH];
+    va_list a;
+    va_start(a,error_message);
+    vsnprintf(buffer, MAX_ERROR_LENGTH,error_message,a);
+    SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
+            error_title,
+            buffer,
+            NULL);
+    va_end(a);
+    destroy_assets();
+    TTF_CloseFont(font);
+    TTF_Quit();
+    SDL_Quit();
+    exit(-1);
+}
+
 void load_conf(){
     FILE * cf;
     if (access(settings_file, F_OK) != -1) {
@@ -87,6 +141,9 @@ void load_conf(){
         int custom_screen_width = 0;
         int custom_screen_height = 0;
         while(fgets(line,MAX_LINE_LENGTH,cf)!=NULL){
+            boolean empty_line = true; //empty line check
+            for(char * c = line; *c && (empty_line = isspace(*c));c++);
+            if(empty_line){ continue; }
             char * name = strtok(line," ");
             char * value = strtok(NULL," ");
             value = strtok(value,"\n");
@@ -136,6 +193,8 @@ void load_conf(){
                 smart_zoom = atoi(value);
             }else if(strcmp("filter_mode",name)==0){
                 filter_mode = atoi(value);
+            }else{
+                critical_error("Unknown Configuration", "Configuration '%s' in settings file is not valid",name);
             }
         }
         // override custom cell dimensions if custom screen dimensions are present
@@ -339,40 +398,6 @@ boolean check_dialog_popup(int16_t c, uint8_t x, uint8_t y){
         }
     }
     return false;
-}
-void create_assets(){
-    if (SDL_CreateWindowAndRenderer(display.w, display.h, SDL_WINDOW_FULLSCREEN | SDL_WINDOW_ALWAYS_ON_TOP, &window,
-                                    &renderer)) {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't create window and renderer: %s",
-                     SDL_GetError());
-        return;
-    }
-    memset(font_cache, 0, UCHAR_MAX * sizeof(glyph_cache));
-    screen_texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, display.w, display.h);
-    SDL_SetRenderTarget(renderer,screen_texture);
-    SDL_SetRenderDrawColor(renderer,0,0,0,COLOR_MAX);
-    SDL_RenderClear(renderer);
-    if(dpad_enabled){
-        SDL_Surface * dpad_i = SDL_LoadBMP("dpad.bmp");
-        dpad_image_select = SDL_CreateTextureFromSurface(renderer,dpad_i);
-        SDL_SetTextureAlphaMod(dpad_image_select,dpad_transparency);
-        dpad_image_move = SDL_CreateTextureFromSurface(renderer,dpad_i);
-        SDL_SetTextureColorMod(dpad_image_move,COLOR_MAX,COLOR_MAX,155);
-        SDL_SetTextureAlphaMod(dpad_image_move,dpad_transparency);
-        SDL_FreeSurface(dpad_i);
-        int area_width = min(cell_w*(LEFT_PANEL_WIDTH - 4),cell_h*20);
-        dpad_area.h = dpad_area.w = (dpad_width)?dpad_width:area_width;
-        dpad_area.x = (dpad_x_pos)?dpad_x_pos: 3*cell_w;
-        dpad_area.y = (dpad_y_pos)?dpad_y_pos :(display.h - (area_width + 2*cell_h));
-    }
-    if(keyboard_always_on){
-        SDL_StartTextInput();
-    }
-}
-
-void destroy_assets(){
-    SDL_DestroyRenderer(renderer);
-    SDL_DestroyWindow(window);
 }
 
 boolean process_events() {
@@ -806,6 +831,8 @@ int main() {
     if(thread != NULL){
         int result;
         SDL_WaitThread(thread,&result);
+    }else{
+        critical_error("Thread Error","Cannot create thread with 8MB stack");
     }
-    exit(0); //FIXME returning does not close the app
+    exit(0); //return causes problems
 }
