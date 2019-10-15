@@ -859,7 +859,12 @@ int main() {
         int result;
         SDL_WaitThread(thread,&result);
     }else{
-        critical_error("Thread Error","Cannot create thread with 8MB stack");
+        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_WARNING,"Thread Error",
+                "Cannot create a thread with sufficient stack size. "
+                "The game will start nonetheless but be aware that some seeds may cause the game "
+                "to crash in this mode.",NULL);
+        brogue_main(NULL);
+
     }
     exit(0); //return causes problems
 }
