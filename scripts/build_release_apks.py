@@ -5,10 +5,14 @@ import subprocess
 import json
 import getpass
 
-def run_command(command,env = os.environ.copy()):
+def run_command(command,env = os.environ.copy(),print_ = False):
     command = command.split()
+
     result = subprocess.run(command,stdout=subprocess.PIPE,env=env)
-    return (result.returncode,result.stdout.decode('utf-8'))
+    result = (result.returncode,result.stdout.decode('utf-8'))
+    if(print_):
+        print(result[1])
+    return result
 
 def get_sign_info():
     try:
@@ -58,9 +62,11 @@ if __name__ == "__main__":
         run_command(f"git tag v{app_ver}")
         releases.append(app_ver)
     else:
-        print("Tag Already Exists")
-        exit(-1)
-
+        answer = ""
+        while(answer not in ['Y','N']):
+            answer = input("Tag already exists. Do you want to rebuild it? [Y/N]")
+        if(answer != 'N'):
+            exit(-1)
     release_folder = cur_dir/"release_apks"/app_ver
     game_code_folder = cur_dir/"brogue-files"
     os.makedirs(release_folder,exist_ok = True)
@@ -78,10 +84,10 @@ if __name__ == "__main__":
         print("Aligning APK")
         run_command(f"zipalign -v -f -p 4\
                 {cur_dir}/app/build/outputs/apk/release/app-release-unsigned.apk\
-                {apk_path}")
+                {apk_path}",print_ = True)
         print("Signing APK")
         run_command(f"apksigner sign --ks {sign_info['path']} --ks-key-alias {sign_info['alias']}\
-                --ks-pass pass:{sign_info['ks_pw']} --key-pass pass:{sign_info['key_pw']} {apk_path}")
+                --ks-pass pass:{sign_info['ks_pw']} --key-pass pass:{sign_info['key_pw']} {apk_path}",print_ = True)
 
 
 
