@@ -63,10 +63,14 @@ if __name__ == "__main__":
         releases.append(app_ver)
     else:
         answer = ""
-        while(answer not in ['Y','N']):
-            answer = input("Tag already exists. Do you want to rebuild it? [Y/N]")
-        if(answer != 'N'):
+        while(answer not in ['y','n']):
+            answer = input("Tag already exists. Do you want to rebuild it? [Y/N]").lower()
+        if(answer != 'y'):
             exit(-1)
+        if(run_command(f"git checkout v{app_ver}",print_=True)):
+            print("Cannot checkout existing tag")
+            exit(-1)
+
     release_folder = cur_dir/"release_apks"/app_ver
     game_code_folder = cur_dir/"brogue-files"
     os.makedirs(release_folder,exist_ok = True)
@@ -89,5 +93,6 @@ if __name__ == "__main__":
         run_command(f"apksigner sign --ks {sign_info['path']} --ks-key-alias {sign_info['alias']}\
                 --ks-pass pass:{sign_info['ks_pw']} --key-pass pass:{sign_info['key_pw']} {apk_path}",print_ = True)
 
+        run_command(f"apksigner verify --print-certs {apk_path}",print_=True)
 
 
