@@ -83,7 +83,7 @@ Except corners left edge of the screen is reserved for opening virtual keyboard.
 
 # Configuration File
 
-When the application started it checks if configuration file exists in **/sdcard/Android/org.brogue.brogue/files/settings.conf**. You can use this file for customizing the behaviour of application.
+When the application started it reads the configuration file in **/sdcard/Android/org.brogue.brogue/files/settings.txt** .  You can use this file for customizing the behaviour of the application.
 
 The syntax of this file is very simple,name value pairs separated with a space in every line:
 [NAME1] [VALUE1]<br/>

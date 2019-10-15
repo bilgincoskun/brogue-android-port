@@ -29,6 +29,8 @@ struct brogueConsole currentConsole;
 extern playerCharacter rogue;
 extern creature player;
 
+const char settings_file[] = "settings.txt";
+
 static SDL_Window *window;
 static SDL_Renderer *renderer;
 static SDL_Texture * screen_texture;
@@ -78,7 +80,6 @@ static boolean smart_zoom = true;
 static int filter_mode = 2;
 
 void load_conf(){
-    const char settings_file[] = "settings.conf";
     FILE * cf;
     if (access(settings_file, F_OK) != -1) {
         cf = fopen(settings_file,"r");
