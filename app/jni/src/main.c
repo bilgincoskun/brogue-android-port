@@ -80,12 +80,32 @@ static double max_zoom = 4.0;
 static boolean smart_zoom = true;
 static int filter_mode = 2;
 
+void destroy_assets(){
+    SDL_DestroyRenderer(renderer);
+    SDL_DestroyWindow(window);
+}
+
+void critical_error(const char* error_title,const char* error_message,...){
+    char buffer[MAX_ERROR_LENGTH];
+    va_list a;
+    va_start(a,error_message);
+    vsnprintf(buffer, MAX_ERROR_LENGTH,error_message,a);
+    SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
+                             error_title,
+                             buffer,
+                             NULL);
+    va_end(a);
+    destroy_assets();
+    TTF_CloseFont(font);
+    TTF_Quit();
+    SDL_Quit();
+    exit(-1);
+}
+
 void create_assets(){
     if (SDL_CreateWindowAndRenderer(display.w, display.h, SDL_WINDOW_FULLSCREEN | SDL_WINDOW_ALWAYS_ON_TOP, &window,
                                     &renderer)) {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't create window and renderer: %s",
-                     SDL_GetError());
-        return;
+        critical_error("SDL Error", "Couldn't create window and renderer: %s", SDL_GetError());
     }
     memset(font_cache, 0, UCHAR_MAX * sizeof(glyph_cache));
     screen_texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, display.w, display.h);
@@ -110,28 +130,6 @@ void create_assets(){
     }
 }
 
-void destroy_assets(){
-    SDL_DestroyRenderer(renderer);
-    SDL_DestroyWindow(window);
-}
-
-
-void critical_error(const char* error_title,const char* error_message,...){
-    char buffer[MAX_ERROR_LENGTH];
-    va_list a;
-    va_start(a,error_message);
-    vsnprintf(buffer, MAX_ERROR_LENGTH,error_message,a);
-    SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
-            error_title,
-            buffer,
-            NULL);
-    va_end(a);
-    destroy_assets();
-    TTF_CloseFont(font);
-    TTF_Quit();
-    SDL_Quit();
-    exit(-1);
-}
 long parse_int(const char * name,const char * value,long min,long max){
     char * endpoint;
     long result = strtol(value,&endpoint,10);
@@ -703,16 +701,13 @@ void TouchScreenGameLoop() {
     char render_hint[2] = {filter_mode+'0',0};
     SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, render_hint);
     if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
-        SDL_Log("Unable to initialize SDL: %s", SDL_GetError());
-        return;
+        critical_error("SDL Error","Unable to initialize SDL: %s", SDL_GetError());
     }
     if (TTF_Init() != 0) {
-        SDL_Log("Unable to initialize SDL_ttf: %s", SDL_GetError());
-        return;
+        critical_error("SDL_ttf Error","Unable to initialize SDL_ttf: %s", SDL_GetError());
     }
     if (SDL_GetDesktopDisplayMode(0, &display) != 0) {
-        SDL_Log("SDL_GetDesktopDisplayMode failed: %s", SDL_GetError());
-        return;
+        critical_error("SDL Error","SDL_GetDesktopDisplayMode failed: %s", SDL_GetError());
     }
 
     if(force_portrait){
@@ -736,8 +731,7 @@ void TouchScreenGameLoop() {
     grid_box = grid_box_zoomed = (SDL_Rect) {.x = LEFT_PANEL_WIDTH * cell_w,.y = TOP_LOG_HEIGIHT * cell_h,.w = (COLS - LEFT_PANEL_WIDTH) * cell_w,.h=(ROWS - TOP_LOG_HEIGIHT - BOTTOM_BUTTONS_HEIGHT)*cell_h};
     create_assets();
     if (!init_font()) {
-        SDL_Log("Cannot fit font into cells");
-        return;
+        critical_error("Font Error","Resolution/cell size is too small for minimum allowed font size");
     }
     rogueMain();
     destroy_assets();
