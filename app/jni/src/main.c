@@ -132,6 +132,33 @@ void critical_error(const char* error_title,const char* error_message,...){
     SDL_Quit();
     exit(-1);
 }
+long parse_int(const char * name,const char * value,long min,long max){
+    char * endpoint;
+    long result = strtol(value,&endpoint,10);
+    if((result == 0 && endpoint == value)||(*endpoint != '\0')){
+       critical_error("Parsing Error","Value of '%s' is not a valid integer",name);
+    }
+    if(result < min || result > max){
+        critical_error("Invalid Value Error","Value of '%s' is not in the range of %d  and %d",name,min,max);
+    }
+    return result;
+}
+
+boolean parse_bool(const char * name,const char * value){
+    return (boolean) parse_int(name,value,0,1);
+}
+
+double parse_float(const char * name,const char * value,double min,double max){
+    char * endpoint;
+    double result = strtof(value,&endpoint);
+    if((result == 0 && endpoint == value)||(*endpoint != '\0')){
+        critical_error("Parsing Error","Value of '%s' is not a valid decimal",name);
+    }
+    if(result < min || result > max){
+        critical_error("Invalid Value Error","Value of '%s' is not in the range of %f  and %f",name,min,max);
+    }
+    return result;
+}
 
 void load_conf(){
     FILE * cf;
@@ -148,53 +175,53 @@ void load_conf(){
             char * value = strtok(NULL," ");
             value = strtok(value,"\n");
             if(strcmp("custom_cell_width",name)==0) {
-                custom_cell_width = atoi(value);
+                custom_cell_width = parse_int(name,value,1,LONG_MAX);
             }else if(strcmp("custom_cell_height",name)==0) {
-                    custom_cell_height = atoi(value);
+                custom_cell_height = parse_int(name,value,1,LONG_MAX);
             }else if(strcmp("custom_screen_width",name)==0) {
-                custom_screen_width = atoi(value);
+                custom_screen_width = parse_int(name,value,1,LONG_MAX);
             }else if(strcmp("custom_screen_height",name)==0) {
-                    custom_screen_height = atoi(value);
+                custom_screen_height = parse_int(name,value,1,LONG_MAX);
             }else if(strcmp("double_tap_lock",name)==0) {
-                double_tap_lock = atoi(value);
+                double_tap_lock = parse_bool(name,value);
             }else if(strcmp("double_tap_interval",name)==0) {
-                double_tap_interval = atoi(value);
+                double_tap_interval = parse_int(name,value,100,1e5);
             }else if(strcmp("dynamic_colors",name)==0){
-                dynamic_colors = atoi(value);
+                dynamic_colors = parse_bool(name,value);
             }else if(strcmp("force_portrait",name)==0){
-                force_portrait = atoi(value);
+                force_portrait = parse_bool(name,value);
             }else if(strcmp("dpad_enabled",name)==0){
-                dpad_enabled = atoi(value);
+                dpad_enabled = parse_bool(name,value);
             }else if(strcmp("dpad_width",name)==0){
-                dpad_width = atoi(value);
+                dpad_width = parse_int(name,value,1,LONG_MAX);
             }else if(strcmp("dpad_x_pos",name)==0){
-                dpad_x_pos = atoi(value);
+                dpad_x_pos = parse_int(name,value,1,LONG_MAX);
             }else if(strcmp("dpad_y_pos",name)==0){
-                dpad_y_pos = atoi(value);
+                dpad_y_pos = parse_int(name,value,1,LONG_MAX);
             }else if(strcmp("allow_dpad_mode_change",name)==0){
-                allow_dpad_mode_change = atoi(value);
+                allow_dpad_mode_change = parse_bool(name,value);
             }else if(strcmp("default_dpad_mode",name)==0){
-                dpad_mode = atoi(value);
+                dpad_mode = parse_bool(name,value);
             }else if(strcmp("dpad_transparency",name)==0){
-                dpad_transparency = atoi(value);
+                dpad_transparency = parse_int(name,value,0,255);
             }else if(strcmp("long_press_interval",name)==0){
-                long_press_interval = atoi(value);
+                long_press_interval = parse_int(name,value,100,1e5);
             }else if(strcmp("keyboard_always_on",name)==0){
-                keyboard_always_on = atoi(value);
+                keyboard_always_on = parse_bool(name,value);
             }else if(strcmp("zoom_mode",name)==0){
-                zoom_mode = atoi(value);
+                zoom_mode = parse_int(name,value,0,2);
             }else if(strcmp("max_zoom",name)==0){
-                max_zoom = atof(value);
+                max_zoom = parse_float(name,value,1.0,10.0);
             }else if(strcmp("init_zoom",name)==0){
-                init_zoom = atof(value);
+                init_zoom = parse_float(name,value,1.0,10.0);
             }else if(strcmp("init_zoom_toggle",name)==0){
                 init_zoom_toggle = atoi(value);
             }else if(strcmp("smart_zoom",name)==0){
-                smart_zoom = atoi(value);
+                smart_zoom = parse_bool(name,value);
             }else if(strcmp("filter_mode",name)==0){
-                filter_mode = atoi(value);
+                filter_mode = parse_int(name,value,0,2);
             }else{
-                critical_error("Unknown Configuration", "Configuration '%s' in settings file is not valid",name);
+                critical_error("Unknown Configuration", "Configuration '%s' in settings file is not recognized",name);
             }
         }
         // override custom cell dimensions if custom screen dimensions are present
