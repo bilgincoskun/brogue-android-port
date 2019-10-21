@@ -37,7 +37,7 @@ static SDL_Renderer *renderer;
 static SDL_Texture * screen_texture;
 static SDL_DisplayMode display;
 static int cell_w, cell_h;
-static boolean screen_changed = false;
+static _Atomic boolean screen_changed = false;
 static TTF_Font *font;
 static glyph_cache font_cache[UCHAR_MAX];
 static SDL_Texture * dpad_image_select;
@@ -242,6 +242,18 @@ uint8_t convert_color(short c) {
 
 boolean is_zoomed(){
     return zoom_mode != 0 && zoom_level != 1.0 && zoom_toggle;
+}
+
+int suspend_resume_filter(void *userdata, SDL_Event *event){
+    switch(event->type){
+        case SDL_APP_WILLENTERBACKGROUND:
+            return 0;
+        case SDL_APP_WILLENTERFOREGROUND:
+            screen_changed = true;
+            return 0;
+
+    }
+    return 1;
 }
 
 void draw_glyph(uint16_t c, SDL_Rect rect, uint8_t r, uint8_t g, uint8_t b) {
@@ -733,6 +745,7 @@ void TouchScreenGameLoop() {
     if (!init_font()) {
         critical_error("Font Error","Resolution/cell size is too small for minimum allowed font size");
     }
+    SDL_SetEventFilter(suspend_resume_filter, NULL);
     rogueMain();
     destroy_assets();
     TTF_CloseFont(font);
