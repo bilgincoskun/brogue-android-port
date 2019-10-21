@@ -55,10 +55,14 @@ if __name__ == "__main__":
     releases = all_releases()
     sign_info = get_sign_info()
     cur_dir = Path(os.getcwd())
-    app_ver = input("App Version:")
+    app_ver = input("App Version(empty for test builds with no tag):")
     if app_ver.startswith('v'):
         app_ver = app_ver[1:]
-    if app_ver not in releases:
+    if app_ver == '':
+        print("Compiling test build")
+        app_ver = "test_build"
+        releases.append(app_ver)
+    elif app_ver not in releases:
         run_command(f"git tag v{app_ver}")
         releases.append(app_ver)
     else:
@@ -84,7 +88,8 @@ if __name__ == "__main__":
         version_env["version_code"] = str(len(releases))
         version_env["version_name"] = f"v{app_ver}"
         run_command(f"{cur_dir}/gradlew aR -p {cur_dir}",version_env)
-        apk_path = f"{release_folder}/brogue-{v}-v{app_ver}.apk"
+        app_ver_ = f"v{app_ver}" if app_ver != "test_build" else "test"
+        apk_path = f"{release_folder}/brogue-{v}-{app_ver_}.apk"
         print("Aligning APK")
         run_command(f"zipalign -v -f -p 4\
                 {cur_dir}/app/build/outputs/apk/release/app-release-unsigned.apk\
