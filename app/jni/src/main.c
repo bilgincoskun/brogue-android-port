@@ -379,7 +379,7 @@ TTF_Font *init_font_size(char *font_path, int size) {
 
 boolean init_font() {
     char font_path[PATH_MAX];
-    realpath("custom.ttf", font_path);
+    realpath("../custom.ttf", font_path);
     if (access(font_path, F_OK) == -1) {
         strcpy(font_path, "default.ttf");
     }
@@ -861,6 +861,16 @@ int brogue_main(void *data){
 int main() {
     chdir(SDL_AndroidGetExternalStoragePath());
     load_conf();
+    if(chdir(BROGUE_VERSION_STRING) == -1){
+        if(errno != ENOENT){
+            critical_error("Save Folder Error","Cannot create/enter the save folder");
+        }
+        if(mkdir(BROGUE_VERSION_STRING) || chdir(BROGUE_VERSION_STRING)){
+            critical_error("Save Folder Error","Cannot create/enter the save folder");
+        }
+    }
+
+
     SDL_Thread *thread = SDL_CreateThreadWithStackSize(brogue_main,"Brogue",8*1024*1024,NULL);
     if(thread != NULL){
         int result;

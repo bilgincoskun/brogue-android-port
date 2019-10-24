@@ -122,7 +122,7 @@ You can see the supported configurations below:
 | smart_zoom | Boolean | 1 | Zoom out when a menu, logs or a confirmation dialog open or left panel is tapped |
 # Saves,Recordings and Highscore
 
-These files are stored in **/sdcard/Android/org.brogue.brogue/files/** which is accessible by the user.
+These files are stored in **/sdcard/Android/org.brogue.brogue/files/\[Brogue Version]** which is accessible by the user.
 
 # Fonts
 Default font  is modified [Dejavu Sans Mono](https://dejavu-fonts.github.io/) with missing characters added/modified from Dejavu Sans.
