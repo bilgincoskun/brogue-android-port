@@ -2,6 +2,7 @@
 #include <math.h>
 #include <unistd.h>
 #include <string.h>
+#include <errno.h>
 #include "SDL.h"
 #include "SDL_ttf.h"
 #include "platform.h"
