@@ -2,15 +2,13 @@ Android port of [Brogue](https://sites.google.com/site/broguegame/) using SDL2
 # Installation
 You can download apks from [here](https://github.com/bilgincoskun/brogue-android-port/releases) 
 
-Currently there are 3 apks use different versions of Brogue
+Currently there are 3 apks use different versions of Brogue which can be installed side by side.
 
 * 1.7.5 with bug fixes from [here](https://github.com/flend/brogue-windows/) (Suggested version)
 
 * Original v1.7.5 version
 
 * Original 1.7.4 version
-
-Also keep in mind that since there are incompatibilities between versions, changing one version to another might cause problems with the save/recording files.
 
 # Building
 
@@ -83,7 +81,7 @@ Except corners left edge of the screen is reserved for opening virtual keyboard.
 
 # Configuration File
 
-When the application started it reads the configuration file in **/sdcard/Android/org.brogue.brogue/files/settings.txt** .  You can use this file for customizing the behaviour of the application.
+When the application started it reads the configuration file in **/sdcard/Android/org.brogue.brogue.[version suffix]/files/settings.txt** .  You can use this file for customizing the behaviour of the application.
 
 The syntax of this file is very simple,name value pairs separated with a space in every line:
 [NAME1] [VALUE1]<br/>
@@ -122,12 +120,12 @@ You can see the supported configurations below:
 | smart_zoom | Boolean | 1 | Zoom out when a menu, logs or a confirmation dialog open or left panel is tapped |
 # Saves,Recordings and Highscore
 
-These files are stored in **/sdcard/Android/org.brogue.brogue/files/\[Brogue Version]** which is accessible by the user.
+These files are stored in **/sdcard/Android/org.brogue.brogue.[version suffix]/files/\[Brogue Version]** which is accessible by the user.
 
 # Fonts
 Default font  is modified [Dejavu Sans Mono](https://dejavu-fonts.github.io/) with missing characters added/modified from Dejavu Sans.
 
-You can use custom fonts by copying them to **/sdcard/Android/org.brogue.brogue/files/custom.ttf** . 
+You can use custom fonts by copying them to **/sdcard/Android/org.brogue.brogue.[version suffix]/files/custom.ttf** . 
 
 However fonts must be:
 

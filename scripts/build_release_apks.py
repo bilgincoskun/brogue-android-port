@@ -87,6 +87,12 @@ if __name__ == "__main__":
         version_env = os.environ.copy()
         version_env["version_code"] = str(len(releases))
         version_env["version_name"] = f"v{app_ver}"
+        version_env["suffix"] = "v" + v
+        try:
+            with open(game_code_folder/"version_name") as f:
+                version_env["app_name"] = f.read().strip()
+        except FileNotFoundError:
+            pass
         run_command(f"{cur_dir}/gradlew aR -p {cur_dir}",version_env)
         app_ver_ = f"v{app_ver}" if app_ver != "test_build" else "test"
         apk_path = f"{release_folder}/brogue-{v}-{app_ver_}.apk"

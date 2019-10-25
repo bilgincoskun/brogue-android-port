@@ -15,20 +15,18 @@ def suffix_env =  System.getenv("suffix")
 def version_code =  version_code_env != null ? Integer.parseInt(version_code_env): 1
 def version_name =  version_name_env != null ? version_name_env : "0.1"
 def app_name     =  app_name_env     != null ? '"' + app_name_env + '"' : '"Brogue"'
-def suffix       =  suffix_env != null ? '.'+suffix_env.replace('-','_')
-        .replace('.','_').replace(' ','_'):null
+def suffix       =  suffix_env != null ? '.'+suffix_env.replace('-','')
+        .replace('.','').replace(' ',''):null
 
 android {
     compileSdkVersion 26
     defaultConfig {
-        if (buildAsApplication) {
-            if(suffix_env) {
-                applicationId "org.brogue.brogue" + suffix
-            }else{
-                applicationId "org.brogue.brogue"
-            }
-            resValue 'string', 'app_name', app_name
+        if(suffix_env) {
+            applicationId "org.brogue.brogue" + suffix
+        }else{
+            applicationId "org.brogue.brogue"
         }
+        resValue 'string', 'app_name', app_name
         minSdkVersion 16
         targetSdkVersion 26
         versionCode version_code
