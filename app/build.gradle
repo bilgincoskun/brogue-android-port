@@ -9,9 +9,11 @@ else {
 
 def version_code_env = System.getenv("version_code")
 def version_name_env = System.getenv("version_name")
+def app_name_env = System.getenv("app_name")
 
 def version_code =  version_code_env != null ? Integer.parseInt(version_code_env): 1
 def version_name =  version_name_env != null ? version_name_env : "0.1"
+def app_name     =  app_name_env     != null ? '"' + app_name_env + '"' : '"Brogue"'
 
 
 android {
@@ -19,6 +21,7 @@ android {
     defaultConfig {
         if (buildAsApplication) {
             applicationId "org.brogue.brogue"
+            resValue 'string', 'app_name', app_name
         }
         minSdkVersion 16
         targetSdkVersion 26
