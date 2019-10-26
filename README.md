@@ -10,6 +10,9 @@ Currently there are 3 apks use different versions of Brogue which can be install
 
 * Original 1.7.4 version
 
+#Updates
+By default the app check if there is a new version when started. You can disable it via **check_update** config.
+
 # Building
 
 Before building it, run **./scripts/setup_project.sh** to download and copy necessary files into the project.
@@ -118,6 +121,7 @@ You can see the supported configurations below:
 | init_zoom_toggle | Boolean | 0 | Start the game as zoomed Value is between 1.0 and 10.0 |
 | max_zoom | Decimal | 4.0 | Maximum allowed zoom level. Value is between 1.0 and 10.0 |
 | smart_zoom | Boolean | 1 | Zoom out when a menu, logs or a confirmation dialog open or left panel is tapped |
+| check_update | Boolean 1 | Check updates when the app starts |
 # Saves,Recordings and Highscore
 
 These files are stored in **/sdcard/Android/org.brogue.brogue.[version suffix]/files/\[Brogue Version]** which is accessible by the user.

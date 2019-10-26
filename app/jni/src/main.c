@@ -3,6 +3,8 @@
 #include <unistd.h>
 #include <string.h>
 #include <errno.h>
+#include <jni.h>
+#include <sys/stat.h>
 #include "SDL.h"
 #include "SDL_ttf.h"
 #include "platform.h"
@@ -80,6 +82,7 @@ static boolean init_zoom_toggle = false;
 static double max_zoom = 4.0;
 static boolean smart_zoom = true;
 static int filter_mode = 2;
+static boolean check_update = true;
 
 void destroy_assets(){
     SDL_DestroyRenderer(renderer);
@@ -219,6 +222,8 @@ void load_conf(){
                 smart_zoom = parse_bool(name,value);
             }else if(strcmp("filter_mode",name)==0){
                 filter_mode = parse_int(name,value,0,2);
+            }else if(strcmp("check_update",name)==0){
+                check_update = parse_bool(name,value);
             }else{
                 critical_error("Unknown Configuration", "Configuration '%s' in settings file is not recognized",name);
             }
@@ -850,6 +855,62 @@ struct brogueConsole TouchScreenConsole = {
         TouchScreenModifierHeld
 };
 
+void git_version_check(){
+    const SDL_MessageBoxButtonData buttons[] = {
+            { 0, 0, "Later" },
+            { SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT, 1, "Check Now" },
+    };
+
+    const SDL_MessageBoxData messageboxdata = {
+            SDL_MESSAGEBOX_INFORMATION,
+            NULL,
+            "Check New Version",
+            "Do you want to check new version now?",
+            SDL_arraysize(buttons),
+            buttons,
+            NULL,
+    };
+    int buttonid;
+    SDL_ShowMessageBox(&messageboxdata,&buttonid);
+    if( buttonid == 0){
+        return;
+    }
+    JNIEnv* env = (JNIEnv*)SDL_AndroidGetJNIEnv();
+    jobject activity = (jobject)SDL_AndroidGetActivity();
+    jclass cls = (*env)->GetObjectClass(env,activity);
+    jmethodID method_id = (*env)->GetMethodID(env,cls, "gitVersionCheck", "()Ljava/lang/String;");
+    jstring ver_ = (*env)->CallObjectMethod(env,activity, method_id);
+    const char * ver = (*env)->GetStringUTFChars(env,ver_,NULL);
+    char version_message[500];
+    char error_title[] = "Cannot Get New Version Info";
+    switch(ver[0]){
+        case ' ': //No Error
+        if(strlen(ver)>1){
+            sprintf(version_message,"Latest version %s released.Opening download page now",ver);
+            SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION,"New Version Found",version_message,NULL);
+            jmethodID method_id = (*env)->GetMethodID(env,cls, "open_download_link", "()V");
+            (*env)->CallVoidMethod(env,activity, method_id);
+        }else{
+            SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION,"No new Version","Already using latest version",NULL);
+        }
+        break;
+        case '1': //Timeout Error
+            SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION,error_title,"Connection timed out",NULL);
+            break;
+        case '2': //JSON Error
+            SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION,error_title,"Cannot parse json",NULL);
+            break;
+        case '3': //Connection Error
+            SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION,error_title,"Cannot download version info",NULL);
+            break;
+
+    }
+    (*env)->ReleaseStringUTFChars(env,ver_,ver);
+    (*env)->DeleteLocalRef(env,activity);
+    (*env)->DeleteLocalRef(env,cls);
+
+}
+
 int brogue_main(void *data){
     currentConsole = TouchScreenConsole;
     rogue.nextGame = NG_NOTHING;
@@ -862,11 +923,14 @@ int brogue_main(void *data){
 int main() {
     chdir(SDL_AndroidGetExternalStoragePath());
     load_conf();
+    if(check_update){
+        git_version_check();
+    }
     if(chdir(BROGUE_VERSION_STRING) == -1){
         if(errno != ENOENT){
             critical_error("Save Folder Error","Cannot create/enter the save folder");
         }
-        if(mkdir(BROGUE_VERSION_STRING) || chdir(BROGUE_VERSION_STRING)){
+        if(mkdir(BROGUE_VERSION_STRING,0770) || chdir(BROGUE_VERSION_STRING)){
             critical_error("Save Folder Error","Cannot create/enter the save folder");
         }
     }
