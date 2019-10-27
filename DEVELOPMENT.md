@@ -18,3 +18,17 @@ There is also scripts/build_release_apks.py to build and sign all versions. When
 
 Note that both of the scripts are assumed to be run at root folder of the project.
 
+# Porting New Brogue Variants
+
+Fork Brogue code from [here](https://github.com/bilgincoskun/brogue-libtcod-sdl2-fix)
+
+Change files under src/brogue and include with your variants' **(Do not change src/platform)**
+
+Make sure it compiles and run
+
+Change BROGUE_VERSION_STRING in Rogue.h with something does not collide with other variants
+
+Edit version_name file with your variant name and version
+
+Make a PR
+
