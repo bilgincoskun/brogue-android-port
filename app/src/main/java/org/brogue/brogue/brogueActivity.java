@@ -1,7 +1,12 @@
 package org.brogue.brogue;
 
+import android.Manifest;
+import android.annotation.TargetApi;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Build;
+import android.os.Environment;
 
 import org.brogue.brogueCore.brogueCore;
 import org.json.JSONException;
@@ -9,6 +14,7 @@ import org.json.JSONObject;
 import org.brogue.brogue.BuildConfig;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.SocketTimeoutException;
@@ -52,8 +58,27 @@ public class brogueActivity extends brogueCore
         return " ";
     }
 
-    private void open_download_link(){
+    private void openDownloadLink(){
         Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(download_link));
         startActivity(intent);
+    }
+
+    private void grantPermission(){
+        if(Build.VERSION.SDK_INT >= 23){
+            if(checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED){
+                requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},10);
+            }
+        }
+    }
+
+    private String configFolder(){
+
+        File f = new File(Environment.getExternalStorageDirectory() + "/Brogue");
+        if(!f.exists()){
+            if(!f.mkdir()){
+                return null;
+            }
+        }
+        return f.toString();
     }
 }

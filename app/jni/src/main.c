@@ -888,7 +888,7 @@ void git_version_check(){
         if(strlen(ver)>1){
             sprintf(version_message,"Latest version %s released.Opening download page now",ver);
             SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION,"New Version Found",version_message,NULL);
-            jmethodID method_id = (*env)->GetMethodID(env,cls, "open_download_link", "()V");
+            jmethodID method_id = (*env)->GetMethodID(env,cls, "openDownloadLink", "()V");
             (*env)->CallVoidMethod(env,activity, method_id);
         }else{
             SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION,"No new Version","Already using latest version",NULL);
@@ -910,6 +910,34 @@ void git_version_check(){
     (*env)->DeleteLocalRef(env,cls);
 
 }
+void config_folder(){
+    JNIEnv* env = (JNIEnv*)SDL_AndroidGetJNIEnv();
+    jobject activity = (jobject)SDL_AndroidGetActivity();
+    jclass cls = (*env)->GetObjectClass(env,activity);
+    jmethodID method_id = (*env)->GetMethodID(env,cls, "configFolder", "()Ljava/lang/String;");
+    jstring folder_ = (*env)->CallObjectMethod(env,activity, method_id);
+    if(folder_!= NULL){
+        const char * folder = (*env)->GetStringUTFChars(env,folder_,NULL);
+        chdir(folder);
+        (*env)->ReleaseStringUTFChars(env,folder_,folder);
+    }else{
+        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_WARNING,"Config Folder Error","Cannot create or enter sdcard/Brogue."
+                                             "Will save to data folder of the app",NULL);
+        chdir(SDL_AndroidGetExternalStoragePath());
+    }
+    (*env)->DeleteLocalRef(env,activity);
+    (*env)->DeleteLocalRef(env,cls);
+}
+
+void grant_permission(){
+    JNIEnv* env = (JNIEnv*)SDL_AndroidGetJNIEnv();
+    jobject activity = (jobject)SDL_AndroidGetActivity();
+    jclass cls = (*env)->GetObjectClass(env,activity);
+    jmethodID method_id = (*env)->GetMethodID(env,cls, "grantPermission", "()V");
+    (*env)->CallVoidMethod(env,activity, method_id);
+    (*env)->DeleteLocalRef(env,activity);
+    (*env)->DeleteLocalRef(env,cls);
+}
 
 int brogue_main(void *data){
     currentConsole = TouchScreenConsole;
@@ -921,7 +949,17 @@ int brogue_main(void *data){
 }
 
 int main() {
-    chdir(SDL_AndroidGetExternalStoragePath());
+    chdir(SDL_AndroidGetInternalStoragePath());
+    if(access("first_run",F_OK) == -1){
+        //TODO check SDK in this side also
+        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION,"Write Permission",
+                "To use sdcard/Brogue as save folder you need to grant app write permission in "
+                "Android 6.0+. Otherwise it will save the app will use the folder under Android/data",NULL);
+        grant_permission();
+        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION,"Continue?","",NULL);
+        fclose(fopen("first_run","w"));
+    }
+    config_folder();
     load_conf();
     if(check_update){
         git_version_check();
