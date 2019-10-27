@@ -965,6 +965,7 @@ int main() {
                 "To use sdcard/Brogue as save folder you need to grant app write permission in "
                 "Android 6.0+. Otherwise it will save the app will use the folder under Android/data",NULL);
         grant_permission();
+        SDL_Delay(1000);
         SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION,"Continue?","",NULL);
         fc = fopen("first_run","w");
         fclose(fc);
