@@ -5,6 +5,7 @@
 #include <errno.h>
 #include <jni.h>
 #include <sys/stat.h>
+#include <time.h>
 #include "SDL.h"
 #include "SDL_ttf.h"
 #include "platform.h"
@@ -18,6 +19,7 @@
 #define FRAME_INTERVAL 50
 #define ZOOM_CHANGED_INTERVAL 300
 #define ZOOM_TOGGLED_INTERVAL 100
+#define DAY_TO_TIMESTAMP 86400
 
 typedef struct {
     SDL_Texture *c;
@@ -83,6 +85,7 @@ static double max_zoom = 4.0;
 static boolean smart_zoom = true;
 static int filter_mode = 2;
 static boolean check_update = true;
+static check_update_interval = 1;
 
 void destroy_assets(){
     SDL_DestroyRenderer(renderer);
@@ -224,6 +227,8 @@ void load_conf(){
                 filter_mode = parse_int(name,value,0,2);
             }else if(strcmp("check_update",name)==0){
                 check_update = parse_bool(name,value);
+            }else if(strcmp("check_update_interval",name)==0){
+                check_update_interval = parse_int(name,value,0,1000);
             }else{
                 critical_error("Unknown Configuration", "Configuration '%s' in settings file is not recognized",name);
             }
@@ -855,7 +860,7 @@ struct brogueConsole TouchScreenConsole = {
         TouchScreenModifierHeld
 };
 
-void git_version_check(){
+boolean git_version_check(){
     const SDL_MessageBoxButtonData buttons[] = {
             { 0, 0, "Later" },
             { SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT, 1, "Check Now" },
@@ -873,7 +878,7 @@ void git_version_check(){
     int buttonid;
     SDL_ShowMessageBox(&messageboxdata,&buttonid);
     if( buttonid == 0){
-        return;
+        return false;
     }
     JNIEnv* env = (JNIEnv*)SDL_AndroidGetJNIEnv();
     jobject activity = (jobject)SDL_AndroidGetActivity();
@@ -883,6 +888,7 @@ void git_version_check(){
     const char * ver = (*env)->GetStringUTFChars(env,ver_,NULL);
     char version_message[500];
     char error_title[] = "Cannot Get New Version Info";
+    boolean return_value = false;
     switch(ver[0]){
         case ' ': //No Error
         if(strlen(ver)>1){
@@ -893,6 +899,7 @@ void git_version_check(){
         }else{
             SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION,"No new Version","Already using latest version",NULL);
         }
+        return_value = true;
         break;
         case '1': //Timeout Error
             SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION,error_title,"Connection timed out",NULL);
@@ -908,7 +915,7 @@ void git_version_check(){
     (*env)->ReleaseStringUTFChars(env,ver_,ver);
     (*env)->DeleteLocalRef(env,activity);
     (*env)->DeleteLocalRef(env,cls);
-
+    return return_value;
 }
 void config_folder(){
     JNIEnv* env = (JNIEnv*)SDL_AndroidGetJNIEnv();
@@ -950,6 +957,8 @@ int brogue_main(void *data){
 
 int main() {
     chdir(SDL_AndroidGetInternalStoragePath());
+    FILE * fc;
+
     if(access("first_run",F_OK) == -1){
         //TODO check SDK in this side also
         SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION,"Write Permission",
@@ -957,13 +966,34 @@ int main() {
                 "Android 6.0+. Otherwise it will save the app will use the folder under Android/data",NULL);
         grant_permission();
         SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION,"Continue?","",NULL);
-        fclose(fopen("first_run","w"));
+        fc = fopen("first_run","w");
+        fclose(fc);
     }
+
+    time_t update_check_time = 0;
+    if(access("last_update_check",F_OK) == -1){
+        fc = fopen("last_update_check","w");
+    }else{
+        fc = fopen("last_update_check","r");
+        fscanf(fc,"%ld",&update_check_time);
+        fclose(fc);
+        fc = fopen("last_update_check","w");
+    }
+
+
     config_folder();
     load_conf();
     if(check_update){
-        git_version_check();
+        time_t new_time;
+        time(&new_time);
+        if(new_time > update_check_time) {
+            if ((new_time-update_check_time) > DAY_TO_TIMESTAMP * check_update_interval && git_version_check()) {
+                update_check_time = new_time;
+            }
+        }
     }
+    fprintf(fc, "%ld", update_check_time);
+    fclose(fc);
     if(chdir(BROGUE_VERSION_STRING) == -1){
         if(errno != ENOENT){
             critical_error("Save Folder Error","Cannot create/enter the save folder");

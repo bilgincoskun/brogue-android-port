@@ -18,7 +18,7 @@ Note that apks require two additional permissions which both are optional:
 
 #Updates
 
-By default the app check if there is a new version when started. You can disable it via **check_update** config.
+By default the app check if there is a new version when started. You can disable it via **check_update** config. You can also set the interval of checks via **check_update_interval**
 
 #App Folder
 
@@ -111,7 +111,8 @@ You can see the supported configurations below:
 | init_zoom_toggle | Boolean | 0 | Start the game as zoomed Value is between 1.0 and 10.0 |
 | max_zoom | Decimal | 4.0 | Maximum allowed zoom level. Value is between 1.0 and 10.0 |
 | smart_zoom | Boolean | 1 | Zoom out when a menu, logs or a confirmation dialog open or left panel is tapped |
-| check_update | Boolean 1 | Check updates when the app starts |
+| check_update | Boolean | 1 | Check updates when the app starts |
+| check_update_interval | Integer | 1 | How many days should pass before checking again. With 0, the app checks update each time it starts |
 # Saves,Recordings and Highscore
 
 These files are stored in **[App Folder]/\[Brogue Version]** which is accessible by the user.
