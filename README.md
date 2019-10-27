@@ -10,28 +10,19 @@ Currently there are 3 apks use different versions of Brogue which can be install
 
 * Original 1.7.4 version
 
+Note that apks require two additional permissions which both are optional:
+
+* Internet Access: This permission is to check updates. You can disable internet access by disabling updates.
+
+* Write Access: This permission is to write /sdcard/Brogue. For Android 6.0+ if you do not grant it at runtime it will write to default data folder under Android/data.
+
 #Updates
+
 By default the app check if there is a new version when started. You can disable it via **check_update** config.
 
-# Building
+#App Folder
 
-Before building it, run **./scripts/setup_project.sh** to download and copy necessary files into the project.
-
-These files are:
-
-* SDL2
-
-* SDL2_ttf
-
-* platform independent files of Brogue
-
-After that you can use gradlew script to build it as usual.
-
-The default version is 1.7.5 with bug fixes. To build a different version change to a different branch in brogue-files folder.
-
-There is also scripts/build_release_apks.py to build and sign all versions. When executed this script will ask key file information and version name and tag the repository. If there is a sign_info.json file in the project of the root, the script will only prompt missing signing information in this file. These parameters are "path" (key store location), "ks_pw" (key store password), "alias" (key alias) and "key_pw" (key password).
-
-Note that both of the scripts are assumed to be run at root folder of the project.
+All versions will try to use /sdcard/Brogue. If write permission is not granted, they will use /sdcard/Android/org.brogue.brogue.[version suffix]/files/ instead. Note that since all save files etc. is written under a folder specific to the that version even multiple versions are installed they will not override others' files under /sdcard/Brogue.
 
 # User Input
 
@@ -81,10 +72,9 @@ Three finger touch. Note that it is implemented to enter a custom seed.
 ### Virtual Keyboard
 
 Except corners left edge of the screen is reserved for opening virtual keyboard.
-
 # Configuration File
 
-When the application started it reads the configuration file in **/sdcard/Android/org.brogue.brogue.[version suffix]/files/settings.txt** .  You can use this file for customizing the behaviour of the application.
+When the application started it reads the configuration file in **[App Folder]/settings.txt** .  You can use this file for customizing the behaviour of the application.
 
 The syntax of this file is very simple,name value pairs separated with a space in every line:
 [NAME1] [VALUE1]<br/>
@@ -124,15 +114,37 @@ You can see the supported configurations below:
 | check_update | Boolean 1 | Check updates when the app starts |
 # Saves,Recordings and Highscore
 
-These files are stored in **/sdcard/Android/org.brogue.brogue.[version suffix]/files/\[Brogue Version]** which is accessible by the user.
+These files are stored in **[App Folder]/\[Brogue Version]** which is accessible by the user.
 
 # Fonts
 Default font  is modified [Dejavu Sans Mono](https://dejavu-fonts.github.io/) with missing characters added/modified from Dejavu Sans.
 
-You can use custom fonts by copying them to **/sdcard/Android/org.brogue.brogue.[version suffix]/files/custom.ttf** . 
+You can use custom fonts by copying them to **[App Folder]/custom.ttf** .
 
 However fonts must be:
 
 * Edited according to draw_glyph function in main.c
 
 * Monospace
+
+# Building
+
+Before building it, run **./scripts/setup_project.sh** to download and copy necessary files into the project.
+
+These files are:
+
+* SDL2
+
+* SDL2_ttf
+
+* platform independent files of Brogue
+
+After that you can use gradlew script to build it as usual.
+
+The default version is 1.7.5 with bug fixes. To build a different version change to a different branch in brogue-files folder.
+
+There is also scripts/build_release_apks.py to build and sign all versions. When executed this script will ask key file information and version name and tag the repository. If there is a sign_info.json file in the project of the root, the script will only prompt missing signing information in this file. These parameters are "path" (key store location), "ks_pw" (key store password), "alias" (key alias) and "key_pw" (key password).
+
+Note that both of the scripts are assumed to be run at root folder of the project.
+
+
