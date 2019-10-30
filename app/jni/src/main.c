@@ -860,7 +860,7 @@ struct brogueConsole TouchScreenConsole = {
         TouchScreenModifierHeld
 };
 
-boolean git_version_check(){
+boolean git_version_check(JNIEnv * env,jobject activity,jclass cls){
     const SDL_MessageBoxButtonData buttons[] = {
             { 0, 0, "Later" },
             { SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT, 1, "Check Now" },
@@ -880,9 +880,6 @@ boolean git_version_check(){
     if( buttonid == 0){
         return false;
     }
-    JNIEnv* env = (JNIEnv*)SDL_AndroidGetJNIEnv();
-    jobject activity = (jobject)SDL_AndroidGetActivity();
-    jclass cls = (*env)->GetObjectClass(env,activity);
     jmethodID method_id = (*env)->GetMethodID(env,cls, "gitVersionCheck", "()Ljava/lang/String;");
     jstring ver_ = (*env)->CallObjectMethod(env,activity, method_id);
     const char * ver = (*env)->GetStringUTFChars(env,ver_,NULL);
@@ -913,14 +910,9 @@ boolean git_version_check(){
 
     }
     (*env)->ReleaseStringUTFChars(env,ver_,ver);
-    (*env)->DeleteLocalRef(env,activity);
-    (*env)->DeleteLocalRef(env,cls);
     return return_value;
 }
-void config_folder(){
-    JNIEnv* env = (JNIEnv*)SDL_AndroidGetJNIEnv();
-    jobject activity = (jobject)SDL_AndroidGetActivity();
-    jclass cls = (*env)->GetObjectClass(env,activity);
+void config_folder(JNIEnv * env,jobject activity,jclass cls){
     jmethodID method_id = (*env)->GetMethodID(env,cls, "configFolder", "()Ljava/lang/String;");
     jstring folder_ = (*env)->CallObjectMethod(env,activity, method_id);
     if(folder_!= NULL){
@@ -932,18 +924,11 @@ void config_folder(){
                                              "Will save to data folder of the app",NULL);
         chdir(SDL_AndroidGetExternalStoragePath());
     }
-    (*env)->DeleteLocalRef(env,activity);
-    (*env)->DeleteLocalRef(env,cls);
 }
 
-void grant_permission(){
-    JNIEnv* env = (JNIEnv*)SDL_AndroidGetJNIEnv();
-    jobject activity = (jobject)SDL_AndroidGetActivity();
-    jclass cls = (*env)->GetObjectClass(env,activity);
+void grant_permission(JNIEnv * env,jobject activity,jclass cls){
     jmethodID method_id = (*env)->GetMethodID(env,cls, "grantPermission", "()V");
     (*env)->CallVoidMethod(env,activity, method_id);
-    (*env)->DeleteLocalRef(env,activity);
-    (*env)->DeleteLocalRef(env,cls);
 }
 
 int brogue_main(void *data){
@@ -958,13 +943,15 @@ int brogue_main(void *data){
 int main() {
     chdir(SDL_AndroidGetInternalStoragePath());
     FILE * fc;
-
+    JNIEnv* env = (JNIEnv*)SDL_AndroidGetJNIEnv();
+    jobject activity = (jobject)SDL_AndroidGetActivity();
+    jclass cls = (*env)->GetObjectClass(env,activity);
     if(access("first_run",F_OK) == -1){
         //TODO check SDK in this side also
         SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION,"Write Permission",
                 "To use sdcard/Brogue as save folder you need to grant app write permission in "
                 "Android 6.0+. Otherwise it will save the app will use the folder under Android/data",NULL);
-        grant_permission();
+        grant_permission(env,activity,cls);
         SDL_Delay(1000);
         SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION,"Continue?","",NULL);
         fc = fopen("first_run","w");
@@ -982,19 +969,21 @@ int main() {
     }
 
 
-    config_folder();
+    config_folder(env,activity,cls);
     load_conf();
     if(check_update){
         time_t new_time;
         time(&new_time);
         if(new_time > update_check_time) {
-            if ((new_time-update_check_time) > DAY_TO_TIMESTAMP * check_update_interval && git_version_check()) {
+            if ((new_time-update_check_time) > DAY_TO_TIMESTAMP * check_update_interval && git_version_check(env,activity,cls)) {
                 update_check_time = new_time;
             }
         }
     }
     fprintf(fc, "%ld", update_check_time);
     fclose(fc);
+    (*env)->DeleteLocalRef(env,activity);
+    (*env)->DeleteLocalRef(env,cls);
     if(chdir(BROGUE_VERSION_STRING) == -1){
         if(errno != ENOENT){
             critical_error("Save Folder Error","Cannot create/enter the save folder");
