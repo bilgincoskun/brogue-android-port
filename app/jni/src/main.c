@@ -878,7 +878,7 @@ boolean git_version_check(JNIEnv * env,jobject activity,jclass cls){
     int buttonid;
     SDL_ShowMessageBox(&messageboxdata,&buttonid);
     if( buttonid == 0){
-        return false;
+        return true;
     }
     jmethodID method_id = (*env)->GetMethodID(env,cls, "gitVersionCheck", "()Ljava/lang/String;");
     jstring ver_ = (*env)->CallObjectMethod(env,activity, method_id);
