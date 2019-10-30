@@ -926,11 +926,6 @@ void config_folder(JNIEnv * env,jobject activity,jclass cls){
     }
 }
 
-void grant_permission(JNIEnv * env,jobject activity,jclass cls){
-    jmethodID method_id = (*env)->GetMethodID(env,cls, "grantPermission", "()V");
-    (*env)->CallVoidMethod(env,activity, method_id);
-}
-
 int brogue_main(void *data){
     currentConsole = TouchScreenConsole;
     rogue.nextGame = NG_NOTHING;
@@ -946,14 +941,18 @@ int main() {
     JNIEnv* env = (JNIEnv*)SDL_AndroidGetJNIEnv();
     jobject activity = (jobject)SDL_AndroidGetActivity();
     jclass cls = (*env)->GetObjectClass(env,activity);
+    jmethodID method_id;
     if(access("first_run",F_OK) == -1){
-        //TODO check SDK in this side also
-        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION,"Write Permission",
-                "To use sdcard/Brogue as save folder you need to grant app write permission in "
-                "Android 6.0+. Otherwise it will save the app will use the folder under Android/data",NULL);
-        grant_permission(env,activity,cls);
-        SDL_Delay(1000);
-        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION,"Continue?","",NULL);
+        method_id = (*env)->GetMethodID(env,cls, "needsWritePermission", "()Z");
+        if((*env)->CallBooleanMethod(env,activity,method_id)){
+            SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION,"Write Permission",
+                                     "To use sdcard/Brogue as save folder you need to grant app write permission in "
+                                     "Android 6.0+. Otherwise it will save the app will use the folder under Android/data",NULL);
+            method_id = (*env)->GetMethodID(env,cls, "grantPermission", "()V");
+            (*env)->CallVoidMethod(env,activity, method_id);
+            SDL_Delay(1000);
+            SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION,"Continue?","",NULL);
+        }
         fc = fopen("first_run","w");
         fclose(fc);
     }

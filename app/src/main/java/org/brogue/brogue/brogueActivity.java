@@ -63,11 +63,14 @@ public class brogueActivity extends brogueCore
         startActivity(intent);
     }
 
+    private boolean needsWritePermission(){
+        return Build.VERSION.SDK_INT >= 23;
+    }
+
+    @TargetApi(23)
     private void grantPermission(){
-        if(Build.VERSION.SDK_INT >= 23){
-            if(checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED){
-                requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},10);
-            }
+        if(checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED){
+            requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},10);
         }
     }
 
