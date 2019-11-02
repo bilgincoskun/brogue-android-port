@@ -232,6 +232,9 @@ void load_conf(){
            custom_cell_height = custom_screen_height / ROWS;
         }
         dpad_mode = default_dpad_mode;
+        if(init_zoom > max_zoom){
+            max_zoom = init_zoom;
+        }
     }else{
         cf = fopen(settings_file,"w");
     }

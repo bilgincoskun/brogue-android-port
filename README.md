@@ -109,7 +109,7 @@ You can see the supported configurations below:
 | zoom_mode | Integer | 1 | 0 disables zoom, 1 zooms to player character (default), 2 zooms to cursor (falls back to zoom_mode 1 if the cursor is not present on the screen)|
 | init_zoom_toggle | Boolean | 0 | Start the game as zoomed |
 | init_zoom | Decimal | 2.0 | Default zooming at the start of the game. Value is between 1.0 and 10.0 |
-| max_zoom | Decimal | 4.0 | Maximum allowed zoom level. Value is between 1.0 and 10.0 |
+| max_zoom | Decimal | 4.0 | Maximum allowed zoom level. Value is between 1.0 and 10.0. It is overriden by init_zoom if init_zoom is bigger than max_zoom|
 | smart_zoom | Boolean | 1 | Zoom out when a menu, logs or a confirmation dialog open or left panel is tapped |
 | check_update | Boolean | 1 | Check updates when the app starts |
 | check_update_interval | Integer | 1 | How many days should pass before checking again. With 0, the app checks update each time it starts |
