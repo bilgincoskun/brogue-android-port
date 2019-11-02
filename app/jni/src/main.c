@@ -61,31 +61,31 @@ static rogueEvent current_event;
 static boolean zoom_toggle = false;
 
 //Config Values
-static int custom_cell_width = 0;
-static int custom_cell_height = 0;
-//int custom_screen_width
-//int custom_screen_height
-static boolean force_portrait = false;
-static boolean double_tap_lock = true;
-static int double_tap_interval = 500;
-static boolean dynamic_colors = 1;
-static boolean dpad_enabled = true;
-static int dpad_width = 0;
-static int dpad_x_pos = 0;
-static int dpad_y_pos = 0;
-static boolean allow_dpad_mode_change = true;
-//boolean default_dpad_mode
-static int long_press_interval = 750;
-static int dpad_transparency = 75;
-static boolean keyboard_always_on = false;
-static int zoom_mode = 1;
-static double init_zoom = 2.0;
-static boolean init_zoom_toggle = false;
-static double max_zoom = 4.0;
-static boolean smart_zoom = true;
-static int filter_mode = 2;
-static boolean check_update = true;
-static check_update_interval = 1;
+static int custom_cell_width;
+static int custom_cell_height;
+static int custom_screen_width;
+static int custom_screen_height;
+static boolean force_portrait;
+static boolean double_tap_lock;
+static int double_tap_interval;
+static boolean dynamic_colors;
+static boolean dpad_enabled;
+static int dpad_width;
+static int dpad_x_pos;
+static int dpad_y_pos;
+static boolean allow_dpad_mode_change;
+static boolean default_dpad_mode;
+static int long_press_interval;
+static int dpad_transparency;
+static boolean keyboard_always_on;
+static int zoom_mode;
+static double init_zoom;
+static boolean init_zoom_toggle;
+static double max_zoom;
+static boolean smart_zoom;
+static int filter_mode;
+static boolean check_update;
+static int check_update_interval;
 
 void destroy_assets(){
     SDL_DestroyRenderer(renderer);
@@ -149,9 +149,6 @@ long parse_int(const char * name,const char * value,long min,long max){
     return result;
 }
 
-boolean parse_bool(const char * name,const char * value){
-    return (boolean) parse_int(name,value,0,1);
-}
 
 double parse_float(const char * name,const char * value,double min,double max){
     char * endpoint;
@@ -165,13 +162,59 @@ double parse_float(const char * name,const char * value,double min,double max){
     return result;
 }
 
+
+#define parse_val(name,value,min,max) _Generic((min), \
+                    int : parse_int, \
+                    boolean: parse_int, \
+                    double: parse_float)(name,value,min,max)
+#define set_and_parse_conf(var_name,default,min,max) { \
+    if(first_run){ \
+        var_name = default; \
+    } \
+    else if(strcmp(#var_name,name)==0) { \
+        var_name = parse_val(name, value, min, max); \
+        return; \
+    } \
+}
+
+void set_conf(const char * name,const char * value){
+    static boolean first_run = true;
+    set_and_parse_conf(custom_cell_width,0,1,LONG_MAX);
+    set_and_parse_conf(custom_cell_height,0,1,LONG_MAX);
+    set_and_parse_conf(custom_screen_width,0,1,LONG_MAX);
+    set_and_parse_conf(custom_screen_height,0,1,LONG_MAX);
+    set_and_parse_conf(force_portrait,false,false,true);
+    set_and_parse_conf(dynamic_colors,true,false,true);
+    set_and_parse_conf(filter_mode,2,0,2);
+    set_and_parse_conf(double_tap_lock,true,false,true);
+    set_and_parse_conf(double_tap_interval,500,100,1e5);
+    set_and_parse_conf(dpad_enabled,true,false,true);
+    set_and_parse_conf(dpad_width,0,1,LONG_MAX);
+    set_and_parse_conf(dpad_x_pos,0,1,LONG_MAX);
+    set_and_parse_conf(dpad_y_pos,0,1,LONG_MAX);
+    set_and_parse_conf(allow_dpad_mode_change,true,false,true);
+    set_and_parse_conf(default_dpad_mode,true,false,true);
+    set_and_parse_conf(dpad_transparency,75,0,255);
+    set_and_parse_conf(long_press_interval,750,100,1e5);
+    set_and_parse_conf(keyboard_always_on,false,false,true);
+    set_and_parse_conf(zoom_mode,1,0,2);
+    set_and_parse_conf(init_zoom_toggle,false,false,true);
+    set_and_parse_conf(init_zoom,2.0,1.0,10.0);
+    set_and_parse_conf(max_zoom,4.0,1.0,10.0);
+    set_and_parse_conf(smart_zoom,true,false,true);
+    set_and_parse_conf(check_update,true,false,true);
+    set_and_parse_conf(check_update_interval,1,0,1000);
+    if(!first_run){
+        critical_error("Unknown Configuration", "Configuration '%s' in settings file is not recognized",name);
+    }
+    first_run = false;
+}
+
 void load_conf(){
     FILE * cf;
     if (access(settings_file, F_OK) != -1) {
         cf = fopen(settings_file,"r");
         char line[MAX_LINE_LENGTH];
-        int custom_screen_width = 0;
-        int custom_screen_height = 0;
         while(fgets(line,MAX_LINE_LENGTH,cf)!=NULL){
             boolean empty_line = true; //empty line check
             for(char * c = line; *c && (empty_line = isspace(*c));c++);
@@ -179,59 +222,7 @@ void load_conf(){
             char * name = strtok(line," ");
             char * value = strtok(NULL," ");
             value = strtok(value,"\n");
-            if(strcmp("custom_cell_width",name)==0) {
-                custom_cell_width = parse_int(name,value,1,LONG_MAX);
-            }else if(strcmp("custom_cell_height",name)==0) {
-                custom_cell_height = parse_int(name,value,1,LONG_MAX);
-            }else if(strcmp("custom_screen_width",name)==0) {
-                custom_screen_width = parse_int(name,value,1,LONG_MAX);
-            }else if(strcmp("custom_screen_height",name)==0) {
-                custom_screen_height = parse_int(name,value,1,LONG_MAX);
-            }else if(strcmp("double_tap_lock",name)==0) {
-                double_tap_lock = parse_bool(name,value);
-            }else if(strcmp("double_tap_interval",name)==0) {
-                double_tap_interval = parse_int(name,value,100,1e5);
-            }else if(strcmp("dynamic_colors",name)==0){
-                dynamic_colors = parse_bool(name,value);
-            }else if(strcmp("force_portrait",name)==0){
-                force_portrait = parse_bool(name,value);
-            }else if(strcmp("dpad_enabled",name)==0){
-                dpad_enabled = parse_bool(name,value);
-            }else if(strcmp("dpad_width",name)==0){
-                dpad_width = parse_int(name,value,1,LONG_MAX);
-            }else if(strcmp("dpad_x_pos",name)==0){
-                dpad_x_pos = parse_int(name,value,1,LONG_MAX);
-            }else if(strcmp("dpad_y_pos",name)==0){
-                dpad_y_pos = parse_int(name,value,1,LONG_MAX);
-            }else if(strcmp("allow_dpad_mode_change",name)==0){
-                allow_dpad_mode_change = parse_bool(name,value);
-            }else if(strcmp("default_dpad_mode",name)==0){
-                dpad_mode = parse_bool(name,value);
-            }else if(strcmp("dpad_transparency",name)==0){
-                dpad_transparency = parse_int(name,value,0,255);
-            }else if(strcmp("long_press_interval",name)==0){
-                long_press_interval = parse_int(name,value,100,1e5);
-            }else if(strcmp("keyboard_always_on",name)==0){
-                keyboard_always_on = parse_bool(name,value);
-            }else if(strcmp("zoom_mode",name)==0){
-                zoom_mode = parse_int(name,value,0,2);
-            }else if(strcmp("max_zoom",name)==0){
-                max_zoom = parse_float(name,value,1.0,10.0);
-            }else if(strcmp("init_zoom",name)==0){
-                init_zoom = parse_float(name,value,1.0,10.0);
-            }else if(strcmp("init_zoom_toggle",name)==0){
-                init_zoom_toggle = atoi(value);
-            }else if(strcmp("smart_zoom",name)==0){
-                smart_zoom = parse_bool(name,value);
-            }else if(strcmp("filter_mode",name)==0){
-                filter_mode = parse_int(name,value,0,2);
-            }else if(strcmp("check_update",name)==0){
-                check_update = parse_bool(name,value);
-            }else if(strcmp("check_update_interval",name)==0){
-                check_update_interval = parse_int(name,value,0,1000);
-            }else{
-                critical_error("Unknown Configuration", "Configuration '%s' in settings file is not recognized",name);
-            }
+            set_conf(name,value);
         }
         // override custom cell dimensions if custom screen dimensions are present
         if(custom_screen_width){
@@ -240,6 +231,7 @@ void load_conf(){
         if(custom_screen_height){
            custom_cell_height = custom_screen_height / ROWS;
         }
+        dpad_mode = default_dpad_mode;
     }else{
         cf = fopen(settings_file,"w");
     }
@@ -969,6 +961,7 @@ int main() {
 
 
     config_folder(env,activity,cls);
+    set_conf("",""); //set default values of config
     load_conf();
     if(check_update){
         time_t new_time;
