@@ -14,6 +14,7 @@
 #define MAX_LINE_LENGTH 200
 #define MAX_ERROR_LENGTH 200
 #define LEFT_PANEL_WIDTH 20
+#define LEFT_EDGE_WIDTH 2
 #define TOP_LOG_HEIGIHT 3
 #define BOTTOM_BUTTONS_HEIGHT 2
 #define FRAME_INTERVAL 50
@@ -59,6 +60,7 @@ static SDL_Rect grid_box_zoomed;
 static boolean game_started = false;
 static rogueEvent current_event;
 static boolean zoom_toggle = false;
+static char smart_zoom_buffer[ROWS][COLS+1] = {0}; //COLS + 1 to use rows as strings
 
 //Config Values
 static int custom_cell_width;
@@ -83,6 +85,7 @@ static double init_zoom;
 static boolean init_zoom_toggle;
 static double max_zoom;
 static boolean smart_zoom;
+static boolean left_panel_smart_zoom;
 static int filter_mode;
 static boolean check_update;
 static int check_update_interval;
@@ -202,6 +205,7 @@ void set_conf(const char * name,const char * value){
     set_and_parse_conf(init_zoom,2.0,1.0,10.0);
     set_and_parse_conf(max_zoom,4.0,1.0,10.0);
     set_and_parse_conf(smart_zoom,true,false,true);
+    set_and_parse_conf(left_panel_smart_zoom,true,false,true);
     set_and_parse_conf(check_update,true,false,true);
     set_and_parse_conf(check_update_interval,1,0,1000);
     if(!first_run){
@@ -409,33 +413,32 @@ boolean init_font() {
 //Hacky solution to check if confirmation message, menu, inventory or logs are shown
 boolean check_dialog_popup(int16_t c, uint8_t x, uint8_t y){
     //write if c >= 0, check otherwise
-    static char char_buffer[ROWS][COLS+1] = {0}; //COLS + 1 to use rows as strings
     if(!smart_zoom){
         return false;
     }
     if(c >= 0){
-        char_buffer[y][x] = c;
+        smart_zoom_buffer[y][x] = c;
     }else{
         for(int i=0;i<ROWS;i++){
             char * word_pos;
-            if((word_pos = strstr(char_buffer[i],"No")) &&
+            if((word_pos = strstr(smart_zoom_buffer[i],"No")) &&
                     (word_pos = strstr(word_pos,"Yes"))
                     ){
                 return true;
             }
-            if((word_pos = strstr(char_buffer[i],"Quit")) &&
+            if((word_pos = strstr(smart_zoom_buffer[i],"Quit")) &&
                (word_pos = strstr(word_pos,"without")) &&
                (word_pos = strstr(word_pos,"saving"))
                ){
                 return true;
             }
-            if((word_pos = strstr(char_buffer[i],"for")) &&
+            if((word_pos = strstr(smart_zoom_buffer[i],"for")) &&
                (word_pos = strstr(word_pos,"more")) &&
                (word_pos = strstr(word_pos,"info"))
                     ){
                 return true;
             }
-            if((word_pos = strstr(char_buffer[i],"--MORE--"))){
+            if((word_pos = strstr(smart_zoom_buffer[i],"--MORE--"))){
                 return true;
             }
         }
@@ -490,14 +493,6 @@ boolean process_events() {
                         break;
                     }
                 }
-                if(smart_zoom && SDL_PointInRect(&p,&left_panel_box)){
-                    in_left_panel = true;
-                    if(prev_zoom_toggle == unset) {
-                        prev_zoom_toggle = zoom_toggle ? set_true : set_false;
-                    }
-                }else{
-                    in_left_panel = false;
-                }
                 if(is_zoomed() && SDL_PointInRect(&p,&grid_box)){
                     raw_input_x = (raw_input_x-grid_box.x)/zoom_level + grid_box_zoomed.x;
                     raw_input_y = (raw_input_y-grid_box.y)/zoom_level + grid_box_zoomed.y;
@@ -505,6 +500,19 @@ boolean process_events() {
                 if(!double_tap_lock || SDL_TICKS_PASSED(SDL_GetTicks(),finger_down_time+double_tap_interval)){
                     cursor_x = min(COLS - 1,raw_input_x / cell_w);
                     cursor_y = min(ROWS -1,raw_input_y / cell_h);
+                }
+                in_left_panel = false;
+                if(smart_zoom && left_panel_smart_zoom && SDL_PointInRect(&p,&left_panel_box) && cursor_x > LEFT_EDGE_WIDTH){
+                    for(int i=LEFT_EDGE_WIDTH;i<LEFT_PANEL_WIDTH;i++){
+                        char c = smart_zoom_buffer[cursor_y][i];
+                        if(c && !isspace(c)){
+                            in_left_panel = true;
+                            if(prev_zoom_toggle == unset) {
+                                prev_zoom_toggle = zoom_toggle ? set_true : set_false;
+                            }
+                            break;
+                        }
+                    }
                 }
                 current_event.param1 = cursor_x;
                 current_event.param2 = cursor_y;
@@ -593,7 +601,7 @@ boolean process_events() {
                 virtual_keyboard = false;
                 current_event.param1 = cursor_x;
                 current_event.param2 = cursor_y;
-                if(current_event.param1 < 2){
+                if(current_event.param1 < LEFT_EDGE_WIDTH){
                     if(current_event.param2 < 2){
                         current_event.eventType = KEYSTROKE;
                     if(rogue.playbackMode){
