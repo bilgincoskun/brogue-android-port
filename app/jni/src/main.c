@@ -275,6 +275,16 @@ void set_conf(const char * name,const char * value){
     first_run = false;
 }
 
+void free_conf_list(){
+    setting_node * current,*next;
+    current = setting_head.next;
+    while(current){
+       next = current->next;
+       free(current);
+       current = next;
+    }
+}
+
 void load_conf(){
     FILE * cf;
     if (access(settings_file, F_OK) != -1) {
@@ -1070,5 +1080,6 @@ int main() {
         brogue_main(NULL);
 
     }
+    free_conf_list();
     exit(0); //return causes problems
 }
