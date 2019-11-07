@@ -16,11 +16,11 @@ Note that apks require two additional permissions which both are optional:
 
 * Write Access: This permission is to write /sdcard/Brogue. For Android 6.0+ if you do not grant it at runtime it will write to default data folder under Android/data.
 
-#Updates
+# Updates
 
 By default the app check if there is a new version when started. You can disable it via **check_update** config. You can also set the interval of checks via **check_update_interval**
 
-#App Folder
+# App Folder
 
 All versions will try to use /sdcard/Brogue. If write permission is not granted, they will use /sdcard/Android/org.brogue.brogue.[version suffix]/files/ instead. Note that since all save files etc. is written under a folder specific to the that version even multiple versions are installed they will not override others' files under /sdcard/Brogue.
 
