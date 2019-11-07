@@ -21,6 +21,7 @@
 #define ZOOM_CHANGED_INTERVAL 300
 #define ZOOM_TOGGLED_INTERVAL 100
 #define DAY_TO_TIMESTAMP 86400
+#define SETTING_NAME_MAX_LEN 30
 
 typedef struct {
     SDL_Texture *c;
@@ -32,6 +33,28 @@ typedef enum{
    set_true,
    unset,
 } bool_store;
+
+typedef enum {
+    boolean_,
+    int_,
+    double_,
+    section_,
+} setting_type;
+
+typedef struct setting_node{
+    char name[SETTING_NAME_MAX_LEN];
+    setting_type t;
+    union {
+        boolean b;
+        int i;
+        double d;
+    } default_,min_,max_;
+    void * value;
+    struct setting_node * next;
+} setting_node;
+
+setting_node setting_head = {0}; //list starts from setting_head->next
+
 struct brogueConsole currentConsole;
 extern playerCharacter rogue;
 extern creature player;
@@ -170,9 +193,35 @@ double parse_float(const char * name,const char * value,double min,double max){
                     int : parse_int, \
                     boolean: parse_int, \
                     double: parse_float)(name,value,min,max)
+#define type_val(var) _Generic((var),\
+    boolean:boolean_,\
+    int: int_,\
+    double:double_)
 #define set_and_parse_conf(var_name,default,min,max) { \
     if(first_run){ \
         var_name = default; \
+        setting_cursor->next =  (setting_node *) malloc(sizeof(setting_node)); \
+        setting_cursor = setting_cursor->next; \
+        strcpy(setting_cursor->name,#var_name); \
+        setting_cursor->t = type_val(default); \
+        switch(setting_cursor->t){\
+            case(boolean_): \
+                setting_cursor->default_.b = default; \
+                setting_cursor->min_.b = min; \
+                setting_cursor->max_.b = max; \
+                break; \
+            case(int_): \
+                setting_cursor->default_.i = default; \
+                setting_cursor->min_.i = min; \
+                setting_cursor->max_.i = max; \
+                break; \
+            case(double_): \
+                setting_cursor->default_.d = default; \
+                setting_cursor->min_.d = min; \
+                setting_cursor->max_.d = max; \
+                break; \
+        }\
+        setting_cursor->value = (void *) &var_name; \
     } \
     else if(strcmp(#var_name,name)==0) { \
         var_name = parse_val(name, value, min, max); \
@@ -180,8 +229,17 @@ double parse_float(const char * name,const char * value,double min,double max){
     } \
 }
 
+#define setting_section(title) {\
+    setting_cursor->next =  (setting_node *) malloc(sizeof(setting_node)); \
+    setting_cursor = setting_cursor->next; \
+    strcpy(setting_cursor->name,title); \
+    setting_cursor->t = section_; \
+}
+
 void set_conf(const char * name,const char * value){
     static boolean first_run = true;
+    static setting_node * setting_cursor = &setting_head;
+    setting_section("Display Settings");
     set_and_parse_conf(custom_cell_width,0,1,LONG_MAX);
     set_and_parse_conf(custom_cell_height,0,1,LONG_MAX);
     set_and_parse_conf(custom_screen_width,0,1,LONG_MAX);
@@ -191,6 +249,7 @@ void set_conf(const char * name,const char * value){
     set_and_parse_conf(filter_mode,2,0,2);
     set_and_parse_conf(double_tap_lock,true,false,true);
     set_and_parse_conf(double_tap_interval,500,100,1e5);
+    setting_section("Dpad Settings");
     set_and_parse_conf(dpad_enabled,true,false,true);
     set_and_parse_conf(dpad_width,0,1,LONG_MAX);
     set_and_parse_conf(dpad_x_pos,0,1,LONG_MAX);
@@ -210,6 +269,8 @@ void set_conf(const char * name,const char * value){
     set_and_parse_conf(check_update_interval,1,0,1000);
     if(!first_run){
         critical_error("Unknown Configuration", "Configuration '%s' in settings file is not recognized",name);
+    }else{
+        setting_cursor->next = NULL;
     }
     first_run = false;
 }
