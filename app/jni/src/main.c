@@ -50,17 +50,15 @@ typedef struct setting_node{
         double d;
     } default_,min_,max_;
     void * value;
-    struct setting_node * next;
 } setting_node;
 
-setting_node setting_head = {0}; //list starts from setting_head->next
 
 struct brogueConsole currentConsole;
 extern playerCharacter rogue;
 extern creature player;
 
-const char settings_file[] = "settings.txt";
-
+static const char settings_file[] = "settings.txt";
+static setting_node * setting_list = NULL;
 static SDL_Window *window;
 static SDL_Renderer *renderer;
 static SDL_Texture * screen_texture;
@@ -84,6 +82,7 @@ static boolean game_started = false;
 static rogueEvent current_event;
 static boolean zoom_toggle = false;
 static char smart_zoom_buffer[ROWS][COLS+1] = {0}; //COLS + 1 to use rows as strings
+static int setting_len = 0;
 
 //Config Values
 static int custom_cell_width;
@@ -198,10 +197,11 @@ double parse_float(const char * name,const char * value,double min,double max){
     int: int_,\
     double:double_)
 #define set_and_parse_conf(var_name,default,min,max) { \
-    if(first_run){ \
+    if(count_len){ \
+        setting_len ++; \
+    }else  if(first_run){ \
         var_name = default; \
-        setting_cursor->next =  (setting_node *) malloc(sizeof(setting_node)); \
-        setting_cursor = setting_cursor->next; \
+        setting_node * setting_cursor = setting_list + index; \
         strcpy(setting_cursor->name,#var_name); \
         setting_cursor->t = type_val(default); \
         switch(setting_cursor->t){\
@@ -222,6 +222,7 @@ double parse_float(const char * name,const char * value,double min,double max){
                 break; \
         }\
         setting_cursor->value = (void *) &var_name; \
+        index++; \
     } \
     else if(strcmp(#var_name,name)==0) { \
         var_name = parse_val(name, value, min, max); \
@@ -229,17 +230,10 @@ double parse_float(const char * name,const char * value,double min,double max){
     } \
 }
 
-#define setting_section(title) {\
-    setting_cursor->next =  (setting_node *) malloc(sizeof(setting_node)); \
-    setting_cursor = setting_cursor->next; \
-    strcpy(setting_cursor->name,title); \
-    setting_cursor->t = section_; \
-}
-
 void set_conf(const char * name,const char * value){
     static boolean first_run = true;
-    static setting_node * setting_cursor = &setting_head;
-    setting_section("Display Settings");
+    static int count_len = true;
+    int index=0;
     set_and_parse_conf(custom_cell_width,0,1,LONG_MAX);
     set_and_parse_conf(custom_cell_height,0,1,LONG_MAX);
     set_and_parse_conf(custom_screen_width,0,1,LONG_MAX);
@@ -249,7 +243,6 @@ void set_conf(const char * name,const char * value){
     set_and_parse_conf(filter_mode,2,0,2);
     set_and_parse_conf(double_tap_lock,true,false,true);
     set_and_parse_conf(double_tap_interval,500,100,1e5);
-    setting_section("Dpad Settings");
     set_and_parse_conf(dpad_enabled,true,false,true);
     set_and_parse_conf(dpad_width,0,1,LONG_MAX);
     set_and_parse_conf(dpad_x_pos,0,1,LONG_MAX);
@@ -269,19 +262,12 @@ void set_conf(const char * name,const char * value){
     set_and_parse_conf(check_update_interval,1,0,1000);
     if(!first_run){
         critical_error("Unknown Configuration", "Configuration '%s' in settings file is not recognized",name);
+    }else if(count_len){
+        count_len = false;
+        setting_list = malloc(sizeof(setting_node)*setting_len);
+        set_conf(name,value);
     }else{
-        setting_cursor->next = NULL;
-    }
-    first_run = false;
-}
-
-void free_conf_list(){
-    setting_node * current,*next;
-    current = setting_head.next;
-    while(current){
-       next = current->next;
-       free(current);
-       current = next;
+        first_run = false;
     }
 }
 
@@ -1080,6 +1066,6 @@ int main() {
         brogue_main(NULL);
 
     }
-    free_conf_list();
+    free(setting_list);
     exit(0); //return causes problems
 }
