@@ -196,6 +196,7 @@ double parse_float(const char * name,const char * value,double min,double max){
     boolean:boolean_,\
     int: int_,\
     double:double_)
+
 #define set_and_parse_conf(var_name,default,min,max) { \
     if(count_len){ \
         setting_len ++; \
@@ -229,11 +230,23 @@ double parse_float(const char * name,const char * value,double min,double max){
         return; \
     } \
 }
+#define add_section(title) { \
+    if(count_len){ \
+        setting_len ++; \
+    }else  if(first_run){ \
+        setting * setting_cursor = setting_list + index; \
+        strcpy(setting_cursor->name,title); \
+        setting_cursor->t = section_; \
+        index++; \
+    } \
+}
+
 
 void set_conf(const char * name,const char * value){
     static boolean first_run = true;
     static int count_len = true;
     int index=0;
+    add_section("Screen Settings");
     set_and_parse_conf(custom_cell_width,0,1,LONG_MAX);
     set_and_parse_conf(custom_cell_height,0,1,LONG_MAX);
     set_and_parse_conf(custom_screen_width,0,1,LONG_MAX);
@@ -241,23 +254,26 @@ void set_conf(const char * name,const char * value){
     set_and_parse_conf(force_portrait,false,false,true);
     set_and_parse_conf(dynamic_colors,true,false,true);
     set_and_parse_conf(filter_mode,2,0,2);
+    add_section("Input Settings");
     set_and_parse_conf(double_tap_lock,true,false,true);
     set_and_parse_conf(double_tap_interval,500,100,1e5);
     set_and_parse_conf(dpad_enabled,true,false,true);
+    set_and_parse_conf(allow_dpad_mode_change,true,false,true);
     set_and_parse_conf(dpad_width,0,1,LONG_MAX);
     set_and_parse_conf(dpad_x_pos,0,1,LONG_MAX);
     set_and_parse_conf(dpad_y_pos,0,1,LONG_MAX);
-    set_and_parse_conf(allow_dpad_mode_change,true,false,true);
     set_and_parse_conf(default_dpad_mode,true,false,true);
     set_and_parse_conf(dpad_transparency,75,0,255);
     set_and_parse_conf(long_press_interval,750,100,1e5);
     set_and_parse_conf(keyboard_always_on,false,false,true);
+    add_section("Zoom Settings");
     set_and_parse_conf(zoom_mode,1,0,2);
     set_and_parse_conf(init_zoom_toggle,false,false,true);
     set_and_parse_conf(init_zoom,2.0,1.0,10.0);
     set_and_parse_conf(max_zoom,4.0,1.0,10.0);
     set_and_parse_conf(smart_zoom,true,false,true);
     set_and_parse_conf(left_panel_smart_zoom,true,false,true);
+    add_section("Update Settings");
     set_and_parse_conf(check_update,true,false,true);
     set_and_parse_conf(check_update_interval,1,0,1000);
     if(!first_run){
