@@ -41,7 +41,7 @@ typedef enum {
     section_,
 } setting_type;
 
-typedef struct setting_node{
+typedef struct {
     char name[SETTING_NAME_MAX_LEN];
     setting_type t;
     union {
@@ -50,7 +50,7 @@ typedef struct setting_node{
         double d;
     } default_,min_,max_;
     void * value;
-} setting_node;
+} setting;
 
 
 struct brogueConsole currentConsole;
@@ -58,7 +58,8 @@ extern playerCharacter rogue;
 extern creature player;
 
 static const char settings_file[] = "settings.txt";
-static setting_node * setting_list = NULL;
+static int setting_len = 0;
+static setting * setting_list = NULL;
 static SDL_Window *window;
 static SDL_Renderer *renderer;
 static SDL_Texture * screen_texture;
@@ -82,7 +83,6 @@ static boolean game_started = false;
 static rogueEvent current_event;
 static boolean zoom_toggle = false;
 static char smart_zoom_buffer[ROWS][COLS+1] = {0}; //COLS + 1 to use rows as strings
-static int setting_len = 0;
 
 //Config Values
 static int custom_cell_width;
@@ -201,7 +201,7 @@ double parse_float(const char * name,const char * value,double min,double max){
         setting_len ++; \
     }else  if(first_run){ \
         var_name = default; \
-        setting_node * setting_cursor = setting_list + index; \
+        setting * setting_cursor = setting_list + index; \
         strcpy(setting_cursor->name,#var_name); \
         setting_cursor->t = type_val(default); \
         switch(setting_cursor->t){\
@@ -264,7 +264,7 @@ void set_conf(const char * name,const char * value){
         critical_error("Unknown Configuration", "Configuration '%s' in settings file is not recognized",name);
     }else if(count_len){
         count_len = false;
-        setting_list = malloc(sizeof(setting_node)*setting_len);
+        setting_list = malloc(sizeof(setting)*setting_len);
         set_conf(name,value);
     }else{
         first_run = false;
