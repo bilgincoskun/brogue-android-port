@@ -71,6 +71,8 @@ static glyph_cache font_cache[UCHAR_MAX];
 static SDL_Texture * dpad_image_select;
 static SDL_Texture * dpad_image_move;
 static SDL_Rect dpad_area;
+static SDL_Texture * settings_image;
+static SDL_Rect settings_draw_area,settings_select_area;
 static boolean dpad_mode = true;
 static boolean ctrl_pressed = false;
 static double zoom_level = 1.0;
@@ -83,6 +85,7 @@ static boolean game_started = false;
 static rogueEvent current_event;
 static boolean zoom_toggle = false;
 static char smart_zoom_buffer[ROWS][COLS+1] = {0}; //COLS + 1 to use rows as strings
+static boolean restart_game = false;
 
 //Config Values
 static int custom_cell_width;
@@ -157,6 +160,19 @@ void create_assets(){
         dpad_area.x = (dpad_x_pos)?dpad_x_pos: 3*cell_w;
         dpad_area.y = (dpad_y_pos)?dpad_y_pos :(display.h - (area_width + 2*cell_h));
     }
+    {
+        int area_width = min(cell_w*4,cell_h*4);
+        settings_draw_area.h = settings_draw_area.w = area_width;
+        settings_draw_area.x = settings_draw_area.y = min(cell_w/2,cell_h/2);
+        settings_select_area.x = settings_select_area.y = 0;
+        settings_select_area.h = settings_select_area.w = settings_draw_area.h+settings_draw_area.x;
+        settings_select_area = settings_draw_area;
+        SDL_Surface *settings_surface = SDL_LoadBMP("settings.bmp");
+        settings_image = SDL_CreateTextureFromSurface(renderer, settings_surface);
+        SDL_SetTextureAlphaMod(settings_image, COLOR_MAX/3);
+        SDL_FreeSurface(settings_surface);
+    }
+
     if(keyboard_always_on){
         SDL_StartTextInput();
     }
@@ -559,6 +575,11 @@ boolean process_events() {
                 raw_input_x = event.tfinger.x * display.w;
                 raw_input_y = event.tfinger.y * display.h;
                 SDL_Point p = {.x = raw_input_x,.y=raw_input_y};
+                if(!game_started && SDL_PointInRect(&p,&settings_select_area)){
+                    //TODO Settings Loop
+                    restart_game = true;
+                    rogue.nextGame = NG_QUIT;
+                }
                 if(dpad_enabled){
                     if(SDL_PointInRect(&p,&dpad_area)){
                         on_dpad = true;
@@ -845,7 +866,7 @@ boolean TouchScreenPauseForMilliseconds(short milliseconds){
     if(screen_changed) {
         screen_changed = false;
         SDL_SetRenderTarget(renderer, NULL);
-        if(rogue.depthLevel == 0 || rogue.gameHasEnded || rogue.quit || player.currentHP <= 0){
+        if(rogue.depthLevel == 0 || rogue.gameHasEnded || rogue.quit || player.currentHP <= 0 || rogue.nextGame == NG_HIGH_SCORES){
             zoom_level = 1.0;
             game_started = false;
         }else if(!game_started){
@@ -853,8 +874,12 @@ boolean TouchScreenPauseForMilliseconds(short milliseconds){
             zoom_level = init_zoom;
             zoom_toggle = init_zoom_toggle;
         }
+
         if(!is_zoomed()){
             SDL_RenderCopy(renderer, screen_texture, NULL, NULL);
+            if(!game_started){
+                SDL_RenderCopy(renderer,settings_image,NULL,&settings_draw_area);
+            }
         }else{
             double width = (COLS - LEFT_PANEL_WIDTH) * cell_w / zoom_level;
             double height = (ROWS - TOP_LOG_HEIGIHT - BOTTOM_BUTTONS_HEIGHT)*cell_h/zoom_level;
@@ -880,6 +905,7 @@ boolean TouchScreenPauseForMilliseconds(short milliseconds){
         if(dpad_enabled){
             SDL_RenderCopy(renderer, dpad_mode?dpad_image_move:dpad_image_select, NULL, &dpad_area);
         }
+
         SDL_RenderPresent(renderer);
         SDL_SetRenderTarget(renderer, screen_texture);
     }
@@ -1069,19 +1095,22 @@ int main() {
         }
     }
 
+    do {
+        restart_game = false;
+        SDL_Thread *thread = SDL_CreateThreadWithStackSize(brogue_main, "Brogue", 8 * 1024 * 1024,
+                                                           NULL);
+        if (thread != NULL) {
+            int result;
+            SDL_WaitThread(thread, &result);
+        } else {
+            SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_WARNING, "Thread Error",
+                                     "Cannot create a thread with sufficient stack size. "
+                                     "The game will start nonetheless but be aware that some seeds may cause the game "
+                                     "to crash in this mode.", NULL);
+            brogue_main(NULL);
 
-    SDL_Thread *thread = SDL_CreateThreadWithStackSize(brogue_main,"Brogue",8*1024*1024,NULL);
-    if(thread != NULL){
-        int result;
-        SDL_WaitThread(thread,&result);
-    }else{
-        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_WARNING,"Thread Error",
-                "Cannot create a thread with sufficient stack size. "
-                "The game will start nonetheless but be aware that some seeds may cause the game "
-                "to crash in this mode.",NULL);
-        brogue_main(NULL);
-
-    }
+        }
+    }while(restart_game);
     free(setting_list);
     exit(0); //return causes problems
 }
