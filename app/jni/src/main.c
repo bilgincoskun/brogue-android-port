@@ -137,10 +137,10 @@ void critical_error(const char* error_title,const char* error_message,...){
     exit(-1);
 }
 
-boolean check_smart_zoom_buffer(char * line,int word_no,...){
+boolean check_smart_zoom_buffer(int line_no,int word_no,...){
     va_list word_list;
     va_start(word_list,word_no);
-    char * word_pos = line;
+    char * word_pos = smart_zoom_buffer[line_no];
     for(int i = 0; i < word_no; i++){
         word_pos = strstr(word_pos,va_arg(word_list,char *));
         if(!word_pos){
@@ -518,17 +518,16 @@ boolean check_dialog_popup(int16_t c, uint8_t x, uint8_t y){
         smart_zoom_buffer[y][x] = c;
     }else{
         for(int i=0;i<ROWS;i++){
-            char * line = smart_zoom_buffer[i];
-            if(check_smart_zoom_buffer(line,2,"No","Yes")){
+            if(check_smart_zoom_buffer(i,2,"No","Yes")){
                 return true;
             }
-            if(check_smart_zoom_buffer(line,3,"Quit","without","saving")){
+            if(check_smart_zoom_buffer(i,3,"Quit","without","saving")){
                 return true;
             }
-            if(check_smart_zoom_buffer(line,3,"for","more","info")){
+            if(check_smart_zoom_buffer(i,3,"for","more","info")){
                 return true;
             }
-            if(check_smart_zoom_buffer(line,1,"--MORE--")){
+            if(check_smart_zoom_buffer(i,1,"--MORE--")){
                 return true;
             }
         }
