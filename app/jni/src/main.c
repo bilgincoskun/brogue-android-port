@@ -138,6 +138,22 @@ void critical_error(const char* error_title,const char* error_message,...){
     exit(-1);
 }
 
+boolean check_smart_zoom_buffer(char * line,int word_no,...){
+    va_list word_list;
+    va_start(word_list,word_no);
+    char * word_pos = line;
+    for(int i = 0; i < word_no; i++){
+        word_pos = strstr(word_pos,va_arg(word_list,char *));
+        if(!word_pos){
+            va_end(word_list);
+            return false;
+        }
+    }
+    va_end(word_list);
+    return true;
+
+}
+
 void create_assets(){
     if (SDL_CreateWindowAndRenderer(display.w, display.h, SDL_WINDOW_FULLSCREEN | SDL_WINDOW_ALWAYS_ON_TOP, &window,
                                     &renderer)) {
@@ -511,25 +527,17 @@ boolean check_dialog_popup(int16_t c, uint8_t x, uint8_t y){
         smart_zoom_buffer[y][x] = c;
     }else{
         for(int i=0;i<ROWS;i++){
-            char * word_pos;
-            if((word_pos = strstr(smart_zoom_buffer[i],"No")) &&
-                    (word_pos = strstr(word_pos,"Yes"))
-                    ){
+            char * line = smart_zoom_buffer[i];
+            if(check_smart_zoom_buffer(line,2,"No","Yes")){
                 return true;
             }
-            if((word_pos = strstr(smart_zoom_buffer[i],"Quit")) &&
-               (word_pos = strstr(word_pos,"without")) &&
-               (word_pos = strstr(word_pos,"saving"))
-               ){
+            if(check_smart_zoom_buffer(line,3,"Quit","without","saving")){
                 return true;
             }
-            if((word_pos = strstr(smart_zoom_buffer[i],"for")) &&
-               (word_pos = strstr(word_pos,"more")) &&
-               (word_pos = strstr(word_pos,"info"))
-                    ){
+            if(check_smart_zoom_buffer(line,3,"for","more","info")){
                 return true;
             }
-            if((word_pos = strstr(smart_zoom_buffer[i],"--MORE--"))){
+            if(check_smart_zoom_buffer(line,1,"--MORE--")){
                 return true;
             }
         }
