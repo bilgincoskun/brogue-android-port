@@ -72,7 +72,6 @@ static SDL_Texture * dpad_image_select;
 static SDL_Texture * dpad_image_move;
 static SDL_Rect dpad_area;
 static SDL_Texture * settings_image;
-static SDL_Rect settings_draw_area,settings_select_area;
 static boolean dpad_mode = true;
 static boolean ctrl_pressed = false;
 static double zoom_level = 1.0;
@@ -177,18 +176,10 @@ void create_assets(){
         dpad_area.x = (dpad_x_pos)?dpad_x_pos: 3*cell_w;
         dpad_area.y = (dpad_y_pos)?dpad_y_pos :(display.h - (area_width + 2*cell_h));
     }
-    {
-        int area_width = min(cell_w*4,cell_h*4);
-        settings_draw_area.h = settings_draw_area.w = area_width;
-        settings_draw_area.x = settings_draw_area.y = min(cell_w/2,cell_h/2);
-        settings_select_area.x = settings_select_area.y = 0;
-        settings_select_area.h = settings_select_area.w = settings_draw_area.h+settings_draw_area.x;
-        settings_select_area = settings_draw_area;
-        SDL_Surface *settings_surface = SDL_LoadBMP("settings.bmp");
-        settings_image = SDL_CreateTextureFromSurface(renderer, settings_surface);
-        SDL_SetTextureAlphaMod(settings_image, COLOR_MAX/3);
-        SDL_FreeSurface(settings_surface);
-    }
+    SDL_Surface *settings_surface = SDL_LoadBMP("settings.bmp");
+    settings_image = SDL_CreateTextureFromSurface(renderer, settings_surface);
+    SDL_SetTextureAlphaMod(settings_image, COLOR_MAX/3);
+    SDL_FreeSurface(settings_surface);
 
     if(keyboard_always_on){
         SDL_StartTextInput();
@@ -585,12 +576,12 @@ boolean process_events() {
                 raw_input_x = event.tfinger.x * display.w;
                 raw_input_y = event.tfinger.y * display.h;
                 SDL_Point p = {.x = raw_input_x,.y=raw_input_y};
-                if(!game_started && SDL_PointInRect(&p,&settings_select_area)){
+                if(!game_started && SDL_PointInRect(&p,&dpad_area)){
                     //TODO Settings Loop
                     restart_game = true;
                     rogue.nextGame = NG_QUIT;
                 }
-                if(dpad_enabled){
+                if(dpad_enabled && game_started){
                     if(SDL_PointInRect(&p,&dpad_area)){
                         on_dpad = true;
                         finger_down_time = SDL_GetTicks();
@@ -637,7 +628,7 @@ boolean process_events() {
                 }
                 raw_input_x = event.tfinger.x * display.w;
                 raw_input_y = event.tfinger.y * display.h;
-                if(dpad_enabled && on_dpad){
+                if(dpad_enabled && on_dpad && game_started){
                     on_dpad = false;
                     if(finger_down_time == 0){
                         break;
@@ -898,7 +889,7 @@ boolean TouchScreenPauseForMilliseconds(short milliseconds){
         if(!is_zoomed()){
             SDL_RenderCopy(renderer, screen_texture, NULL, NULL);
             if(!game_started){
-                SDL_RenderCopy(renderer,settings_image,NULL,&settings_draw_area);
+                SDL_RenderCopy(renderer,settings_image,NULL,&dpad_area);
             }
         }else{
             double width = (COLS - LEFT_PANEL_WIDTH) * cell_w / zoom_level;
@@ -922,7 +913,7 @@ boolean TouchScreenPauseForMilliseconds(short milliseconds){
             SDL_RenderCopy(renderer,screen_texture,&button_panel_box,&button_panel_box);
             SDL_RenderCopy(renderer,screen_texture,&grid_box_zoomed,&grid_box);
         }
-        if(dpad_enabled){
+        if(dpad_enabled && game_started){
             SDL_RenderCopy(renderer, dpad_mode?dpad_image_move:dpad_image_select, NULL, &dpad_area);
         }
 
