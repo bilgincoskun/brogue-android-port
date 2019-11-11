@@ -864,7 +864,17 @@ void TouchScreenGameLoop() {
         critical_error("Font Error","Resolution/cell size is too small for minimum allowed font size");
     }
     SDL_SetEventFilter(suspend_resume_filter, NULL);
-    rogueMain();
+    while(true){
+        rogueMain();
+        if(!restart_game){
+            break;
+        }
+        rogue.nextGame = NG_NOTHING;
+        rogue.nextGamePath[0] = '\0';
+        rogue.nextGameSeed = 0;
+        restart_game = false;
+        //TODO reset screen and font when changed
+    }
     destroy_assets();
     TTF_CloseFont(font);
     TTF_Quit();
@@ -1111,22 +1121,19 @@ int main() {
         }
     }
 
-    do {
-        restart_game = false;
-        SDL_Thread *thread = SDL_CreateThreadWithStackSize(brogue_main, "Brogue", 8 * 1024 * 1024,
-                                                           NULL);
-        if (thread != NULL) {
-            int result;
-            SDL_WaitThread(thread, &result);
-        } else {
-            SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_WARNING, "Thread Error",
-                                     "Cannot create a thread with sufficient stack size. "
-                                     "The game will start nonetheless but be aware that some seeds may cause the game "
-                                     "to crash in this mode.", NULL);
-            brogue_main(NULL);
+    SDL_Thread *thread = SDL_CreateThreadWithStackSize(brogue_main, "Brogue", 8 * 1024 * 1024,
+                                                       NULL);
+    if (thread != NULL) {
+        int result;
+        SDL_WaitThread(thread, &result);
+    } else {
+        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_WARNING, "Thread Error",
+                                 "Cannot create a thread with sufficient stack size. "
+                                 "The game will start nonetheless but be aware that some seeds may cause the game "
+                                 "to crash in this mode.", NULL);
+        brogue_main(NULL);
 
-        }
-    }while(restart_game);
+    }
     free(setting_list);
     exit(0); //return causes problems
 }
