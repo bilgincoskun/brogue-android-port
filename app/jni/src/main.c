@@ -114,6 +114,7 @@ static boolean left_panel_smart_zoom;
 static int filter_mode;
 static boolean check_update;
 static int check_update_interval;
+static boolean ask_for_update_check;
 
 void destroy_assets(){
     SDL_DestroyRenderer(renderer);
@@ -292,6 +293,7 @@ void set_conf(const char * name,const char * value){
     add_section("Update Settings");
     set_and_parse_conf(check_update,true,false,true);
     set_and_parse_conf(check_update_interval,1,0,1000);
+    set_and_parse_conf(ask_for_update_check,false,false,true);
     if(!first_run){
         critical_error("Unknown Configuration", "Configuration '%s' in settings file is not recognized",name);
     }else if(count_len){
@@ -963,24 +965,26 @@ struct brogueConsole TouchScreenConsole = {
 };
 
 boolean git_version_check(JNIEnv * env,jobject activity,jclass cls){
-    const SDL_MessageBoxButtonData buttons[] = {
-            { 0, 0, "Later" },
-            { SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT, 1, "Check Now" },
-    };
+    if(ask_for_update_check) {
+        const SDL_MessageBoxButtonData buttons[] = {
+                {0,                                       0, "Later"},
+                {SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT, 1, "Check Now"},
+        };
 
-    const SDL_MessageBoxData messageboxdata = {
-            SDL_MESSAGEBOX_INFORMATION,
-            NULL,
-            "Check New Version",
-            "Do you want to check new version now?",
-            SDL_arraysize(buttons),
-            buttons,
-            NULL,
-    };
-    int buttonid;
-    SDL_ShowMessageBox(&messageboxdata,&buttonid);
-    if( buttonid == 0){
-        return true;
+        const SDL_MessageBoxData messageboxdata = {
+                SDL_MESSAGEBOX_INFORMATION,
+                NULL,
+                "Check New Version",
+                "Do you want to check new version now?",
+                SDL_arraysize(buttons),
+                buttons,
+                NULL,
+        };
+        int buttonid;
+        SDL_ShowMessageBox(&messageboxdata, &buttonid);
+        if (buttonid == 0) {
+            return true;
+        }
     }
     jmethodID method_id = (*env)->GetMethodID(env,cls, "gitVersionCheck", "()Ljava/lang/String;");
     jstring ver_ = (*env)->CallObjectMethod(env,activity, method_id);
@@ -995,19 +999,23 @@ boolean git_version_check(JNIEnv * env,jobject activity,jclass cls){
             SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION,"New Version Found",version_message,NULL);
             jmethodID method_id = (*env)->GetMethodID(env,cls, "openDownloadLink", "()V");
             (*env)->CallVoidMethod(env,activity, method_id);
-        }else{
+        }else if (ask_for_update_check){
             SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION,"No new Version","Already using latest version",NULL);
         }
         return_value = true;
         break;
         case '1': //Timeout Error
-            SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION,error_title,"Connection timed out",NULL);
+            if(ask_for_update_check)
+                SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION,error_title,"Connection timed out",NULL);
             break;
         case '2': //JSON Error
-            SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION,error_title,"Cannot parse json",NULL);
+
+            if(ask_for_update_check)
+                SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION,error_title,"Cannot parse json",NULL);
             break;
         case '3': //Connection Error
-            SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION,error_title,"Cannot download version info",NULL);
+            if(ask_for_update_check)
+                SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION,error_title,"Cannot download version info",NULL);
             break;
 
     }
