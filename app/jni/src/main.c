@@ -9,6 +9,7 @@
 #include "SDL.h"
 #include "SDL_ttf.h"
 #include "platform.h"
+#include "IncludeGlobals.h"
 
 #define COLOR_MAX UCHAR_MAX
 #define MAX_LINE_LENGTH 200
@@ -21,7 +22,8 @@
 #define ZOOM_CHANGED_INTERVAL 300
 #define ZOOM_TOGGLED_INTERVAL 100
 #define DAY_TO_TIMESTAMP 86400
-#define SETTING_NAME_MAX_LEN 30
+#define SETTING_NAME_MAX_LEN 25
+#define SETTING_VALUE_MAX_LEN 11
 
 typedef struct {
     SDL_Texture *c;
@@ -49,6 +51,7 @@ typedef struct {
         int i;
         double d;
     } default_,min_,max_;
+    short xLoc,yLoc;
     void * value;
 } setting;
 
@@ -230,7 +233,7 @@ double parse_float(const char * name,const char * value,double min,double max){
         var_name = default; \
         setting * setting_cursor = setting_list + index; \
         strcpy(setting_cursor->name,#var_name); \
-        setting_cursor->t = type_val(default); \
+        setting_cursor->t = type_val(min); \
         switch(setting_cursor->t){\
             case(boolean_): \
                 setting_cursor->default_.b = default; \
@@ -256,6 +259,9 @@ double parse_float(const char * name,const char * value,double min,double max){
         return; \
     } \
 }
+
+#define set_and_parse_bool_conf(var_name,default) set_and_parse_conf(var_name,default,(char) false,true)
+
 #define add_section(title) { \
     if(count_len){ \
         setting_len ++; \
@@ -277,32 +283,32 @@ void set_conf(const char * name,const char * value){
     set_and_parse_conf(custom_cell_height,0,1,LONG_MAX);
     set_and_parse_conf(custom_screen_width,0,1,LONG_MAX);
     set_and_parse_conf(custom_screen_height,0,1,LONG_MAX);
-    set_and_parse_conf(force_portrait,false,false,true);
-    set_and_parse_conf(dynamic_colors,true,false,true);
+    set_and_parse_bool_conf(force_portrait,false);
+    set_and_parse_bool_conf(dynamic_colors,true);
     set_and_parse_conf(filter_mode,2,0,2);
     add_section("Input Settings");
-    set_and_parse_conf(double_tap_lock,true,false,true);
+    set_and_parse_bool_conf(double_tap_lock,true);
     set_and_parse_conf(double_tap_interval,500,100,1e5);
-    set_and_parse_conf(dpad_enabled,true,false,true);
-    set_and_parse_conf(allow_dpad_mode_change,true,false,true);
+    set_and_parse_bool_conf(dpad_enabled,true);
+    set_and_parse_bool_conf(allow_dpad_mode_change,true);
     set_and_parse_conf(dpad_width,0,1,LONG_MAX);
     set_and_parse_conf(dpad_x_pos,0,1,LONG_MAX);
     set_and_parse_conf(dpad_y_pos,0,1,LONG_MAX);
-    set_and_parse_conf(default_dpad_mode,true,false,true);
+    set_and_parse_bool_conf(default_dpad_mode,true);
     set_and_parse_conf(dpad_transparency,75,0,255);
     set_and_parse_conf(long_press_interval,750,100,1e5);
-    set_and_parse_conf(keyboard_always_on,false,false,true);
+    set_and_parse_bool_conf(keyboard_always_on,false);
     add_section("Zoom Settings");
     set_and_parse_conf(zoom_mode,1,0,2);
-    set_and_parse_conf(init_zoom_toggle,false,false,true);
+    set_and_parse_bool_conf(init_zoom_toggle,false);
     set_and_parse_conf(init_zoom,2.0,1.0,10.0);
     set_and_parse_conf(max_zoom,4.0,1.0,10.0);
-    set_and_parse_conf(smart_zoom,true,false,true);
-    set_and_parse_conf(left_panel_smart_zoom,true,false,true);
+    set_and_parse_bool_conf(smart_zoom,true);
+    set_and_parse_bool_conf(left_panel_smart_zoom,true);
     add_section("Update Settings");
-    set_and_parse_conf(check_update,true,false,true);
+    set_and_parse_bool_conf(check_update,true);
     set_and_parse_conf(check_update_interval,1,0,1000);
-    set_and_parse_conf(ask_for_update_check,false,false,true);
+    set_and_parse_bool_conf(ask_for_update_check,false);
     if(!first_run){
         critical_error("Unknown Configuration", "Configuration '%s' in settings file is not recognized",name);
     }else if(count_len){
@@ -538,6 +544,103 @@ boolean check_dialog_popup(int16_t c, uint8_t x, uint8_t y){
 }
 
 
+
+void to_buffer(uchar ch,
+                 short xLoc, short yLoc,
+                 short foreRed, short foreGreen, short foreBlue,
+                 short backRed, short backGreen, short backBlue){
+   displayBuffer[xLoc][yLoc] = (cellDisplayBuffer) {.character = ch,
+                                                    .foreColorComponents = {foreRed,foreGreen,foreBlue},
+                                                    .backColorComponents = {backRed,backGreen,backBlue},
+                                                    .needsUpdate = true
+   };
+}
+
+void redraw_value(int index){
+    setting s = setting_list[index];
+    int start = s.xLoc + SETTING_NAME_MAX_LEN;
+    char buffer[SETTING_VALUE_MAX_LEN-2] = {0};
+    switch(s.t){
+        case boolean_:
+            {
+                boolean value =* (boolean *) s.value;
+                strcpy(buffer,value?"true ":"false");
+            }
+            break;
+        case int_:
+            {
+                int value = *(int *)  s.value;
+                sprintf(buffer,"%d",value);
+            }
+            break;
+        case double_:
+            {
+                double value = *(double *)  s.value;
+                sprintf(buffer,"%.1f",value);
+            }
+            break;
+    }
+    if(s.t != section_) {
+        to_buffer('-', start, s.yLoc, 0, 0, 0, 60, 60, 60);
+        to_buffer('+', start + SETTING_VALUE_MAX_LEN - 1, s.yLoc, 0, 0, 0, 60, 60, 60);
+        for (int i = 0; i < SETTING_VALUE_MAX_LEN - 2; i++) {
+            to_buffer(' ', i + start + 1, s.yLoc, 0, 0, 0, 100, 100, 100);
+        }
+        int offset = (SETTING_VALUE_MAX_LEN - 2 - strlen(buffer)) / 2;
+        for (int i = 0;buffer[i]; i++) {
+            to_buffer(buffer[i], i + start + 1 + offset, s.yLoc, 0, 0, 0, 100, 100, 100);
+        }
+
+
+    }
+}
+
+void settings_menu() {
+    clearDisplayBuffer(displayBuffer);
+    short xLoc=3,yLoc=1;
+    for(int i=0;i<setting_len;i++){
+        setting_list[i].xLoc = xLoc;
+        setting_list[i].yLoc = yLoc;
+        redraw_value(i);
+        char * name = setting_list[i].name;
+        char bg=0,fg=100;
+        if(setting_list[i].t == section_){
+            bg = 100;
+            fg = 0;
+        }
+
+        for(int j=0;name[j];j++){
+            to_buffer(name[j]!='_'?name[j]:' ',
+                    xLoc + j,yLoc,
+                    fg,fg,fg,
+                    bg,bg,bg
+                    );
+        }
+
+        yLoc += 2;
+        if(yLoc >= ROWS - 2){
+            xLoc += SETTING_NAME_MAX_LEN + SETTING_VALUE_MAX_LEN + 2;
+            yLoc = 1;
+        }
+    }
+    restart_game = true;
+    //TODO scroll settings or different sections open different menus
+    refreshScreen();
+    while(true){
+        //TODO process event and draw if true
+        //TODO round double if changed 4.13 -> 4.1
+        //TODO allow a way to select default
+        commitDraws();
+        if(screen_changed) {
+            SDL_SetRenderTarget(renderer, NULL);
+            SDL_RenderCopy(renderer, screen_texture, NULL, NULL);
+            SDL_RenderPresent(renderer);
+            SDL_SetRenderTarget(renderer, screen_texture);
+        }
+        SDL_Delay(100);
+    }
+}
+
 boolean process_events() {
     static int16_t cursor_x = 0;
     static int16_t cursor_y = 0;
@@ -581,8 +684,7 @@ boolean process_events() {
                 SDL_Point p = {.x = raw_input_x,.y=raw_input_y};
                 if(SDL_PointInRect(&p,&dpad_area)){
                     if(in_title_menu){
-                        //TODO Settings Loop
-                        restart_game = true;
+                        settings_menu();
                         rogue.nextGame = NG_QUIT;
                         break;
                     }else if(dpad_enabled){
@@ -817,6 +919,7 @@ boolean process_events() {
     return current_event.eventType != EVENT_ERROR;
 }
 
+
 void TouchScreenGameLoop() {
     SDL_SetHint(SDL_HINT_RENDER_BATCHING, "1");
     if(force_portrait){
@@ -951,6 +1054,7 @@ void TouchScreenNextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInput, 
     *returnEvent = current_event;
     current_event.eventType = EVENT_ERROR; //unset the event
 }
+
 
 void TouchScreenPlotChar(uchar ch,
                          short xLoc, short yLoc,
