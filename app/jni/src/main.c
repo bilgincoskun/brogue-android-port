@@ -50,6 +50,7 @@ typedef struct {
         boolean b;
         int i;
         double d;
+        short s; //section_number
     } default_,min_,max_;
     short xLoc,yLoc;
     void * value;
@@ -269,6 +270,8 @@ double parse_float(const char * name,const char * value,double min,double max){
         setting * setting_cursor = setting_list + index; \
         strcpy(setting_cursor->name,title); \
         setting_cursor->t = section_; \
+        setting_cursor->default_.s = section_no; \
+        section_no ++; \
         index++; \
     } \
 }
@@ -277,6 +280,7 @@ double parse_float(const char * name,const char * value,double min,double max){
 void set_conf(const char * name,const char * value){
     static boolean first_run = true;
     static int count_len = true;
+    static int section_no = 0;
     int index=0;
     add_section("Screen Settings");
     set_and_parse_conf(custom_cell_width,0,1,LONG_MAX);
@@ -594,11 +598,16 @@ void redraw_value(int index){
 
     }
 }
-
-void settings_menu() {
+void rebuild_settings_menu(int current_section){ //-1 means no section is open
     clearDisplayBuffer(displayBuffer);
     short xLoc=3,yLoc=1;
+    int section_no = 0;
     for(int i=0;i<setting_len;i++){
+        if(setting_list[i].t == section_){
+            section_no += 1;
+        }else if( section_no != (current_section+1)){
+            continue;
+        }
         setting_list[i].xLoc = xLoc;
         setting_list[i].yLoc = yLoc;
         redraw_value(i);
@@ -611,21 +620,23 @@ void settings_menu() {
 
         for(int j=0;name[j];j++){
             to_buffer(name[j]!='_'?name[j]:' ',
-                    xLoc + j,yLoc,
-                    fg,fg,fg,
-                    bg,bg,bg
-                    );
+                      xLoc + j,yLoc,
+                      fg,fg,fg,
+                      bg,bg,bg
+            );
         }
-
-        yLoc += 2;
+        yLoc += 3;
         if(yLoc >= ROWS - 2){
             xLoc += SETTING_NAME_MAX_LEN + SETTING_VALUE_MAX_LEN + 2;
             yLoc = 1;
         }
     }
-    restart_game = true;
-    //TODO scroll settings or different sections open different menus
     refreshScreen();
+}
+
+void settings_menu() {
+    restart_game = true;
+    rebuild_settings_menu(0);
     while(true){
         //TODO process event and draw if true
         //TODO round double if changed 4.13 -> 4.1
