@@ -85,6 +85,8 @@ static rogueEvent current_event;
 static boolean zoom_toggle = false;
 static char smart_zoom_buffer[ROWS][COLS+1] = {0}; //COLS + 1 to use rows as strings
 static boolean restart_game = false;
+static int new_game_line = -1;
+static boolean in_title_menu = true;
 
 //Config Values
 static int custom_cell_width;
@@ -535,6 +537,7 @@ boolean check_dialog_popup(int16_t c, uint8_t x, uint8_t y){
     return false;
 }
 
+
 boolean process_events() {
     static int16_t cursor_x = 0;
     static int16_t cursor_y = 0;
@@ -549,6 +552,7 @@ boolean process_events() {
     if(current_event.eventType!=EVENT_ERROR){
         return true;
     }
+
     current_event.shiftKey = false;
     current_event.controlKey = ctrl_pressed;
     SDL_Event event;
@@ -575,13 +579,13 @@ boolean process_events() {
                 raw_input_x = event.tfinger.x * display.w;
                 raw_input_y = event.tfinger.y * display.h;
                 SDL_Point p = {.x = raw_input_x,.y=raw_input_y};
-                if(!game_started && SDL_PointInRect(&p,&dpad_area)){
-                    //TODO Settings Loop
-                    restart_game = true;
-                    rogue.nextGame = NG_QUIT;
-                }
-                if(dpad_enabled && game_started){
-                    if(SDL_PointInRect(&p,&dpad_area)){
+                if(SDL_PointInRect(&p,&dpad_area)){
+                    if(in_title_menu){
+                        //TODO Settings Loop
+                        restart_game = true;
+                        rogue.nextGame = NG_QUIT;
+                        break;
+                    }else if(dpad_enabled){
                         on_dpad = true;
                         finger_down_time = SDL_GetTicks();
                         break;
@@ -627,7 +631,7 @@ boolean process_events() {
                 }
                 raw_input_x = event.tfinger.x * display.w;
                 raw_input_y = event.tfinger.y * display.h;
-                if(dpad_enabled && on_dpad && game_started){
+                if(dpad_enabled && on_dpad){
                     on_dpad = false;
                     if(finger_down_time == 0){
                         break;
@@ -884,12 +888,20 @@ boolean TouchScreenPauseForMilliseconds(short milliseconds){
             zoom_level = init_zoom;
             zoom_toggle = init_zoom_toggle;
         }
+        if(new_game_line==-1){ //To check if it is in title menu
+            for(int i=0;i<ROWS;i++){
+                if(check_smart_zoom_buffer(i,2,"New","Game")){
+                    new_game_line = i;
+                    break;
+                }
+            }
+        }else{
+            in_title_menu = !game_started && check_smart_zoom_buffer(new_game_line,2,"New","Game");
+        }
 
         if(!is_zoomed()){
             SDL_RenderCopy(renderer, screen_texture, NULL, NULL);
-            if(!game_started){
-                SDL_RenderCopy(renderer,settings_image,NULL,&dpad_area);
-            }
+
         }else{
             double width = (COLS - LEFT_PANEL_WIDTH) * cell_w / zoom_level;
             double height = (ROWS - TOP_LOG_HEIGIHT - BOTTOM_BUTTONS_HEIGHT)*cell_h/zoom_level;
@@ -912,7 +924,9 @@ boolean TouchScreenPauseForMilliseconds(short milliseconds){
             SDL_RenderCopy(renderer,screen_texture,&button_panel_box,&button_panel_box);
             SDL_RenderCopy(renderer,screen_texture,&grid_box_zoomed,&grid_box);
         }
-        if(dpad_enabled && game_started){
+        if(in_title_menu){
+            SDL_RenderCopy(renderer,settings_image,NULL,&dpad_area);
+        } else if(dpad_enabled){
             SDL_RenderCopy(renderer, dpad_mode?dpad_image_move:dpad_image_select, NULL, &dpad_area);
         }
 
