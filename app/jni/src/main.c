@@ -76,6 +76,7 @@ static SDL_Texture * dpad_image_select;
 static SDL_Texture * dpad_image_move;
 static SDL_Rect dpad_area;
 static SDL_Texture * settings_image;
+static SDL_Rect settings_icon_area;
 static boolean dpad_mode = true;
 static boolean ctrl_pressed = false;
 static double zoom_level = 1.0;
@@ -186,6 +187,9 @@ void create_assets(){
     settings_image = SDL_CreateTextureFromSurface(renderer, settings_surface);
     SDL_SetTextureAlphaMod(settings_image, COLOR_MAX/3);
     SDL_FreeSurface(settings_surface);
+    settings_icon_area.h = settings_icon_area.w = min(cell_w*(LEFT_PANEL_WIDTH - 4),cell_h*20);
+    settings_icon_area.x = 2*cell_w;
+    settings_icon_area.y = (display.h - (settings_icon_area.h + 2*cell_h));
 
     if(keyboard_always_on){
         SDL_StartTextInput();
@@ -636,11 +640,13 @@ void rebuild_settings_menu(int current_section){ //-1 means no section is open
 
 void settings_menu() {
     restart_game = true;
-    rebuild_settings_menu(0);
+    int current_section = 0;
+    rebuild_settings_menu(current_section);
     while(true){
         //TODO process event and draw if true
         //TODO round double if changed 4.13 -> 4.1
         //TODO allow a way to select default
+        //TODO acceleration
         commitDraws();
         if(screen_changed) {
             SDL_SetRenderTarget(renderer, NULL);
@@ -649,6 +655,7 @@ void settings_menu() {
             SDL_SetRenderTarget(renderer, screen_texture);
         }
         SDL_Delay(100);
+
     }
 }
 
@@ -693,16 +700,16 @@ boolean process_events() {
                 raw_input_x = event.tfinger.x * display.w;
                 raw_input_y = event.tfinger.y * display.h;
                 SDL_Point p = {.x = raw_input_x,.y=raw_input_y};
-                if(SDL_PointInRect(&p,&dpad_area)){
-                    if(in_title_menu){
-                        settings_menu();
-                        rogue.nextGame = NG_QUIT;
-                        break;
-                    }else if(dpad_enabled){
-                        on_dpad = true;
-                        finger_down_time = SDL_GetTicks();
-                        break;
-                    }
+                if(!in_title_menu && SDL_PointInRect(&p,&dpad_area)){
+                    on_dpad = true;
+                    finger_down_time = SDL_GetTicks();
+                    break;
+
+                }
+                if(in_title_menu && SDL_PointInRect(&p,&settings_icon_area)){
+                    settings_menu();
+                    rogue.nextGame = NG_QUIT;
+                    break;
                 }
                 if(is_zoomed() && SDL_PointInRect(&p,&grid_box)){
                     raw_input_x = (raw_input_x-grid_box.x)/zoom_level + grid_box_zoomed.x;
@@ -1039,7 +1046,7 @@ boolean TouchScreenPauseForMilliseconds(short milliseconds){
             SDL_RenderCopy(renderer,screen_texture,&grid_box_zoomed,&grid_box);
         }
         if(in_title_menu){
-            SDL_RenderCopy(renderer,settings_image,NULL,&dpad_area);
+            SDL_RenderCopy(renderer,settings_image,NULL,&settings_icon_area);
         } else if(dpad_enabled){
             SDL_RenderCopy(renderer, dpad_mode?dpad_image_move:dpad_image_select, NULL, &dpad_area);
         }
