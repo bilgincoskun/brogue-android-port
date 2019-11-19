@@ -688,6 +688,17 @@ void settings_menu() {
                                     menu_changed = true;
                                 }}
                                 break;
+                            case double_:{
+                                double * value = s.value;
+                                *value = floorf(*value*10) / 10;
+                                if(decrease){
+                                    *value = max(s.min_.d,*value-0.1);
+                                    menu_changed = true;
+                                }else if(increase){
+                                    *value = min(s.max_.d,*value+0.1);
+                                    menu_changed = true;
+                                }}
+                                break;
                         }
                         if(menu_changed){
                             rebuild_settings_menu(current_section);
@@ -697,13 +708,13 @@ void settings_menu() {
 
             }
         }
-        //TODO round double if changed 4.13 -> 4.1
         //TODO allow a way to select default
         //TODO acceleration
         //TODO OK(save functionality) and Cancel Buttons
         //TODO only recreate textures
         //TODO increase interaction size of < and >
         //TODO add keyboard input
+        //TODO change in-place buttons to separate buttons and highlight?
 
         SDL_Delay(100);
 
