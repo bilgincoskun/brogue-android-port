@@ -662,9 +662,9 @@ void settings_menu() {
                 cursor_y = min(ROWS -1,raw_input_y / cell_h);
                 for(int i=0;i<setting_len;i++){
                     setting s = setting_list[i];
-                    if(s.yLoc == cursor_y && (s.xLoc <= cursor_x && cursor_x < s.xLoc + SETTING_NAME_MAX_LEN + SETTING_VALUE_MAX_LEN  )){
-                        boolean decrease = cursor_x == s.xLoc + SETTING_NAME_MAX_LEN;
-                        boolean increase = cursor_x == s.xLoc + SETTING_NAME_MAX_LEN + SETTING_VALUE_MAX_LEN - 1;
+                    if(abs(s.yLoc-cursor_y)<=1 && (s.xLoc <= cursor_x && cursor_x <= s.xLoc + SETTING_NAME_MAX_LEN + SETTING_VALUE_MAX_LEN  )){
+                        boolean decrease = abs(cursor_x - s.xLoc - SETTING_NAME_MAX_LEN) <= 2;
+                        boolean increase = cursor_x >= s.xLoc + SETTING_NAME_MAX_LEN + SETTING_VALUE_MAX_LEN - 2;
                         boolean menu_changed = false;
                         switch(s.t){
                             case section_:
@@ -712,9 +712,7 @@ void settings_menu() {
         //TODO acceleration
         //TODO OK(save functionality) and Cancel Buttons
         //TODO only recreate textures
-        //TODO increase interaction size of < and >
         //TODO add keyboard input
-        //TODO change in-place buttons to separate buttons and highlight?
 
         SDL_Delay(100);
 
