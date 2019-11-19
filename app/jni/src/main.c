@@ -610,6 +610,7 @@ void rebuild_settings_menu(int current_section){ //-1 means no section is open
         if(setting_list[i].t == section_){
             section_no += 1;
         }else if( section_no != (current_section+1)){
+            setting_list[i].yLoc = -1;
             continue;
         }
         setting_list[i].xLoc = xLoc;
@@ -636,6 +637,13 @@ void rebuild_settings_menu(int current_section){ //-1 means no section is open
         }
     }
     refreshScreen();
+    commitDraws();
+    if(screen_changed) {
+        SDL_SetRenderTarget(renderer, NULL);
+        SDL_RenderCopy(renderer, screen_texture, NULL, NULL);
+        SDL_RenderPresent(renderer);
+        SDL_SetRenderTarget(renderer, screen_texture);
+    }
 }
 
 void settings_menu() {
@@ -643,17 +651,35 @@ void settings_menu() {
     int current_section = 0;
     rebuild_settings_menu(current_section);
     while(true){
-        //TODO process event and draw if true
+        SDL_Event event;
+        while (SDL_PollEvent(&event)){
+            if (event.type == SDL_FINGERDOWN){
+                int16_t cursor_x,cursor_y;
+                float raw_input_x,raw_input_y;
+                raw_input_x = event.tfinger.x * display.w;
+                raw_input_y = event.tfinger.y * display.h;
+                cursor_x = min(COLS - 1,raw_input_x / cell_w);
+                cursor_y = min(ROWS -1,raw_input_y / cell_h);
+                for(int i=0;i<setting_len;i++){
+                    setting s = setting_list[i];
+                    if(s.yLoc == cursor_y && (s.xLoc <= cursor_x && cursor_x < s.xLoc + SETTING_NAME_MAX_LEN + SETTING_VALUE_MAX_LEN  )){
+                        switch(s.t){
+                            case section_:
+                                current_section = s.default_.s;
+                                rebuild_settings_menu(current_section);
+                                break;
+                        }
+                    }
+                }
+
+            }
+        }
         //TODO round double if changed 4.13 -> 4.1
         //TODO allow a way to select default
         //TODO acceleration
-        commitDraws();
-        if(screen_changed) {
-            SDL_SetRenderTarget(renderer, NULL);
-            SDL_RenderCopy(renderer, screen_texture, NULL, NULL);
-            SDL_RenderPresent(renderer);
-            SDL_SetRenderTarget(renderer, screen_texture);
-        }
+        //TODO OK(save functionality) and Cancel Buttons
+        //TODO only recreate textures
+
         SDL_Delay(100);
 
     }
