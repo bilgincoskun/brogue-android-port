@@ -589,8 +589,8 @@ void redraw_value(int index){
             break;
     }
     if(s.t != section_) {
-        to_buffer('-', start, s.yLoc, 0, 0, 0, 60, 60, 60);
-        to_buffer('+', start + SETTING_VALUE_MAX_LEN - 1, s.yLoc, 0, 0, 0, 60, 60, 60);
+        to_buffer('<', start, s.yLoc, 0, 0, 0, 60, 60, 60);
+        to_buffer('>', start + SETTING_VALUE_MAX_LEN - 1, s.yLoc, 0, 0, 0, 60, 60, 60);
         for (int i = 0; i < SETTING_VALUE_MAX_LEN - 2; i++) {
             to_buffer(' ', i + start + 1, s.yLoc, 0, 0, 0, 100, 100, 100);
         }
@@ -692,6 +692,7 @@ void settings_menu() {
         //TODO acceleration
         //TODO OK(save functionality) and Cancel Buttons
         //TODO only recreate textures
+        //TODO increase interaction size of < and >
 
         SDL_Delay(100);
 
