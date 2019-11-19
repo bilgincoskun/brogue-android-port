@@ -663,11 +663,24 @@ void settings_menu() {
                 for(int i=0;i<setting_len;i++){
                     setting s = setting_list[i];
                     if(s.yLoc == cursor_y && (s.xLoc <= cursor_x && cursor_x < s.xLoc + SETTING_NAME_MAX_LEN + SETTING_VALUE_MAX_LEN  )){
+                        boolean decrease = cursor_x == s.xLoc + SETTING_NAME_MAX_LEN;
+                        boolean increase = cursor_x == s.xLoc + SETTING_NAME_MAX_LEN + SETTING_VALUE_MAX_LEN - 1;
+                        boolean menu_changed = false;
                         switch(s.t){
                             case section_:
                                 current_section = s.default_.s;
-                                rebuild_settings_menu(current_section);
+                                menu_changed = true;
                                 break;
+                            case boolean_:
+                                if (increase || decrease){
+                                    boolean * value = s.value;
+                                    *value = !*value;
+                                    menu_changed = true;
+                                }
+                                break;
+                        }
+                        if(menu_changed){
+                            rebuild_settings_menu(current_section);
                         }
                     }
                 }
