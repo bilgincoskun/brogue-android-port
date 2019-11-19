@@ -287,10 +287,10 @@ void set_conf(const char * name,const char * value){
     static int section_no = 0;
     int index=0;
     add_section("Screen Settings");
-    set_and_parse_conf(custom_cell_width,0,1,LONG_MAX);
-    set_and_parse_conf(custom_cell_height,0,1,LONG_MAX);
-    set_and_parse_conf(custom_screen_width,0,1,LONG_MAX);
-    set_and_parse_conf(custom_screen_height,0,1,LONG_MAX);
+    set_and_parse_conf(custom_cell_width,0,0,LONG_MAX);
+    set_and_parse_conf(custom_cell_height,0,0,LONG_MAX);
+    set_and_parse_conf(custom_screen_width,0,0,LONG_MAX);
+    set_and_parse_conf(custom_screen_height,0,0,LONG_MAX);
     set_and_parse_bool_conf(force_portrait,false);
     set_and_parse_bool_conf(dynamic_colors,true);
     set_and_parse_conf(filter_mode,2,0,2);
@@ -678,6 +678,16 @@ void settings_menu() {
                                     menu_changed = true;
                                 }
                                 break;
+                            case int_:{
+                                int * value = s.value;
+                                if(decrease){
+                                   *value = max(s.min_.i,*value-1);
+                                   menu_changed = true;
+                                }else if(increase){
+                                    *value = min(s.max_.i,*value+1);
+                                    menu_changed = true;
+                                }}
+                                break;
                         }
                         if(menu_changed){
                             rebuild_settings_menu(current_section);
@@ -693,6 +703,7 @@ void settings_menu() {
         //TODO OK(save functionality) and Cancel Buttons
         //TODO only recreate textures
         //TODO increase interaction size of < and >
+        //TODO add keyboard input
 
         SDL_Delay(100);
 
