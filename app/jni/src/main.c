@@ -715,14 +715,7 @@ void settings_menu() {
             }
 
         }
-        //TODO allow a way to select default
-        //TODO acceleration
-        //TODO OK(save functionality) and Cancel Buttons
-        //TODO only recreate textures
-        //TODO add keyboard input
-
         SDL_Delay(100);
-
     }
 }
 
