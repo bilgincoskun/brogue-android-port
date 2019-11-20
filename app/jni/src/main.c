@@ -650,63 +650,70 @@ void settings_menu() {
     restart_game = true;
     int current_section = 0;
     rebuild_settings_menu(current_section);
+    int hold = 0;
+    int16_t cursor_x,cursor_y;
     while(true){
         SDL_Event event;
         while (SDL_PollEvent(&event)){
             if (event.type == SDL_FINGERDOWN){
-                int16_t cursor_x,cursor_y;
                 float raw_input_x,raw_input_y;
                 raw_input_x = event.tfinger.x * display.w;
                 raw_input_y = event.tfinger.y * display.h;
-                cursor_x = min(COLS - 1,raw_input_x / cell_w);
-                cursor_y = min(ROWS -1,raw_input_y / cell_h);
-                for(int i=0;i<setting_len;i++){
-                    setting s = setting_list[i];
-                    if(abs(s.yLoc-cursor_y)<=1 && (s.xLoc <= cursor_x && cursor_x <= s.xLoc + SETTING_NAME_MAX_LEN + SETTING_VALUE_MAX_LEN  )){
-                        boolean decrease = abs(cursor_x - s.xLoc - SETTING_NAME_MAX_LEN) <= 2;
-                        boolean increase = cursor_x >= s.xLoc + SETTING_NAME_MAX_LEN + SETTING_VALUE_MAX_LEN - 2;
-                        boolean menu_changed = false;
-                        switch(s.t){
-                            case section_:
-                                current_section = s.default_.s;
+                cursor_x = min(COLS - 1, raw_input_x / cell_w);
+                cursor_y = min(ROWS - 1, raw_input_y / cell_h);
+                hold = SDL_GetTicks();
+
+            } else if (event.type == SDL_FINGERUP){
+                hold = 0;
+            }
+        }
+        if(hold){
+            for(int i=0;i<setting_len;i++){
+                setting s = setting_list[i];
+                if(abs(s.yLoc-cursor_y)<=1 && (s.xLoc <= cursor_x && cursor_x <= s.xLoc + SETTING_NAME_MAX_LEN + SETTING_VALUE_MAX_LEN  )){
+                    boolean decrease = abs(cursor_x - s.xLoc - SETTING_NAME_MAX_LEN) <= 2;
+                    boolean increase = cursor_x >= s.xLoc + SETTING_NAME_MAX_LEN + SETTING_VALUE_MAX_LEN - 2;
+                    boolean menu_changed = false;
+                    switch(s.t){
+                        case section_:
+                            current_section = s.default_.s;
+                            menu_changed = true;
+                            break;
+                        case boolean_:
+                            if (increase || decrease){
+                                boolean * value = s.value;
+                                *value = !*value;
                                 menu_changed = true;
-                                break;
-                            case boolean_:
-                                if (increase || decrease){
-                                    boolean * value = s.value;
-                                    *value = !*value;
-                                    menu_changed = true;
-                                }
-                                break;
-                            case int_:{
-                                int * value = s.value;
-                                if(decrease){
-                                   *value = max(s.min_.i,*value-1);
-                                   menu_changed = true;
-                                }else if(increase){
-                                    *value = min(s.max_.i,*value+1);
-                                    menu_changed = true;
-                                }}
-                                break;
-                            case double_:{
-                                double * value = s.value;
-                                *value = floorf(*value*10) / 10;
-                                if(decrease){
-                                    *value = max(s.min_.d,*value-0.1);
-                                    menu_changed = true;
-                                }else if(increase){
-                                    *value = min(s.max_.d,*value+0.1);
-                                    menu_changed = true;
-                                }}
-                                break;
-                        }
-                        if(menu_changed){
-                            rebuild_settings_menu(current_section);
-                        }
+                            }
+                            break;
+                        case int_:{
+                            int * value = s.value;
+                            if(decrease){
+                                *value = max(s.min_.i,*value-1);
+                                menu_changed = true;
+                            }else if(increase){
+                                *value = min(s.max_.i,*value+1);
+                                menu_changed = true;
+                            }}
+                            break;
+                        case double_:{
+                            double * value = s.value;
+                            *value = floorf(*value*10) / 10;
+                            if(decrease){
+                                *value = max(s.min_.d,*value-0.1);
+                                menu_changed = true;
+                            }else if(increase){
+                                *value = min(s.max_.d,*value+0.1);
+                                menu_changed = true;
+                            }}
+                            break;
+                    }
+                    if(menu_changed){
+                        rebuild_settings_menu(current_section);
                     }
                 }
-
             }
+
         }
         //TODO allow a way to select default
         //TODO acceleration
