@@ -728,6 +728,9 @@ void settings_menu() {
                                     }
                                     menu_changed = true;
                                     break;
+                                case CANCEL_BUTTON_ID:
+                                    restart_game = true;
+                                    return;
                             }
                             break;
                         case boolean_:
