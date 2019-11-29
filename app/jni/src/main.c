@@ -24,6 +24,9 @@
 #define DAY_TO_TIMESTAMP 86400
 #define SETTING_NAME_MAX_LEN 25
 #define SETTING_VALUE_MAX_LEN 11
+#define DEFAULTS_BUTTON_ID 1
+#define CANCEL_BUTTON_ID 2
+#define OK_BUTTON_ID 3
 
 typedef struct {
     SDL_Texture *c;
@@ -332,9 +335,9 @@ void set_conf(const char * name,const char * value){
     set_and_parse_bool_conf(check_update,true);
     set_and_parse_conf(check_update_interval,1,0,1000);
     set_and_parse_bool_conf(ask_for_update_check,false);
-    add_button("Defaults",1,COLS - 8,ROWS - 8);
-    add_button("  Cancel",2,COLS - 8,ROWS - 5);
-    add_button("      OK",3,COLS - 8,ROWS - 2);
+    add_button("Defaults",DEFAULTS_BUTTON_ID,COLS - 8,ROWS - 8);
+    add_button("  Cancel",CANCEL_BUTTON_ID,COLS - 8,ROWS - 5);
+    add_button("      OK",OK_BUTTON_ID,COLS - 8,ROWS - 2);
     if(!first_run){
         critical_error("Unknown Configuration", "Configuration '%s' in settings file is not recognized",name);
     }else if(count_len){
@@ -662,7 +665,6 @@ void rebuild_settings_menu(int current_section){ //-1 means no section is open
 void settings_menu() {
     restart_game = true;
     int current_section = 0;
-    rebuild_settings_menu(current_section);
     int hold = 0;
     int16_t cursor_x,cursor_y;
     for(int i=0;i<setting_len;i++){
@@ -679,6 +681,7 @@ void settings_menu() {
                 break;
         }
     }
+    rebuild_settings_menu(current_section);
     while(true){
         SDL_Event event;
         while (SDL_PollEvent(&event)){
@@ -705,6 +708,27 @@ void settings_menu() {
                         case section_:
                             current_section = s->default_.s;
                             menu_changed = true;
+                            break;
+                        case button_:
+                            switch (s->default_.id){
+                                case DEFAULTS_BUTTON_ID:
+                                    for(int i=0;i<setting_len;i++){
+                                        setting * s = &setting_list[i];
+                                        switch(s->t){
+                                            case boolean_:
+                                                s->new.b = s->default_.b;
+                                                break;
+                                            case int_:
+                                                s->new.i = s->default_.i;
+                                                break;
+                                            case double_:
+                                                s->new.d = s->default_.d;
+                                                break;
+                                        }
+                                    }
+                                    menu_changed = true;
+                                    break;
+                            }
                             break;
                         case boolean_:
                             if (increase || decrease){
