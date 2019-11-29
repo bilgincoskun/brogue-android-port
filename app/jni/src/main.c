@@ -27,6 +27,7 @@
 #define DEFAULTS_BUTTON_ID 1
 #define CANCEL_BUTTON_ID 2
 #define OK_BUTTON_ID 3
+#define SETTINGS_FILE "settings.txt"
 
 typedef struct {
     SDL_Texture *c;
@@ -66,7 +67,6 @@ struct brogueConsole currentConsole;
 extern playerCharacter rogue;
 extern creature player;
 
-static const char settings_file[] = "settings.txt";
 static int setting_len = 0;
 static setting * setting_list = NULL;
 static SDL_Window *window;
@@ -97,6 +97,7 @@ static char smart_zoom_buffer[ROWS][COLS+1] = {0}; //COLS + 1 to use rows as str
 static boolean restart_game = false;
 static int new_game_line = -1;
 static boolean in_title_menu = true;
+static boolean settings_changed = false;
 
 //Config Values
 static int custom_cell_width;
@@ -128,6 +129,7 @@ static int check_update_interval;
 static boolean ask_for_update_check;
 
 void destroy_assets(){
+    SDL_SetRenderTarget(renderer,NULL);
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
 }
@@ -351,8 +353,8 @@ void set_conf(const char * name,const char * value){
 
 void load_conf(){
     FILE * cf;
-    if (access(settings_file, F_OK) != -1) {
-        cf = fopen(settings_file,"r");
+    if (access(SETTINGS_FILE, F_OK) != -1) {
+        cf = fopen(SETTINGS_FILE,"r");
         char line[MAX_LINE_LENGTH];
         while(fgets(line,MAX_LINE_LENGTH,cf)!=NULL){
             boolean empty_line = true; //empty line check
@@ -375,7 +377,7 @@ void load_conf(){
             max_zoom = init_zoom;
         }
     }else{
-        cf = fopen(settings_file,"w");
+        cf = fopen(SETTINGS_FILE,"w");
     }
     fclose(cf);
 }
@@ -655,7 +657,6 @@ void rebuild_settings_menu(int current_section){ //-1 means no section is open
     refreshScreen();
     commitDraws();
     if(screen_changed) {
-        SDL_SetRenderTarget(renderer, NULL);
         SDL_RenderCopy(renderer, screen_texture, NULL, NULL);
         SDL_RenderPresent(renderer);
         SDL_SetRenderTarget(renderer, screen_texture);
@@ -664,6 +665,7 @@ void rebuild_settings_menu(int current_section){ //-1 means no section is open
 
 void settings_menu() {
     restart_game = true;
+    settings_changed = false;
     int current_section = 0;
     int hold = 0;
     int16_t cursor_x,cursor_y;
@@ -704,6 +706,7 @@ void settings_menu() {
                     boolean decrease = abs(cursor_x - s->xLoc - SETTING_NAME_MAX_LEN) <= 2;
                     boolean increase = cursor_x >= s->xLoc + SETTING_NAME_MAX_LEN + SETTING_VALUE_MAX_LEN - 2;
                     boolean menu_changed = false;
+                    FILE * st;
                     switch(s->t){
                         case section_:
                             current_section = s->default_.s;
@@ -714,23 +717,50 @@ void settings_menu() {
                                 case DEFAULTS_BUTTON_ID:
                                     for(int i=0;i<setting_len;i++){
                                         setting * s = &setting_list[i];
-                                        switch(s->t){
-                                            case boolean_:
-                                                s->new.b = s->default_.b;
-                                                break;
-                                            case int_:
-                                                s->new.i = s->default_.i;
-                                                break;
-                                            case double_:
-                                                s->new.d = s->default_.d;
-                                                break;
-                                        }
+                                        s->new = s->default_;
                                     }
                                     menu_changed = true;
                                     break;
                                 case CANCEL_BUTTON_ID:
+                                    return;
+                                case OK_BUTTON_ID:
+                                    st = fopen("../" SETTINGS_FILE,"w");
+                                    for(int i=0;i<setting_len;i++){
+                                        setting * s = &setting_list[i];
+                                        switch(s->t){
+                                            case boolean_:
+                                                if(* (( boolean * ) s->value) != s->new.b){
+                                                    * (( boolean * ) s->value) = s->new.b;
+                                                    settings_changed = true;
+                                                }
+                                                if(s->new.b != s->default_.b) {
+                                                    fprintf(st, "%s %s\n",s->name, s->new.b ? "1" : "0");
+                                                }
+                                                break;
+                                            case int_:
+                                                if(* (( int * ) s->value) != s->new.i){
+                                                    * (( int * ) s->value) = s->new.i;
+                                                    settings_changed = true;
+                                                }
+                                                if(s->new.i != s->default_.i) {
+                                                    fprintf(st, "%s %d\n",s->name, s->new.i);
+                                                }
+                                                break;
+                                            case double_:
+                                                if(* (( double * ) s->value) != s->new.d){
+                                                    * (( double * ) s->value) = s->new.d;
+                                                    settings_changed = true;
+                                                }
+                                                if(s->new.d != s->default_.d) {
+                                                    fprintf(st, "%s %f\n",s->name, s->new.d);
+                                                }
+                                                break;
+                                        }
+                                    }
+                                    fclose(st);
                                     restart_game = true;
                                     return;
+
                             }
                             break;
                         case boolean_:
@@ -1090,17 +1120,13 @@ void TouchScreenGameLoop() {
         critical_error("Font Error","Resolution/cell size is too small for minimum allowed font size");
     }
     SDL_SetEventFilter(suspend_resume_filter, NULL);
-    while(true){
-        rogueMain();
-        if(!restart_game){
-            break;
-        }
+    do {
+        restart_game = false;
         rogue.nextGame = NG_NOTHING;
         rogue.nextGamePath[0] = '\0';
         rogue.nextGameSeed = 0;
-        restart_game = false;
-        //TODO reset screen and font when changed
-    }
+        rogueMain();
+    }while(restart_game && !settings_changed);
     destroy_assets();
     TTF_CloseFont(font);
     TTF_Quit();
@@ -1357,7 +1383,6 @@ int main() {
             critical_error("Save Folder Error","Cannot create/enter the save folder");
         }
     }
-
     SDL_Thread *thread = SDL_CreateThreadWithStackSize(brogue_main, "Brogue", 8 * 1024 * 1024,
                                                        NULL);
     if (thread != NULL) {
