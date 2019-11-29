@@ -41,6 +41,7 @@ typedef enum {
     int_,
     double_,
     section_,
+    button_,
 } setting_type;
 
 typedef struct {
@@ -51,6 +52,7 @@ typedef struct {
         int i;
         double d;
         short s; //section_number
+        short id; //buton id
     } new,default_,min_,max_;
     short xLoc,yLoc;
     void * value;
@@ -280,6 +282,19 @@ double parse_float(const char * name,const char * value,double min,double max){
     } \
 }
 
+#define add_button(title,b_id,xpos,ypos) { \
+    if(count_len){ \
+        setting_len ++; \
+    }else  if(first_run){ \
+        setting * setting_cursor = setting_list + index; \
+        strcpy(setting_cursor->name,title); \
+        setting_cursor->t = button_; \
+        setting_cursor->default_.id = b_id; \
+        setting_cursor->xLoc = xpos; \
+        setting_cursor->yLoc = ypos; \
+        index++; \
+    } \
+}
 
 void set_conf(const char * name,const char * value){
     static boolean first_run = true;
@@ -317,6 +332,9 @@ void set_conf(const char * name,const char * value){
     set_and_parse_bool_conf(check_update,true);
     set_and_parse_conf(check_update_interval,1,0,1000);
     set_and_parse_bool_conf(ask_for_update_check,false);
+    add_button("Defaults",1,COLS - 8,ROWS - 8);
+    add_button("  Cancel",2,COLS - 8,ROWS - 5);
+    add_button("      OK",3,COLS - 8,ROWS - 2);
     if(!first_run){
         critical_error("Unknown Configuration", "Configuration '%s' in settings file is not recognized",name);
     }else if(count_len){
@@ -600,31 +618,35 @@ void rebuild_settings_menu(int current_section){ //-1 means no section is open
     for(int i=0;i<setting_len;i++){
         if(setting_list[i].t == section_){
             section_no += 1;
-        }else if( section_no != (current_section+1)){
+        }else if(setting_list[i].t != button_ &&  section_no != (current_section+1)){
             setting_list[i].yLoc = -1;
             continue;
         }
-        setting_list[i].xLoc = xLoc;
-        setting_list[i].yLoc = yLoc;
+        if(setting_list[i].t != button_){
+            setting_list[i].xLoc = xLoc;
+            setting_list[i].yLoc = yLoc;
+        }
         redraw_value(i);
         char * name = setting_list[i].name;
         char bg=0,fg=100;
-        if(setting_list[i].t == section_){
+        if(setting_list[i].t == section_ || setting_list[i].t == button_){
             bg = 100;
             fg = 0;
         }
 
         for(int j=0;name[j];j++){
             to_buffer(name[j]!='_'?name[j]:' ',
-                      xLoc + j,yLoc,
+                      setting_list[i].xLoc + j,setting_list[i].yLoc,
                       fg,fg,fg,
                       bg,bg,bg
             );
         }
-        yLoc += 3;
-        if(yLoc >= ROWS - 2){
-            xLoc += SETTING_NAME_MAX_LEN + SETTING_VALUE_MAX_LEN + 2;
-            yLoc = 1;
+        if(setting_list[i].t != button_) {
+            yLoc += 3;
+            if (yLoc >= ROWS - 2) {
+                xLoc += SETTING_NAME_MAX_LEN + SETTING_VALUE_MAX_LEN + 2;
+                yLoc = 1;
+            }
         }
     }
     refreshScreen();
