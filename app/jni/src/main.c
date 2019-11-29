@@ -51,7 +51,7 @@ typedef struct {
         int i;
         double d;
         short s; //section_number
-    } default_,min_,max_;
+    } new,default_,min_,max_;
     short xLoc,yLoc;
     void * value;
 } setting;
@@ -565,38 +565,29 @@ void to_buffer(uchar ch,
 }
 
 void redraw_value(int index){
-    setting s = setting_list[index];
-    int start = s.xLoc + SETTING_NAME_MAX_LEN;
+    setting * s = & setting_list[index];
+    int start = s->xLoc + SETTING_NAME_MAX_LEN;
     char buffer[SETTING_VALUE_MAX_LEN-2] = {0};
-    switch(s.t){
+    switch(s->t){
         case boolean_:
-            {
-                boolean value =* (boolean *) s.value;
-                strcpy(buffer,value?"true ":"false");
-            }
+            strcpy(buffer,s->new.b?"true ":"false");
             break;
         case int_:
-            {
-                int value = *(int *)  s.value;
-                sprintf(buffer,"%d",value);
-            }
+            sprintf(buffer,"%d",s->new.i);
             break;
         case double_:
-            {
-                double value = *(double *)  s.value;
-                sprintf(buffer,"%.1f",value);
-            }
+            sprintf(buffer,"%.1f",s->new.d);
             break;
     }
-    if(s.t != section_) {
-        to_buffer('<', start, s.yLoc, 0, 0, 0, 60, 60, 60);
-        to_buffer('>', start + SETTING_VALUE_MAX_LEN - 1, s.yLoc, 0, 0, 0, 60, 60, 60);
+    if(s->t != section_) {
+        to_buffer('<', start, s->yLoc, 0, 0, 0, 60, 60, 60);
+        to_buffer('>', start + SETTING_VALUE_MAX_LEN - 1, s->yLoc, 0, 0, 0, 60, 60, 60);
         for (int i = 0; i < SETTING_VALUE_MAX_LEN - 2; i++) {
-            to_buffer(' ', i + start + 1, s.yLoc, 0, 0, 0, 100, 100, 100);
+            to_buffer(' ', i + start + 1, s->yLoc, 0, 0, 0, 100, 100, 100);
         }
         int offset = (SETTING_VALUE_MAX_LEN - 2 - strlen(buffer)) / 2;
         for (int i = 0;buffer[i]; i++) {
-            to_buffer(buffer[i], i + start + 1 + offset, s.yLoc, 0, 0, 0, 100, 100, 100);
+            to_buffer(buffer[i], i + start + 1 + offset, s->yLoc, 0, 0, 0, 100, 100, 100);
         }
 
 
@@ -652,6 +643,20 @@ void settings_menu() {
     rebuild_settings_menu(current_section);
     int hold = 0;
     int16_t cursor_x,cursor_y;
+    for(int i=0;i<setting_len;i++){
+        setting  * s = & setting_list[i];
+        switch(s->t){
+            case boolean_:
+                s->new.b = * (boolean *) s->value;
+                break;
+            case int_:
+                s->new.i = * (int *) s->value;
+                break;
+            case double_:
+                s->new.d = * (double *) s->value;
+                break;
+        }
+    }
     while(true){
         SDL_Event event;
         while (SDL_PollEvent(&event)){
@@ -669,43 +674,40 @@ void settings_menu() {
         }
         if(hold){
             for(int i=0;i<setting_len;i++){
-                setting s = setting_list[i];
-                if(abs(s.yLoc-cursor_y)<=1 && (s.xLoc <= cursor_x && cursor_x <= s.xLoc + SETTING_NAME_MAX_LEN + SETTING_VALUE_MAX_LEN  )){
-                    boolean decrease = abs(cursor_x - s.xLoc - SETTING_NAME_MAX_LEN) <= 2;
-                    boolean increase = cursor_x >= s.xLoc + SETTING_NAME_MAX_LEN + SETTING_VALUE_MAX_LEN - 2;
+                setting * s = &setting_list[i];
+                if(abs(s->yLoc-cursor_y)<=1 && (s->xLoc <= cursor_x && cursor_x <= s->xLoc + SETTING_NAME_MAX_LEN + SETTING_VALUE_MAX_LEN  )){
+                    boolean decrease = abs(cursor_x - s->xLoc - SETTING_NAME_MAX_LEN) <= 2;
+                    boolean increase = cursor_x >= s->xLoc + SETTING_NAME_MAX_LEN + SETTING_VALUE_MAX_LEN - 2;
                     boolean menu_changed = false;
-                    switch(s.t){
+                    switch(s->t){
                         case section_:
-                            current_section = s.default_.s;
+                            current_section = s->default_.s;
                             menu_changed = true;
                             break;
                         case boolean_:
                             if (increase || decrease){
-                                boolean * value = s.value;
-                                *value = !*value;
+                                s->new.b = !s->new.b;
                                 menu_changed = true;
                             }
                             break;
-                        case int_:{
-                            int * value = s.value;
+                        case int_:
                             if(decrease){
-                                *value = max(s.min_.i,*value-1);
+                                s->new.i = max(s->min_.i,s->new.i-1);
                                 menu_changed = true;
                             }else if(increase){
-                                *value = min(s.max_.i,*value+1);
+                                s->new.i = min(s->max_.i,s->new.i+1);
                                 menu_changed = true;
-                            }}
+                            }
                             break;
-                        case double_:{
-                            double * value = s.value;
-                            *value = floorf(*value*10) / 10;
+                        case double_:
+                            s->new.d = floorf(s->new.d*10) / 10;
                             if(decrease){
-                                *value = max(s.min_.d,*value-0.1);
+                                s->new.d = max(s->min_.d,s->new.d-0.1);
                                 menu_changed = true;
                             }else if(increase){
-                                *value = min(s.max_.d,*value+0.1);
+                                s->new.d = min(s->max_.d,s->new.d+0.1);
                                 menu_changed = true;
-                            }}
+                            }
                             break;
                     }
                     if(menu_changed){
