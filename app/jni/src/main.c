@@ -60,6 +60,7 @@ typedef struct {
     } new,default_,min_,max_;
     short xLoc,yLoc;
     void * value;
+    boolean need_restart;
 } setting;
 
 
@@ -239,7 +240,7 @@ double parse_float(const char * name,const char * value,double min,double max){
     int: int_,\
     double:double_)
 
-#define set_and_parse_conf(var_name,default,min,max) { \
+#define set_and_parse_conf(var_name,default,min,max,restart) { \
     if(count_len){ \
         setting_len ++; \
     }else  if(first_run){ \
@@ -247,6 +248,7 @@ double parse_float(const char * name,const char * value,double min,double max){
         setting * setting_cursor = setting_list + index; \
         strcpy(setting_cursor->name,#var_name); \
         setting_cursor->t = type_val(min); \
+        setting_cursor->need_restart = restart; \
         switch(setting_cursor->t){\
             case(boolean_): \
                 setting_cursor->default_.b = default; \
@@ -273,7 +275,7 @@ double parse_float(const char * name,const char * value,double min,double max){
     } \
 }
 
-#define set_and_parse_bool_conf(var_name,default) set_and_parse_conf(var_name,default,(char) false,true)
+#define set_and_parse_bool_conf(var_name,default,restart) set_and_parse_conf(var_name,default,(char) false,true,restart)
 
 #define add_section(title) { \
     if(count_len){ \
@@ -308,36 +310,36 @@ void set_conf(const char * name,const char * value){
     static int section_no = 0;
     int index=0;
     add_section("Screen Settings");
-    set_and_parse_conf(custom_cell_width,0,0,LONG_MAX);
-    set_and_parse_conf(custom_cell_height,0,0,LONG_MAX);
-    set_and_parse_conf(custom_screen_width,0,0,LONG_MAX);
-    set_and_parse_conf(custom_screen_height,0,0,LONG_MAX);
-    set_and_parse_bool_conf(force_portrait,false);
-    set_and_parse_bool_conf(dynamic_colors,true);
-    set_and_parse_conf(filter_mode,2,0,2);
+    set_and_parse_conf(custom_cell_width,0,0,LONG_MAX,true);
+    set_and_parse_conf(custom_cell_height,0,0,LONG_MAX,true);
+    set_and_parse_conf(custom_screen_width,0,0,LONG_MAX,true);
+    set_and_parse_conf(custom_screen_height,0,0,LONG_MAX,true);
+    set_and_parse_bool_conf(force_portrait,false,true);
+    set_and_parse_bool_conf(dynamic_colors,true,false);
+    set_and_parse_conf(filter_mode,2,0,2,true);
     add_section("Input Settings");
-    set_and_parse_bool_conf(double_tap_lock,true);
-    set_and_parse_conf(double_tap_interval,500,100,1e5);
-    set_and_parse_bool_conf(dpad_enabled,true);
-    set_and_parse_bool_conf(allow_dpad_mode_change,true);
-    set_and_parse_conf(dpad_width,0,1,LONG_MAX);
-    set_and_parse_conf(dpad_x_pos,0,1,LONG_MAX);
-    set_and_parse_conf(dpad_y_pos,0,1,LONG_MAX);
-    set_and_parse_bool_conf(default_dpad_mode,true);
-    set_and_parse_conf(dpad_transparency,75,0,255);
-    set_and_parse_conf(long_press_interval,750,100,1e5);
-    set_and_parse_bool_conf(keyboard_always_on,false);
+    set_and_parse_bool_conf(double_tap_lock,true,false);
+    set_and_parse_conf(double_tap_interval,500,100,1e5,false);
+    set_and_parse_bool_conf(dpad_enabled,true,false);
+    set_and_parse_bool_conf(allow_dpad_mode_change,true,false);
+    set_and_parse_conf(dpad_width,0,0,LONG_MAX,false);
+    set_and_parse_conf(dpad_x_pos,0,0,LONG_MAX,false);
+    set_and_parse_conf(dpad_y_pos,0,0,LONG_MAX,false);
+    set_and_parse_bool_conf(default_dpad_mode,true,false);
+    set_and_parse_conf(dpad_transparency,75,0,255,false);
+    set_and_parse_conf(long_press_interval,750,100,1e5,false);
+    set_and_parse_bool_conf(keyboard_always_on,false,false);
     add_section("Zoom Settings");
-    set_and_parse_conf(zoom_mode,1,0,2);
-    set_and_parse_bool_conf(init_zoom_toggle,false);
-    set_and_parse_conf(init_zoom,2.0,1.0,10.0);
-    set_and_parse_conf(max_zoom,4.0,1.0,10.0);
-    set_and_parse_bool_conf(smart_zoom,true);
-    set_and_parse_bool_conf(left_panel_smart_zoom,true);
+    set_and_parse_conf(zoom_mode,1,0,2,false);
+    set_and_parse_bool_conf(init_zoom_toggle,false,false);
+    set_and_parse_conf(init_zoom,2.0,1.0,10.0,false);
+    set_and_parse_conf(max_zoom,4.0,1.0,10.0,false);
+    set_and_parse_bool_conf(smart_zoom,true,false);
+    set_and_parse_bool_conf(left_panel_smart_zoom,true,false);
     add_section("Update Settings");
-    set_and_parse_bool_conf(check_update,true);
-    set_and_parse_conf(check_update_interval,1,0,1000);
-    set_and_parse_bool_conf(ask_for_update_check,false);
+    set_and_parse_bool_conf(check_update,true,false);
+    set_and_parse_conf(check_update_interval,1,0,1000,false);
+    set_and_parse_bool_conf(ask_for_update_check,false,false);
     add_button("Defaults",DEFAULTS_BUTTON_ID,COLS - 8,ROWS - 8);
     add_button("  Cancel",CANCEL_BUTTON_ID,COLS - 8,ROWS - 5);
     add_button("      OK",OK_BUTTON_ID,COLS - 8,ROWS - 2);
@@ -711,6 +713,7 @@ void settings_menu() {
                     boolean increase = cursor_x >= s->xLoc + SETTING_NAME_MAX_LEN + SETTING_VALUE_MAX_LEN - 2;
                     boolean menu_changed = false;
                     FILE * st;
+                    boolean need_restart = false;
                     switch(s->t){
                         case section_:
                             current_section = s->default_.s;
@@ -734,8 +737,11 @@ void settings_menu() {
                                         switch(s->t){
                                             case boolean_:
                                                 if(* (( boolean * ) s->value) != s->new.b){
-                                                    * (( boolean * ) s->value) = s->new.b;
-                                                    settings_changed = true;
+                                                    need_restart = need_restart || s->need_restart;
+                                                    if(!s->need_restart) {
+                                                        *((boolean *) s->value) = s->new.b;
+                                                        settings_changed = true;
+                                                    }
                                                 }
                                                 if(s->new.b != s->default_.b) {
                                                     fprintf(st, "%s %s\n",s->name, s->new.b ? "1" : "0");
@@ -743,8 +749,11 @@ void settings_menu() {
                                                 break;
                                             case int_:
                                                 if(* (( int * ) s->value) != s->new.i){
-                                                    * (( int * ) s->value) = s->new.i;
-                                                    settings_changed = true;
+                                                    need_restart = need_restart || s->need_restart;
+                                                    if(!s->need_restart) {
+                                                        *((int *) s->value) = s->new.i;
+                                                        settings_changed = true;
+                                                    }
                                                 }
                                                 if(s->new.i != s->default_.i) {
                                                     fprintf(st, "%s %d\n",s->name, s->new.i);
@@ -752,14 +761,25 @@ void settings_menu() {
                                                 break;
                                             case double_:
                                                 if(* (( double * ) s->value) != s->new.d){
-                                                    * (( double * ) s->value) = s->new.d;
-                                                    settings_changed = true;
+                                                    need_restart = need_restart || s->need_restart;
+                                                    if(!s->need_restart) {
+                                                        *((double *) s->value) = s->new.d;
+                                                        settings_changed = true;
+                                                    }
                                                 }
                                                 if(s->new.d != s->default_.d) {
                                                     fprintf(st, "%s %f\n",s->name, s->new.d);
                                                 }
                                                 break;
                                         }
+                                    }
+                                    if(need_restart){
+                                        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_WARNING, "Settings Warning",
+                                                "One or more changes require restart",
+                                                NULL);
+                                        restart_game = false;
+                                        settings_changed = false;
+                                        return;
                                     }
                                     fclose(st);
                                     restart_game = true;
@@ -1135,11 +1155,16 @@ void TouchScreenGameLoop() {
     SDL_SetEventFilter(suspend_resume_filter, NULL);
     do {
         restart_game = false;
+        settings_changed = false;
         rogue.nextGame = NG_NOTHING;
         rogue.nextGamePath[0] = '\0';
         rogue.nextGameSeed = 0;
         rogueMain();
-    }while(restart_game && !settings_changed);
+        if(settings_changed){
+            destroy_assets();
+            create_assets();
+        }
+    }while(restart_game);
     destroy_assets();
     TTF_CloseFont(font);
     TTF_Quit();
