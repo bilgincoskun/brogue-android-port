@@ -74,7 +74,8 @@ static SDL_Renderer *renderer;
 static SDL_Texture * screen_texture;
 static SDL_DisplayMode display;
 static int cell_w, cell_h;
-static _Atomic boolean screen_changed = false;
+static boolean screen_changed = false;
+static _Atomic boolean resumed = false;
 static TTF_Font *font;
 static glyph_cache font_cache[UCHAR_MAX];
 static SDL_Texture * dpad_image_select;
@@ -396,7 +397,7 @@ int suspend_resume_filter(void *userdata, SDL_Event *event){
         case SDL_APP_WILLENTERBACKGROUND:
             return 0;
         case SDL_APP_WILLENTERFOREGROUND:
-            screen_changed = true;
+            resumed = true;
             return 0;
 
     }
@@ -657,6 +658,7 @@ void rebuild_settings_menu(int current_section){ //-1 means no section is open
     refreshScreen();
     commitDraws();
     if(screen_changed) {
+        SDL_SetRenderTarget(renderer, NULL);
         SDL_RenderCopy(renderer, screen_texture, NULL, NULL);
         SDL_RenderPresent(renderer);
         SDL_SetRenderTarget(renderer, screen_texture);
@@ -811,6 +813,13 @@ boolean process_events() {
     static boolean on_dpad = false;
     static bool_store prev_zoom_toggle = unset;
     static boolean in_left_panel = true;
+    if(resumed){
+        resumed = false;
+        destroy_assets();
+        create_assets();
+        refreshScreen();
+        commitDraws();
+    }
     if(current_event.eventType!=EVENT_ERROR){
         return true;
     }
