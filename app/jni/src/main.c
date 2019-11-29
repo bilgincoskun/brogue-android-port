@@ -670,6 +670,7 @@ void settings_menu() {
     settings_changed = false;
     int current_section = 0;
     int hold = 0;
+    int acc = 0;
     int16_t cursor_x,cursor_y;
     for(int i=0;i<setting_len;i++){
         setting  * s = & setting_list[i];
@@ -702,6 +703,7 @@ void settings_menu() {
             }
         }
         if(hold){
+            acc +=1;
             for(int i=0;i<setting_len;i++){
                 setting * s = &setting_list[i];
                 if(abs(s->yLoc-cursor_y)<=1 && (s->xLoc <= cursor_x && cursor_x <= s->xLoc + SETTING_NAME_MAX_LEN + SETTING_VALUE_MAX_LEN  )){
@@ -797,8 +799,10 @@ void settings_menu() {
                 }
             }
 
+        }else{
+            acc = 0;
         }
-        SDL_Delay(100);
+        SDL_Delay(100/max(1,(acc - 10)*2));
     }
 }
 
