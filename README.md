@@ -72,6 +72,8 @@ Three finger touch. Note that it is implemented to enter a custom seed.
 ### Virtual Keyboard
 
 Except corners left edge of the screen is reserved for opening virtual keyboard.
+# Settings
+You can access settings from title menu. The explanations of the configurations can be found under the **Configuration File** section.
 # Configuration File
 
 When the application started it reads the configuration file in **[App Folder]/settings.txt** .  You can use this file for customizing the behaviour of the application.
