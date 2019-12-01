@@ -717,6 +717,7 @@ void settings_menu() {
                     switch(s->t){
                         case section_:
                             current_section = s->default_.s;
+                            cursor_x = -1;
                             menu_changed = true;
                             break;
                         case button_:
