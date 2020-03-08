@@ -2,11 +2,13 @@ Android port of [Brogue](https://sites.google.com/site/broguegame/) using SDL2
 # Installation
 You can download apks from [here](https://github.com/bilgincoskun/brogue-android-port/releases) 
 
-Currently there are 3 apks use different versions of Brogue which can be installed side by side.
-
-* 1.7.5 with bug fixes from [here](https://github.com/flend/brogue-windows/) (Suggested version)
+Currently there are 4 apks use different versions of Brogue which can be installed side by side.
 
 * Original v1.7.5 version
+
+* Community Edition from [here](https://github.com/tmewett/BrogueCE)
+
+* 1.7.5 with bug fixes from [here](https://github.com/flend/brogue-windows/)
 
 * Original 1.7.4 version
 

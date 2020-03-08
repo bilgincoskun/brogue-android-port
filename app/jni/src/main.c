@@ -1365,6 +1365,8 @@ int brogue_main(void *data){
     return 0;
 }
 
+boolean serverMode = false;
+
 int main() {
     chdir(SDL_AndroidGetInternalStoragePath());
     FILE * fc;
