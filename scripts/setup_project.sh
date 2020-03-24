@@ -6,7 +6,7 @@ mkdir -p "$tmp_dir"
 cd "$tmp_dir"
 
 echo "Downloading SDL2"
-wget -qO- https://www.libsdl.org/release/SDL2-2.0.10.tar.gz | tar xz
+wget -qO- https://www.libsdl.org/release/SDL2-2.0.12.tar.gz | tar xz
 mv SDL2* SDL
 
 echo "Downloading SDL2_ttf"
