@@ -8,7 +8,6 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
 
-import org.brogue.brogueCore.brogueCore;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.brogue.brogue.BuildConfig;
@@ -22,7 +21,10 @@ import java.net.URL;
 
 import javax.net.ssl.HttpsURLConnection;
 
-public class brogueActivity extends brogueCore
+
+import org.libsdl.app.SDLActivity;
+
+public class brogueActivity extends SDLActivity
 {
     private String download_link;
     private String gitVersionCheck(){//first character of return value indicates error
