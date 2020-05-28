@@ -26,6 +26,21 @@ import org.libsdl.app.SDLActivity;
 
 public class brogueActivity extends SDLActivity
 {
+   @Override
+   protected String[] getLibraries() {
+       if( Build.VERSION.SDK_INT <= 17){
+           return new String[] {
+                   "hidapi",
+                   "SDL2",
+                   "SDL2_ttf",
+                   "main"
+           };
+       }else{
+           return super.getLibraries();
+       }
+
+
+   }
     private String download_link;
     private String gitVersionCheck(){//first character of return value indicates error
         String git_url = "https://api.github.com/repos/bilgincoskun/brogue-android-port/releases/latest";
