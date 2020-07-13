@@ -28,6 +28,10 @@
 #define CANCEL_BUTTON_ID 2
 #define OK_BUTTON_ID 3
 #define SETTINGS_FILE "settings.txt"
+#define TILES_LEN 256
+#define MAX_GLYPH_NO (TILES_LEN * 3)
+#define TILES_FLIP_TIME 900
+#define MIN_TILE G_UP_ARROW
 
 typedef struct {
     SDL_Texture *c;
@@ -78,7 +82,7 @@ static int cell_w, cell_h;
 static boolean screen_changed = false;
 static _Atomic boolean resumed = false;
 static TTF_Font *font;
-static glyph_cache font_cache[UCHAR_MAX];
+static glyph_cache font_cache[MAX_GLYPH_NO];
 static SDL_Texture * dpad_image_select;
 static SDL_Texture * dpad_image_move;
 static SDL_Rect dpad_area;
@@ -100,6 +104,7 @@ static boolean restart_game = false;
 static int new_game_line = -1;
 static boolean in_title_menu = true;
 static boolean settings_changed = false;
+static int tiles_frame = 0;
 
 //Config Values
 static int custom_cell_width;
@@ -129,6 +134,8 @@ static int filter_mode;
 static boolean check_update;
 static int check_update_interval;
 static boolean ask_for_update_check;
+static boolean enable_tiles;
+static boolean enable_tiles_animation;
 
 void destroy_assets(){
     SDL_SetRenderTarget(renderer,NULL);
@@ -174,7 +181,7 @@ void create_assets(){
                                     &renderer)) {
         critical_error("SDL Error", "Couldn't create window and renderer: %s", SDL_GetError());
     }
-    memset(font_cache, 0, UCHAR_MAX * sizeof(glyph_cache));
+    memset(font_cache, 0, MAX_GLYPH_NO * sizeof(glyph_cache));
     screen_texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, display.w, display.h);
     SDL_SetRenderTarget(renderer,screen_texture);
     SDL_SetRenderDrawColor(renderer,0,0,0,COLOR_MAX);
@@ -316,6 +323,8 @@ void set_conf(const char * name,const char * value){
     set_and_parse_conf(custom_screen_height,0,0,LONG_MAX,true);
     set_and_parse_bool_conf(force_portrait,false,true);
     set_and_parse_bool_conf(dynamic_colors,true,false);
+    set_and_parse_bool_conf(enable_tiles,false,false);
+    set_and_parse_bool_conf(enable_tiles_animation,true,false);
     set_and_parse_conf(filter_mode,2,0,2,true);
     add_section("Input Settings");
     set_and_parse_bool_conf(double_tap_lock,true,false);
@@ -406,99 +415,163 @@ int suspend_resume_filter(void *userdata, SDL_Event *event){
     return 1;
 }
 
-void draw_glyph(uint16_t c, SDL_Rect rect, uint8_t r, uint8_t g, uint8_t b) {
+#define convert_glyph(glyph,ascii,tile) case glyph:\
+    if(enable_tiles){\
+        key = tile;\
+        if(tile >= TILES_LEN)\
+            key += (tiles_frame> TILES_FLIP_TIME)*TILES_LEN;\
+    }\
+    else{\
+        key = ascii;\
+    }\
+    break;
+
+void draw_glyph(enum displayGlyph c, SDL_Rect rect, uint8_t r, uint8_t g, uint8_t b) {
     if (c <= ' ') { //Empty Cell Optimization
         return;
     }
-    uint8_t key;
-    if (c < UCHAR_MAX) {
+    uint16_t key;
+    if (c < MIN_TILE) {
         key = c;
     } else {
-        switch (c) {
-            case FLOOR_CHAR:
-                key = 128 + 0;
-                break;
-            case CHASM_CHAR:
-                key = 128 + 1;
-                break;
-            case TRAP_CHAR:
-                key = 128 + 2;
-                break;
-            case FIRE_CHAR:
-                key = 128 + 3;
-                break;
-            case FOLIAGE_CHAR:
-                key = 128 + 4;
-                break;
-            case AMULET_CHAR:
-                key = 128 + 5;
-                break;
-            case SCROLL_CHAR:
-                key = 128 + 6;
-                break;
-            case RING_CHAR:
-                key = 128 + 7;
-                break;
-            case WEAPON_CHAR:
-                key = 128 + 8;
-                break;
-            case GEM_CHAR:
-                key = 128 + 9;
-                break;
-            case TOTEM_CHAR:
-                key = 128 + 10;
-                break;
-            case BAD_MAGIC_CHAR:
-                key = 128 + 12;
-                break;
-            case GOOD_MAGIC_CHAR:
-                key = 128 + 13;
-                break;
-            case DOWN_ARROW_CHAR:
-                key = 144 + 1;
-                break;
-            case LEFT_ARROW_CHAR:
-                key = 144 + 2;
-                break;
-            case RIGHT_ARROW_CHAR:
-                key = 144 + 3;
-                break;
-            case UP_TRIANGLE_CHAR:
-                key = 144 + 4;
-                break;
-            case DOWN_TRIANGLE_CHAR:
-                key = 144 + 5;
-                break;
-            case OMEGA_CHAR:
-                key = 144 + 6;
-                break;
-            case THETA_CHAR:
-                key = 144 + 7;
-                break;
-            case LAMDA_CHAR:
-                key = 144 + 8;
-                break;
-            case KOPPA_CHAR:
-                key = 144 + 9;
-                break;
-            case CHARM_CHAR:
-                key = 144 + 9;
-                break;
-            case LOZENGE_CHAR:
-                key = 144 + 10;
-                break;
-            case CROSS_PRODUCT_CHAR:
-                key = 144 + 11;
-                break;
-            default:
-                key = '?';
-                break;
+        switch(c){
+            convert_glyph(G_UP_ARROW,128+8,128+8)
+            convert_glyph(G_DOWN_ARROW,144+1,144+1)
+            convert_glyph(G_PLAYER, '@', 256)
+            convert_glyph(G_BOG_MONSTER, 'B', 257)
+            convert_glyph(G_CENTAUR, 'C', 258)
+            convert_glyph(G_DRAGON, 'D', 259)
+            convert_glyph(G_GOLEM, 'G', 260)
+            convert_glyph(G_TENTACLE_HORROR, 'H', 261)
+            convert_glyph(G_JELLY, 'J', 262)
+            convert_glyph(G_KRAKEN, 'K', 263)
+            convert_glyph(G_LICH, 'L', 264)
+            convert_glyph(G_NAGA, 'N', 265)
+            convert_glyph(G_OGRE, 'O', 266)
+            convert_glyph(G_OGRE_MAGIC, 'O', 267)
+            convert_glyph(G_PHANTOM, 'P', 268)
+            convert_glyph(G_REVENANT, 'R', 269)
+            convert_glyph(G_SALAMANDER, 'S', 270)
+            convert_glyph(G_TROLL, 'T', 271)
+            convert_glyph(G_UNDERWORM, 'U', 272)
+            convert_glyph(G_WRAITH, 'W', 273)
+            convert_glyph(G_ZOMBIE, 'Z', 274)
+            convert_glyph(G_MOUND, 'a', 275)
+            convert_glyph(G_BLOAT, 'b', 276)
+            convert_glyph(G_CENTIPEDE, 'c', 277)
+            convert_glyph(G_DAR_BLADEMASTER, 'd', 278)
+            convert_glyph(G_DAR_PRIESTESS, 'd', 279)
+            convert_glyph(G_DAR_BATTLEMAGE, 'd', 280)
+            convert_glyph(G_EEL, 'e', 281)
+            convert_glyph(G_FURY, 'f', 282)
+            convert_glyph(G_GOBLIN, 'g', 283)
+            convert_glyph(G_GOBLIN_MAGIC, 'g', 284)
+            convert_glyph(G_GOBLIN_CHIEFTAN, 'g', 285)
+            convert_glyph(G_IMP, 'i', 286)
+            convert_glyph(G_JACKAL, 'j', 287)
+            convert_glyph(G_KOBOLD, 'k', 288)
+            convert_glyph(G_MONKEY, 'm', 289)
+            convert_glyph(G_PIXIE, 'p', 290)
+            convert_glyph(G_RAT, 'r', 291)
+            convert_glyph(G_SPIDER, 's', 292)
+            convert_glyph(G_TOAD, 't', 293)
+            convert_glyph(G_BAT, 'v', 294)
+            convert_glyph(G_WISP, 'w', 295)
+            convert_glyph(G_UNICORN, 218, 296)
+            convert_glyph(G_FLAMEDANCER, 'F', 297)
+            convert_glyph(G_IFRIT, 'I', 298)
+            convert_glyph(G_VAMPIRE, 'V', 299)
+            convert_glyph(G_PHOENIX, 'P', 300)
+            convert_glyph(G_WARDEN, 'Y', 301)
+            convert_glyph(G_ANCIENT_SPIRIT,'M',302)
+            convert_glyph(G_WALL, '#', 303)
+            convert_glyph(G_WALL_TOP, '#', 304)
+            convert_glyph(G_GRANITE,'#',305)
+            convert_glyph(G_GRASS, '"', 306)
+            convert_glyph(G_FOLIAGE, 128+4, 307)
+            convert_glyph(G_BLOODWORT_STALK,128+4,308)
+            convert_glyph(G_BLOODWORT_POD,'*',309)
+            convert_glyph(G_POTION, '!', 310)
+            convert_glyph(G_DEWAR,'&',311)
+            convert_glyph(G_CLOSED_DOOR,'+'  ,312)
+            convert_glyph(G_OPEN_DOOR  ,'\''  ,313)
+            convert_glyph(G_CLOSED_IRON_DOOR, '+', 314)
+            convert_glyph(G_OPEN_IRON_DOOR, '-', 315)
+            convert_glyph(G_PORTCULLIS,'#',316)
+            convert_glyph(G_KEY, '-', 317)
+            convert_glyph(G_DOORWAY    ,144+6,318)
+            convert_glyph(G_WEB, ':', 319)
+            convert_glyph(G_FOOD, ';', 320)
+            convert_glyph(G_UP_STAIRS, '<', 321)
+            convert_glyph(G_DOWN_STAIRS, '>', 322)
+            convert_glyph(G_BRIDGE, '=', 323)
+            convert_glyph(G_STAFF, '\\', 324)
+            convert_glyph(G_ALTAR, '|', 325)
+            convert_glyph(G_LIQUID, 128 + 3, 326)
+            convert_glyph(G_TRAP, 128 + 2, 327)
+            convert_glyph(G_FIRE, 128 + 3, 328)
+            convert_glyph(G_SCROLL,128+6, 329)
+            convert_glyph(G_RING, 'o', 330)
+            convert_glyph(G_WEAPON, 128+8,331)
+            convert_glyph(G_TOTEM, 128+10,332)
+            convert_glyph(G_CHARM, 144+9, 333)
+            convert_glyph(G_STATUE,223, 334)
+            convert_glyph(G_CRACKED_STATUE,223, 335)
+            convert_glyph(G_GUARDIAN,223,336)
+            convert_glyph(G_WINGED_GUARDIAN,223,337)
+            convert_glyph(G_VENT,'=', 338)
+            convert_glyph(G_GOLD, '*', 339)
+            convert_glyph(G_EGG,128+9,340)
+            convert_glyph(G_RUBBLE, ',', 341)
+            convert_glyph(G_BONES, ',', 342)
+            convert_glyph(G_LEVER,'/',343)
+            convert_glyph(G_LEVER_PULLED,'\\',344)
+            convert_glyph(G_TORCH, '#', 345)
+            convert_glyph(G_BAD_MAGIC,128 + 12,346)
+            convert_glyph(G_CARPET, '.', 347)
+            convert_glyph(G_CHASM, 128+1, 348)
+            convert_glyph(G_AMULET,128+5,349)
+            convert_glyph(G_TURRET,128+10,350)
+            convert_glyph(G_GEM,128+9,351)
+            convert_glyph(G_CRYSTAL,'#',352)
+            convert_glyph(G_BARRICADE,'#',353)
+            convert_glyph(G_CLOSED_CAGE,'|',354)
+            convert_glyph(G_OPEN_CAGE,'|',355)
+            convert_glyph(G_PEDESTAL,'|',356)
+            convert_glyph(G_CLOSED_COFFIN,'-',357)
+            convert_glyph(G_OPEN_COFFIN,'-',358)
+            convert_glyph(G_MAGIC_GLYPH,128+1,359)
+            convert_glyph(G_ELECTRIC_CRYSTAL,'$',361)
+            convert_glyph(G_FLOOR, '.', 362)
+            convert_glyph(G_CHAIN_LEFT, '-', 363)
+            convert_glyph(G_CHAIN_TOP, '|', 364)
+            convert_glyph(G_CHAIN_TOP_LEFT, '\\', 365)
+            convert_glyph(G_CHAIN_BOTTOM_LEFT, '/', 366)
+            convert_glyph(G_EASY,'&',367)
+            convert_glyph(G_ARMOR,'[',368)
+            convert_glyph(G_FLOOR_ALT, '.', 369)
+            convert_glyph(G_ASHES, '\'', 370)
+            convert_glyph(G_GOOD_MAGIC,128 + 13,372)
+            convert_glyph(G_CHAIN_RIGHT, '-', 373)
+            convert_glyph(G_CHAIN_BOTTOM, '|', 374)
+            convert_glyph(G_CHAIN_BOTTOM_RIGHT, '\\', 375)
+            convert_glyph(G_CHAIN_TOP_RIGHT, '/', 376)
+            convert_glyph(G_HOLE,128+1,377)
+            convert_glyph(G_WAND,'~',378)
+            convert_glyph(G_BOG,'~',379)
+            convert_glyph(G_BEDROLL, '=', 381)
+            default: key = '?';
         }
     }
     glyph_cache *lc = &font_cache[key];
     if (lc->c == NULL) {
         SDL_Color fc = {COLOR_MAX, COLOR_MAX, COLOR_MAX};
-        SDL_Surface *text = TTF_RenderGlyph_Blended(font, key, fc);
+        SDL_Surface *text;
+        if((key >= 2*TILES_LEN) && !TTF_GlyphIsProvided(font,key)){
+            text = TTF_RenderGlyph_Blended(font, key - TILES_LEN, fc);
+        }else{
+            text = TTF_RenderGlyph_Blended(font, key, fc);
+        }
         lc->width = text->w;
         lc->height = text->h;
         lc->offset_x = (rect.w - text->w) / 2;
@@ -1238,19 +1311,30 @@ boolean TouchScreenPauseForMilliseconds(short milliseconds){
 }
 
 void TouchScreenNextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInput, boolean colorsDance) {
+    static uint32_t prev_time = 0;
     while(!process_events()){
         if (dynamic_colors && colorsDance) {
             shuffleTerrainColors(3, true);
             commitDraws();
         }
+        if (enable_tiles_animation){
+            uint32_t current_time = SDL_GetTicks();
+            tiles_frame += current_time - prev_time;
+            prev_time = current_time;
+            if(tiles_frame > TILES_FLIP_TIME * 2){
+                tiles_frame = 0;
+            }
+            refreshScreen();
+        }
         TouchScreenPauseForMilliseconds(FRAME_INTERVAL);
+
     }
     *returnEvent = current_event;
     current_event.eventType = EVENT_ERROR; //unset the event
 }
 
 
-void TouchScreenPlotChar(uchar ch,
+void TouchScreenPlotChar(enum displayGlyph ch,
                          short xLoc, short yLoc,
                          short foreRed, short foreGreen, short foreBlue,
                          short backRed, short backGreen, short backBlue) {
