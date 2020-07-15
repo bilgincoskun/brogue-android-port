@@ -20,7 +20,7 @@ Note that both of the scripts are assumed to be run at root folder of the projec
 
 # Porting New Brogue Variants
 
-Fork Brogue code from [here](https://github.com/bilgincoskun/brogue-libtcod-sdl2-fix)
+Fork Brogue code from [here](https://github.com/bilgincoskun/game-logic-for-brogue-android-port)
 
 Change files under src/brogue and include with your variants' **(Do not change src/platform)**
 

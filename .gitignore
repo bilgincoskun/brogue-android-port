@@ -81,7 +81,7 @@ lint/outputs/
 lint/tmp/
 # lint/reports/
 
-brogue-files
+game_files
 app/.cxx/
 app/jni/SDL
 app/jni/SDL_ttf

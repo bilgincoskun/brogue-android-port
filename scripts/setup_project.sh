@@ -4,6 +4,7 @@ tmp_dir=$(mktemp -d)
 cur_dir=$(pwd)
 mkdir -p "$tmp_dir"
 cd "$tmp_dir"
+game_folder="game_files"
 
 echo "Downloading SDL2"
 wget -qO- https://www.libsdl.org/release/SDL2-2.0.12.tar.gz | tar xz
@@ -22,8 +23,9 @@ rm -rf "$tmp_dir"
 
 echo "Downloading Brogue Files"
 #You can also use original distribution but dont forget to move necessary .h files and .c files to header and src/brogue folders
-git clone https://github.com/bilgincoskun/brogue-libtcod-sdl2-fix brogue-files -b 175-with-fixes -q
+git clone https://github.com/bilgincoskun/game-logic-for-brogue-android-port $game_folder -b 175-with-fixes -q
+git -C $game_folder pull --all
 
 echo "Setting Symlinks for Brogue Code"
-ln -sf ../../../brogue-files/include ./app/jni/src
-ln -sf ../../../brogue-files/src/brogue ./app/jni/src
+ln -sf ../../../$game_folder/include ./app/jni/src
+ln -sf ../../../$game_folder/src/brogue ./app/jni/src
