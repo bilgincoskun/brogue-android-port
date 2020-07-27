@@ -550,6 +550,8 @@ void draw_glyph(enum displayGlyph c, SDL_Rect rect, uint8_t r, uint8_t g, uint8_
             convert_glyph(G_CLOSED_COFFIN,'-',357)
             convert_glyph(G_OPEN_COFFIN,'-',358)
             convert_glyph(G_MAGIC_GLYPH,128+1,359)
+            convert_glyph(G_GLOWING_GLYPH,128+1,383)
+            convert_glyph(G_SACRED_GLYPH,128+1,383)
             convert_glyph(G_ELECTRIC_CRYSTAL,'$',361)
             convert_glyph(G_FLOOR, '.', 362)
             convert_glyph(G_CHAIN_LEFT, '-', 363)
