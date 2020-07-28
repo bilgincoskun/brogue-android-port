@@ -76,7 +76,7 @@ if __name__ == "__main__":
             exit(-1)
 
     release_folder = cur_dir/"release_apks"/app_ver
-    game_code_folder = cur_dir/"brogue-files"
+    game_code_folder = cur_dir/"game_files"
     os.makedirs(release_folder,exist_ok = True)
     git_command = f"git -C {game_code_folder}"
     versions = run_command(f"{git_command} branch -r")[1]
