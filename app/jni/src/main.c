@@ -574,6 +574,10 @@ void draw_glyph(enum displayGlyph c, SDL_Rect rect, uint8_t r, uint8_t g, uint8_
             convert_glyph(G_WAND,'~',378)
             convert_glyph(G_BOG,',',379)
             convert_glyph(G_BEDROLL, '=', 381)
+            convert_glyph(G_NET, ':', 385)
+            convert_glyph(G_FALLEN_TORCH, '#', 386)
+            convert_glyph(G_VINE, ':', 360)
+
             default: key = '?';
         }
     }
