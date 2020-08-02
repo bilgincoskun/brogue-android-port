@@ -134,8 +134,8 @@ static int filter_mode;
 static boolean check_update;
 static int check_update_interval;
 static boolean ask_for_update_check;
-static boolean enable_tiles;
-static boolean enable_tiles_animation;
+static boolean graphics_by_default;
+static boolean graphics_animation;
 
 
 boolean hasGraphics = true;
@@ -327,8 +327,8 @@ void set_conf(const char * name,const char * value){
     set_and_parse_conf(custom_screen_height,0,0,LONG_MAX,true);
     set_and_parse_bool_conf(force_portrait,false,true);
     set_and_parse_bool_conf(dynamic_colors,true,false);
-    set_and_parse_bool_conf(enable_tiles,false,false);
-    set_and_parse_bool_conf(enable_tiles_animation,true,false);
+    set_and_parse_bool_conf(graphics_by_default, false, false);
+    set_and_parse_bool_conf(graphics_animation,true,false);
     set_and_parse_conf(filter_mode,2,0,2,true);
     add_section("Input Settings");
     set_and_parse_bool_conf(double_tap_lock,true,false);
@@ -420,7 +420,7 @@ int suspend_resume_filter(void *userdata, SDL_Event *event){
 }
 
 #define convert_glyph(glyph,ascii,tile) case glyph:\
-    if(enable_tiles){\
+    if(graphicsEnabled){\
         key = tile;\
         if(tile >= TILES_LEN)\
             key += (tiles_frame> TILES_FLIP_TIME)*TILES_LEN;\
@@ -1337,7 +1337,7 @@ void TouchScreenNextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInput, 
             shuffleTerrainColors(3, true);
             commitDraws();
         }
-        if (enable_tiles_animation){
+        if (graphics_animation){
             uint32_t current_time = SDL_GetTicks();
             tiles_frame += current_time - prev_time;
             prev_time = current_time;
@@ -1379,13 +1379,22 @@ boolean TouchScreenModifierHeld(int modifier) {
     return modifier == 1 && ctrl_pressed;
 }
 
+
+static boolean TouchScreenSetGraphicsEnabled(boolean state) {
+    graphicsEnabled = state;
+    refreshScreen();
+    return state;
+}
+
 struct brogueConsole TouchScreenConsole = {
-        TouchScreenGameLoop,
-        TouchScreenPauseForMilliseconds,
-        TouchScreenNextKeyOrMouseEvent,
-        TouchScreenPlotChar,
-        TouchScreenRemap,
-        TouchScreenModifierHeld
+        .gameLoop = TouchScreenGameLoop,
+        .pauseForMilliseconds = TouchScreenPauseForMilliseconds,
+        .nextKeyOrMouseEvent = TouchScreenNextKeyOrMouseEvent,
+        .plotChar = TouchScreenPlotChar,
+        .remap = TouchScreenRemap,
+        .modifierHeld = TouchScreenModifierHeld,
+        .setGraphicsEnabled = TouchScreenSetGraphicsEnabled,
+
 };
 
 boolean git_version_check(JNIEnv * env,jobject activity,jclass cls){
@@ -1446,6 +1455,7 @@ boolean git_version_check(JNIEnv * env,jobject activity,jclass cls){
     (*env)->ReleaseStringUTFChars(env,ver_,ver);
     return return_value;
 }
+
 void config_folder(JNIEnv * env,jobject activity,jclass cls){
     jmethodID method_id = (*env)->GetMethodID(env,cls, "configFolder", "()Ljava/lang/String;");
     jstring folder_ = (*env)->CallObjectMethod(env,activity, method_id);
@@ -1507,6 +1517,7 @@ int main() {
     config_folder(env,activity,cls);
     set_conf("",""); //set default values of config
     load_conf();
+    graphicsEnabled = graphics_by_default;
     if(check_update){
         time_t new_time;
         time(&new_time);
