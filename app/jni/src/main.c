@@ -137,6 +137,10 @@ static boolean ask_for_update_check;
 static boolean enable_tiles;
 static boolean enable_tiles_animation;
 
+
+boolean hasGraphics = true;
+boolean graphicsEnabled = true;
+
 void destroy_assets(){
     SDL_SetRenderTarget(renderer,NULL);
     SDL_DestroyRenderer(renderer);
