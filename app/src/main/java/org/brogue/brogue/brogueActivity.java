@@ -80,6 +80,12 @@ public class brogueActivity extends SDLActivity
         startActivity(intent);
     }
 
+    private void openManual(){
+        String manual_url = "https://github.com/bilgincoskun/brogue-android-port/blob/master/README.md";
+        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(manual_url));
+        startActivity(intent);
+    }
+
     private boolean needsWritePermission(){
         return Build.VERSION.SDK_INT >= 23;
     }

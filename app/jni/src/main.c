@@ -1456,6 +1456,30 @@ boolean git_version_check(JNIEnv * env,jobject activity,jclass cls){
     return return_value;
 }
 
+void open_manual(JNIEnv * env,jobject activity,jclass cls){
+    const SDL_MessageBoxButtonData buttons[] = {
+            {0,                                       0, "No"},
+            {SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT, 1, "Yes"},
+    };
+
+    const SDL_MessageBoxData messageboxdata = {
+              SDL_MESSAGEBOX_INFORMATION,
+              NULL,
+              "Manual",
+              "Manual contains information about control, settings etc. Do you want to read it now?",
+              SDL_arraysize(buttons),
+            buttons,
+              NULL,
+    };
+    int buttonid;
+    SDL_ShowMessageBox(&messageboxdata, &buttonid);
+    if (buttonid == 0) {
+        return;
+    }
+    jmethodID method_id = (*env)->GetMethodID(env,cls, "openManual", "()V");
+    (*env)->CallVoidMethod(env,activity, method_id);
+}
+
 void config_folder(JNIEnv * env,jobject activity,jclass cls){
     jmethodID method_id = (*env)->GetMethodID(env,cls, "configFolder", "()Ljava/lang/String;");
     jstring folder_ = (*env)->CallObjectMethod(env,activity, method_id);
@@ -1499,6 +1523,7 @@ int main() {
             SDL_Delay(1000);
             SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION,"Continue?","",NULL);
         }
+        open_manual(env,activity,cls);
         fc = fopen("first_run","w");
         fclose(fc);
     }
