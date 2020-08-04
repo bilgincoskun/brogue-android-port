@@ -134,9 +134,8 @@ static int filter_mode;
 static boolean check_update;
 static int check_update_interval;
 static boolean ask_for_update_check;
-static boolean graphics_by_default;
-static boolean graphics_animation;
-
+static boolean tiles_by_default;
+static boolean tiles_animation;
 
 boolean hasGraphics = true;
 boolean graphicsEnabled = true;
@@ -327,8 +326,8 @@ void set_conf(const char * name,const char * value){
     set_and_parse_conf(custom_screen_height,0,0,LONG_MAX,true);
     set_and_parse_bool_conf(force_portrait,false,true);
     set_and_parse_bool_conf(dynamic_colors,true,false);
-    set_and_parse_bool_conf(graphics_by_default, false, false);
-    set_and_parse_bool_conf(graphics_animation,true,false);
+    set_and_parse_bool_conf(tiles_by_default, false, false);
+    set_and_parse_bool_conf(tiles_animation, true, false);
     set_and_parse_conf(filter_mode,2,0,2,true);
     add_section("Input Settings");
     set_and_parse_bool_conf(double_tap_lock,true,false);
@@ -1337,7 +1336,7 @@ void TouchScreenNextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInput, 
             shuffleTerrainColors(3, true);
             commitDraws();
         }
-        if (graphics_animation){
+        if (tiles_animation){
             uint32_t current_time = SDL_GetTicks();
             tiles_frame += current_time - prev_time;
             prev_time = current_time;
@@ -1542,7 +1541,7 @@ int main() {
     config_folder(env,activity,cls);
     set_conf("",""); //set default values of config
     load_conf();
-    graphicsEnabled = graphics_by_default;
+    graphicsEnabled = tiles_by_default;
     if(check_update){
         time_t new_time;
         time(&new_time);
