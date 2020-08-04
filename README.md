@@ -2,15 +2,13 @@ Android port of [Brogue](https://sites.google.com/site/broguegame/) using SDL2
 # Installation
 You can download apks from [here](https://github.com/bilgincoskun/brogue-android-port/releases) 
 
-Currently there are 4 apks use different versions of Brogue which can be installed side by side.
+Currently there are 3 apks which use different versions of Brogue which can be installed side by side.
 
 * Original v1.7.5 version
 
 * Community Edition from [here](https://github.com/tmewett/BrogueCE)
 
 * 1.7.5 with bug fixes from [here](https://github.com/flend/brogue-windows/)
-
-* Original 1.7.4 version
 
 Note that apks require two additional permissions which both are optional:
 
@@ -99,6 +97,8 @@ You can see the supported configurations below:
 | force_portrait | Boolean | 0 | By default the app will start in landscape mode. If this option enabled it will force application to use portrait mode |
 | dynamic_colors | Boolean | 1 | Dynamic colors on water,lava etc.  Disabling will lower the power consumption |
 | filter_mode | Integer | 2 | Selects the algorithm for anti-aliasing: 0 uses nearest pixel sampling, 1 uses linear filtering and 2 uses anistropic filtering. If you get graphical glitches or performance issues, try to lower the value. |
+| tiles_by_default | Boolean | 0 | When enabled, the tiles will be shown by default. |
+| tiles_animation | Boolean | 1 | Enables tiles animation. |
 | double_tap_lock | Boolean | 1 | When enabled it will ignore the missclicks within **double_tap_interval** range |
 | double_tap_interval | Integer | 500 | Milliseconds.The maximum time between two taps to acknowledge it as a double tap. Value is between 100 and 100000 |
 | dpad_enabled | Boolean | 1 | Enable on-screen d-pad |
@@ -123,8 +123,10 @@ You can see the supported configurations below:
 
 These files are stored in **[App Folder]/\[Brogue Version]** which is accessible by the user.
 
-# Fonts
-Default font  is modified [Dejavu Sans Mono](https://dejavu-fonts.github.io/) with missing characters added/modified from Dejavu Sans.
+# Graphics
+By default the port uses ACII. To always use tileset, you can use tiles_by_default settting. You can also use in-game menu to enable tiles. Note that changes from in-game menu setting is not persistent.
+
+Default graphics use modified [Dejavu Sans Mono](https://dejavu-fonts.github.io/) with missing characters added/modified from Dejavu Sans for the text. For the tiles, tileset based on [Oryx Design Lab Tiles](https://www.oryxdesignlab.com/news/2018/11/8/brogue-tiles-v175-is-released) is used with some additions/changes.
 
 You can use custom fonts by copying them to **[App Folder]/custom.ttf** .
 
@@ -133,3 +135,5 @@ However fonts must be:
 * Edited according to draw_glyph function in main.c
 
 * Monospace
+
+* Animated tiles must be placed such that the offset between the first frame and the second one must be 256

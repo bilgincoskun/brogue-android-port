@@ -22,7 +22,7 @@ Note that both of the scripts are assumed to be run at root folder of the projec
 
 Fork Brogue code from [here](https://github.com/bilgincoskun/game-logic-for-brogue-android-port)
 
-Change files under src/brogue and include with your variants' **(Do not change src/platform)**
+Port your changes from your variant **(Do not change src/platform)**
 
 Make sure it compiles and run
 
@@ -31,4 +31,3 @@ Change BROGUE_VERSION_STRING in Rogue.h with something does not collide with oth
 Edit version_name file with your variant name and version
 
 Make a PR
-
