@@ -79,11 +79,11 @@ if __name__ == "__main__":
     game_code_folder = cur_dir/"game_files"
     os.makedirs(release_folder,exist_ok = True)
     git_command = f"git -C {game_code_folder}"
-    versions = run_command(f"{git_command} branch -r")[1]
-    versions = sorted(v.strip().replace("origin/","") for v in versions.strip().split("\n") if "/master" not in v)
+    versions = run_command(f"{git_command} branch --format=%(refname:short)")[1]
+    versions = sorted(versions.strip().split("\n"))
     for v in versions:
         run_command(f"{git_command} checkout {v}")
-        print("Compiling APK")
+        print(f"Compiling {v} APK")
         version_env = os.environ.copy()
         version_env["version_code"] = str(len(releases))
         version_env["version_name"] = f"v{app_ver}"

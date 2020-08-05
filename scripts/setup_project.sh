@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-echo "This script will download all necessasry files and setup the project"
+echo "This script will download all necessary files and setup the project"
 tmp_dir=$(mktemp -d)
 cur_dir=$(pwd)
 mkdir -p "$tmp_dir"
@@ -23,8 +23,12 @@ rm -rf "$tmp_dir"
 
 echo "Downloading Brogue Files"
 #You can also use original distribution but dont forget to move necessary .h files and .c files to header and src/brogue folders
-git clone https://github.com/bilgincoskun/game-logic-for-brogue-android-port $game_folder -b 175-with-fixes -q
+git clone https://github.com/bilgincoskun/game-logic-for-brogue-android-port $game_folder -q
 git -C $game_folder pull --all
+for b in $(git -C $game_folder branch -r)
+do
+    git -C $game_folder checkout --track $b  &> /dev/null
+done
 
 echo "Setting Symlinks for Brogue Code"
 ln -sf ../../../$game_folder/include ./app/jni/src
