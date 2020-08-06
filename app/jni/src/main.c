@@ -1330,13 +1330,13 @@ boolean TouchScreenPauseForMilliseconds(short milliseconds){
 }
 
 void TouchScreenNextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInput, boolean colorsDance) {
-    static uint32_t prev_time = 0;
     while(!process_events()){
         if (dynamic_colors && colorsDance) {
             shuffleTerrainColors(3, true);
             commitDraws();
         }
-        if (tiles_animation){
+        if (graphicsEnabled && tiles_animation){
+            static uint32_t prev_time = 0;
             uint32_t current_time = SDL_GetTicks();
             tiles_frame += current_time - prev_time;
             prev_time = current_time;
