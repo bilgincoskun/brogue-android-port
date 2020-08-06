@@ -1338,12 +1338,21 @@ void TouchScreenNextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInput, 
         if (graphicsEnabled && tiles_animation){
             static uint32_t prev_time = 0;
             uint32_t current_time = SDL_GetTicks();
+            uint32_t prev_tiles_frame = tiles_frame;
             tiles_frame += current_time - prev_time;
             prev_time = current_time;
+            boolean refresh = false;
             if(tiles_frame > TILES_FLIP_TIME * 2){
                 tiles_frame = 0;
+                refresh = true;
+            }else if((tiles_frame >= TILES_FLIP_TIME) && (prev_tiles_frame < TILES_FLIP_TIME)){
+                refresh = true;
             }
-            refreshScreen();
+            if(refresh){
+                refreshScreen();
+            }
+        }else{
+            tiles_frame = 0;
         }
         TouchScreenPauseForMilliseconds(FRAME_INTERVAL);
 

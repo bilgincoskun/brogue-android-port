@@ -96,9 +96,9 @@ You can see the supported configurations below:
 | custom_screen_height | Integer | 0 | When present and value is not 0 it sets the screen height.Disables custom_cell_height when active |
 | force_portrait | Boolean | 0 | By default the app will start in landscape mode. If this option enabled it will force application to use portrait mode |
 | dynamic_colors | Boolean | 1 | Dynamic colors on water,lava etc.  Disabling will lower the power consumption |
-| filter_mode | Integer | 2 | Selects the algorithm for anti-aliasing: 0 uses nearest pixel sampling, 1 uses linear filtering and 2 uses anistropic filtering. If you get graphical glitches or performance issues, try to lower the value. |
-| tiles_by_default | Boolean | 0 | When enabled, the tiles will be shown by default. |
-| tiles_animation | Boolean | 1 | Enables tiles animation. |
+| filter_mode | Integer | 2 | Selects the algorithm for anti-aliasing: 0 uses nearest pixel sampling, 1 uses linear filtering and 2 uses anistropic filtering. If you get graphical glitches or performance issues, try to lower the value |
+| tiles_by_default | Boolean | 0 | When enabled, the tiles will be shown by default |
+| tiles_animation | Boolean | 1 | Enables tiles animation. Disabling will lower the power consumption |
 | double_tap_lock | Boolean | 1 | When enabled it will ignore the missclicks within **double_tap_interval** range |
 | double_tap_interval | Integer | 500 | Milliseconds.The maximum time between two taps to acknowledge it as a double tap. Value is between 100 and 100000 |
 | dpad_enabled | Boolean | 1 | Enable on-screen d-pad |
@@ -109,13 +109,13 @@ You can see the supported configurations below:
 | default_dpad_mode | Boolean | 1 | Decides if the mode of d-pad at the start of the game will be selection mode (0) or movement mode (1) |
 | dpad_transparency | Integer | 75 |  Value is between 0 (non-visible) and 255 (opaque) |
 | long_press_interval | Integer | 750 | Milliseconds.The minimum time between press and release to acknowledge it as a long press. Value is between 100 and 100000 |
-| keyboard_always_on | Boolean | 0 | Opens the keyboard at the start of the game and prevents it from closing when touch input is occured. Note that playing back button still closes the keyboard. |
-| zoom_mode | Integer | 1 | 0 disables zoom, 1 zooms to player character (default), 2 zooms to cursor (falls back to zoom_mode 1 if the cursor is not present on the screen)|
+| keyboard_always_on | Boolean | 0 | Opens the keyboard at the start of the game and prevents it from closing when touch input is occured. Note that playing back button still closes the keyboard |
+| zoom_mode | Integer | 1 | 0 disables zoom, 1 zooms to player character (default), 2 zooms to cursor (falls back to zoom_mode 1 if the cursor is not present on the screen) |
 | init_zoom_toggle | Boolean | 0 | Start the game as zoomed |
 | init_zoom | Decimal | 2.0 | Default zooming at the start of the game. Value is between 1.0 and 10.0 |
-| max_zoom | Decimal | 4.0 | Maximum allowed zoom level. Value is between 1.0 and 10.0. It is overriden by init_zoom if init_zoom is bigger than max_zoom|
+| max_zoom | Decimal | 4.0 | Maximum allowed zoom level. Value is between 1.0 and 10.0. It is overriden by init_zoom if init_zoom is bigger than max_zoom |
 | smart_zoom | Boolean | 1 | Zoom out when a menu, logs or a confirmation dialog open or an item in left panel is tapped except left edge (when left_panel_smart zoom is enabled) |
-| left_panel_smart_zoom | Boolean | 1 | Enable smart zoom for left panel. |
+| left_panel_smart_zoom | Boolean | 1 | Enable smart zoom for left panel |
 | check_update | Boolean | 1 | Check updates when the app starts |
 | check_update_interval | Integer | 1 | How many days should pass before checking again. With 0, the app checks update each time it starts |
 | ask_for_update_check | Boolean | 0 | Ask before checking update |
