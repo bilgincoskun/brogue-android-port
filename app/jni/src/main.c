@@ -77,7 +77,7 @@ static setting * setting_list = NULL;
 static SDL_Window *window;
 static SDL_Renderer *renderer;
 static SDL_Texture * screen_texture;
-static SDL_DisplayMode display;
+static SDL_Rect display;
 static int cell_w, cell_h;
 static boolean screen_changed = false;
 static _Atomic boolean resumed = false;
@@ -1218,7 +1218,7 @@ void TouchScreenGameLoop() {
     if (TTF_Init() != 0) {
         critical_error("SDL_ttf Error","Unable to initialize SDL_ttf: %s", SDL_GetError());
     }
-    if (SDL_GetDesktopDisplayMode(0, &display) != 0) {
+    if (SDL_GetDisplayBounds(0, &display) != 0) {
         critical_error("SDL Error","SDL_GetDesktopDisplayMode failed: %s", SDL_GetError());
     }
 
