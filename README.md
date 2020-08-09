@@ -90,8 +90,8 @@ You can see the supported configurations below:
 
 | Name | Value Type | Default Value | |
 | --- | --- | --- | --- |
-| custom_cell_width | Integer | 0 | When present and value is not 0 it sets the cell width |
-| custom_cell_height | Integer | 0 | When present and value is not 0 it sets the cell height |
+| custom_cell_width | Decimal | 0 | When present and value is not 0 it sets the cell width |
+| custom_cell_height | Decimal | 0 | When present and value is not 0 it sets the cell height |
 | custom_screen_width | Integer | 0 | When present and value is not 0 it sets the screen width.Disables custom_cell_width when active |
 | custom_screen_height | Integer | 0 | When present and value is not 0 it sets the screen height.Disables custom_cell_height when active |
 | force_portrait | Boolean | 0 | By default the app will start in landscape mode. If this option enabled it will force application to use portrait mode |
