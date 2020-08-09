@@ -601,13 +601,13 @@ void draw_glyph(enum displayGlyph c, SDL_FRect rect, uint8_t r, uint8_t g, uint8
         lc->c = SDL_CreateTextureFromSurface(renderer, text);
         SDL_FreeSurface(text);
     }
-    SDL_FRect font_rect;
+    SDL_Rect font_rect;
     font_rect.x = rect.x + lc->offset_x;
     font_rect.y = rect.y + lc->offset_y;
     font_rect.w = lc->width;
     font_rect.h = lc->height;
     SDL_SetTextureColorMod(lc->c, r, g, b);
-    SDL_RenderCopyF(renderer, lc->c, NULL, &font_rect);
+    SDL_RenderCopy(renderer, lc->c, NULL, &font_rect);
 }
 
 TTF_Font *init_font_size(char *font_path, int size) {
