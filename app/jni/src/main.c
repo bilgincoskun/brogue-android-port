@@ -35,7 +35,7 @@
 
 typedef struct {
     SDL_Texture *c;
-    int width, height, offset_x, offset_y;
+    double width, height, offset_x, offset_y;
 } glyph_cache;
 
 typedef enum{
@@ -78,7 +78,7 @@ static SDL_Window *window;
 static SDL_Renderer *renderer;
 static SDL_Texture * screen_texture;
 static SDL_Rect display;
-static int cell_w, cell_h;
+static double cell_w, cell_h;
 static boolean screen_changed = false;
 static _Atomic boolean resumed = false;
 static TTF_Font *font;
@@ -107,8 +107,8 @@ static boolean settings_changed = false;
 static int tiles_frame = 0;
 
 //Config Values
-static int custom_cell_width;
-static int custom_cell_height;
+static double custom_cell_width;
+static double custom_cell_height;
 static int custom_screen_width;
 static int custom_screen_height;
 static boolean force_portrait;
@@ -197,8 +197,8 @@ void create_assets(){
         SDL_SetTextureColorMod(dpad_image_move,COLOR_MAX,COLOR_MAX,155);
         SDL_SetTextureAlphaMod(dpad_image_move,dpad_transparency);
         SDL_FreeSurface(dpad_i);
-        int area_width = min(cell_w*(LEFT_PANEL_WIDTH - 4),cell_h*20);
-        dpad_area.h = dpad_area.w = (dpad_width)?dpad_width:area_width;
+        double area_width = min(cell_w*(LEFT_PANEL_WIDTH - 4),cell_h*20);
+        dpad_area.h = dpad_area.w =(dpad_width)?dpad_width:area_width;
         dpad_area.x = (dpad_x_pos)?dpad_x_pos: 3*cell_w;
         dpad_area.y = (dpad_y_pos)?dpad_y_pos :(display.h - (area_width + 2*cell_h));
     }
@@ -320,8 +320,8 @@ void set_conf(const char * name,const char * value){
     static int section_no = 0;
     int index=0;
     add_section("Screen Settings");
-    set_and_parse_conf(custom_cell_width,0,0,LONG_MAX,true);
-    set_and_parse_conf(custom_cell_height,0,0,LONG_MAX,true);
+    set_and_parse_conf(custom_cell_width,0.0,0.0,(double) INT_MAX,true);
+    set_and_parse_conf(custom_cell_height,0.0,0.0,(double) INT_MAX,true);
     set_and_parse_conf(custom_screen_width,0,0,LONG_MAX,true);
     set_and_parse_conf(custom_screen_height,0,0,LONG_MAX,true);
     set_and_parse_bool_conf(force_portrait,false,true);
@@ -429,7 +429,7 @@ int suspend_resume_filter(void *userdata, SDL_Event *event){
     }\
     break;
 
-void draw_glyph(enum displayGlyph c, SDL_Rect rect, uint8_t r, uint8_t g, uint8_t b) {
+void draw_glyph(enum displayGlyph c, SDL_FRect rect, uint8_t r, uint8_t g, uint8_t b) {
     if (c <= ' ') { //Empty Cell Optimization
         return;
     }
@@ -598,13 +598,13 @@ void draw_glyph(enum displayGlyph c, SDL_Rect rect, uint8_t r, uint8_t g, uint8_
         lc->c = SDL_CreateTextureFromSurface(renderer, text);
         SDL_FreeSurface(text);
     }
-    SDL_Rect font_rect;
+    SDL_FRect font_rect;
     font_rect.x = rect.x + lc->offset_x;
     font_rect.y = rect.y + lc->offset_y;
     font_rect.w = lc->width;
     font_rect.h = lc->height;
     SDL_SetTextureColorMod(lc->c, r, g, b);
-    SDL_RenderCopy(renderer, lc->c, NULL, &font_rect);
+    SDL_RenderCopyF(renderer, lc->c, NULL, &font_rect);
 }
 
 TTF_Font *init_font_size(char *font_path, int size) {
@@ -785,7 +785,7 @@ void settings_menu() {
         SDL_Event event;
         while (SDL_PollEvent(&event)){
             if (event.type == SDL_FINGERDOWN){
-                float raw_input_x,raw_input_y;
+                double raw_input_x,raw_input_y;
                 raw_input_x = event.tfinger.x * display.w;
                 raw_input_y = event.tfinger.y * display.h;
                 cursor_x = min(COLS - 1, raw_input_x / cell_w);
@@ -945,7 +945,7 @@ boolean process_events() {
     current_event.controlKey = ctrl_pressed;
     SDL_Event event;
     while (SDL_PollEvent(&event)) {
-        float raw_input_x,raw_input_y;
+        double raw_input_x,raw_input_y;
         switch (event.type) {
             case SDL_FINGERDOWN:
                 if(event.tfinger.fingerId !=0){
@@ -1230,12 +1230,12 @@ void TouchScreenGameLoop() {
     if(custom_cell_width != 0){
         cell_w = custom_cell_width;
     }else {
-        cell_w = display.w / COLS;
+        cell_w = ((double) display.w) / COLS;
     }
     if(custom_cell_height != 0){
        cell_h = custom_cell_height;
     }else{
-        cell_h = display.h / ROWS;
+        cell_h = ((double) display.h) / ROWS;
     }
     left_panel_box = (SDL_Rect) {.x = 0, .y = 0, .w = LEFT_PANEL_WIDTH * cell_w, .h = ROWS * cell_h};
     log_panel_box = (SDL_Rect) {.x = LEFT_PANEL_WIDTH * cell_w, .y = 0, .w = (COLS - LEFT_PANEL_WIDTH) * cell_w, .h = TOP_LOG_HEIGIHT * cell_h};
@@ -1368,13 +1368,13 @@ void TouchScreenPlotChar(enum displayGlyph ch,
                          short backRed, short backGreen, short backBlue) {
 
     check_dialog_popup(ch, xLoc, yLoc);
-    SDL_Rect rect;
+    SDL_FRect rect;
     rect.x = xLoc * cell_w;
     rect.y = yLoc * cell_h;
     rect.w = cell_w;
     rect.h = cell_h;
     SDL_SetRenderDrawColor(renderer, convert_color(backRed), convert_color(backGreen),convert_color(backBlue), COLOR_MAX);
-    SDL_RenderFillRect(renderer, &rect);
+    SDL_RenderFillRectF(renderer, &rect);
     draw_glyph(ch, rect, convert_color(foreRed), convert_color(foreGreen), convert_color(foreBlue));
     screen_changed = true;
 }
