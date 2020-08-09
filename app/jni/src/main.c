@@ -1360,9 +1360,12 @@ void TouchScreenNextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInput, 
             }else if((tiles_frame >= TILES_FLIP_TIME) && (prev_tiles_frame < TILES_FLIP_TIME)){
                 refresh = true;
             }
-            if(refresh){
+            //Do not refresh screen during zoom change
+            static double prev_zoom = 0.0;
+            if(refresh && prev_zoom == zoom_level){
                 refreshScreen();
             }
+            prev_zoom = zoom_level;
         }else{
             tiles_frame = 0;
         }
