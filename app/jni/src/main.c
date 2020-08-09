@@ -257,24 +257,27 @@ double parse_float(const char * name,const char * value,double min,double max){
         var_name = default; \
         setting * setting_cursor = setting_list + index; \
         strcpy(setting_cursor->name,#var_name); \
-        setting_cursor->t = type_val(min); \
+        setting_cursor->t = type_val(var_name); \
         setting_cursor->need_restart = restart; \
         switch(setting_cursor->t){\
             case(boolean_): \
-                setting_cursor->default_.b = default; \
-                setting_cursor->min_.b = min; \
-                setting_cursor->max_.b = max; \
+                setting_cursor->default_.b = (char) default; \
+                setting_cursor->min_.b = (char) min; \
+                setting_cursor->max_.b = (char) max; \
                 break; \
             case(int_): \
-                setting_cursor->default_.i = default; \
-                setting_cursor->min_.i = min; \
-                setting_cursor->max_.i = max; \
+                setting_cursor->default_.i = (int) default; \
+                setting_cursor->min_.i = (int) min; \
+                setting_cursor->max_.i = (int) max; \
                 break; \
             case(double_): \
-                setting_cursor->default_.d = default; \
-                setting_cursor->min_.d = min; \
-                setting_cursor->max_.d = max; \
+                setting_cursor->default_.d = (double) default; \
+                setting_cursor->min_.d = (double) min; \
+                setting_cursor->max_.d = (double) max; \
                 break; \
+            case(section_): \
+            case(button_): \
+            break; \
         }\
         setting_cursor->value = (void *) &var_name; \
         index++; \
@@ -285,7 +288,7 @@ double parse_float(const char * name,const char * value,double min,double max){
     } \
 }
 
-#define set_and_parse_bool_conf(var_name,default,restart) set_and_parse_conf(var_name,default,(char) false,true,restart)
+#define set_and_parse_bool_conf(var_name,default,restart) set_and_parse_conf(var_name,default,false,true,restart)
 
 #define add_section(title) { \
     if(count_len){ \
@@ -320,8 +323,8 @@ void set_conf(const char * name,const char * value){
     static int section_no = 0;
     int index=0;
     add_section("Screen Settings");
-    set_and_parse_conf(custom_cell_width,0.0,0.0,(double) INT_MAX,true);
-    set_and_parse_conf(custom_cell_height,0.0,0.0,(double) INT_MAX,true);
+    set_and_parse_conf(custom_cell_width,0,0,LONG_MAX,true);
+    set_and_parse_conf(custom_cell_height,0,0,LONG_MAX,true);
     set_and_parse_conf(custom_screen_width,0,0,LONG_MAX,true);
     set_and_parse_conf(custom_screen_height,0,0,LONG_MAX,true);
     set_and_parse_bool_conf(force_portrait,false,true);
@@ -621,7 +624,7 @@ TTF_Font *init_font_size(char *font_path, int size) {
 
 boolean init_font() {
     char font_path[PATH_MAX];
-    realpath("../custom.ttf", font_path);
+    (void) realpath("../custom.ttf", font_path);
     if (access(font_path, F_OK) == -1) {
         strcpy(font_path, "default.ttf");
     }
@@ -695,6 +698,9 @@ void redraw_value(int index){
             break;
         case double_:
             sprintf(buffer,"%.1f",s->new.d);
+            break;
+        case section_:
+        case button_:
             break;
     }
     if(s->t != section_) {
@@ -777,6 +783,9 @@ void settings_menu() {
                 break;
             case double_:
                 s->new.d = * (double *) s->value;
+                break;
+            case section_:
+            case button_:
                 break;
         }
     }
@@ -863,6 +872,9 @@ void settings_menu() {
                                                 if(s->new.d != s->default_.d) {
                                                     fprintf(st, "%s %f\n",s->name, s->new.d);
                                                 }
+                                                break;
+                                            case section_:
+                                            case button_:
                                                 break;
                                         }
                                     }
@@ -1137,7 +1149,7 @@ boolean process_events() {
                 break;
             case SDL_KEYDOWN:
                 current_event.eventType = KEYSTROKE;
-                SDL_Scancode k = event.key.keysym.sym;
+                SDL_KeyCode k = event.key.keysym.sym;
                 if (event.key.keysym.mod & KMOD_CTRL){
                     current_event.controlKey = ctrl_pressed = true;
                     ctrl_time = SDL_GetTicks();
