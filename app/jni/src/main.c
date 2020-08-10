@@ -34,8 +34,9 @@
 #define MIN_TILE G_UP_ARROW
 
 typedef struct {
-    SDL_Texture *c;
     double width, height, offset_x, offset_y;
+    SDL_Texture *c;
+    boolean animated;
 } glyph_cache;
 
 typedef enum{
@@ -593,6 +594,7 @@ void draw_glyph(enum displayGlyph c, SDL_FRect rect, uint8_t r, uint8_t g, uint8
             text = TTF_RenderGlyph_Blended(font, key - TILES_LEN, fc);
         }else{
             text = TTF_RenderGlyph_Blended(font, key, fc);
+            font_cache[c].animated = true;
         }
         lc->width = text->w;
         lc->height = text->h;
@@ -1342,9 +1344,10 @@ boolean TouchScreenPauseForMilliseconds(short milliseconds){
 
 void TouchScreenNextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInput, boolean colorsDance) {
     while(!process_events()){
+        boolean screen_changed = false;
         if (dynamic_colors && colorsDance) {
             shuffleTerrainColors(3, true);
-            commitDraws();
+            screen_changed = true;
         }
         if (graphicsEnabled && tiles_animation){
             static uint32_t prev_time = 0;
@@ -1362,11 +1365,19 @@ void TouchScreenNextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInput, 
             //Do not refresh screen during zoom change
             static double prev_zoom = 0.0;
             if(refresh && prev_zoom == zoom_level){
-                refreshScreen();
+                for(int i=0; i<COLS; i++ ) {
+                    for(int j=0; j<ROWS; j++ ) {
+                        displayBuffer[i][j].needsUpdate = font_cache[displayBuffer[i][j].character].animated;
+                    }
+                }
+                screen_changed = true;
             }
             prev_zoom = zoom_level;
         }else{
             tiles_frame = 0;
+        }
+        if(screen_changed){
+            commitDraws();
         }
         TouchScreenPauseForMilliseconds(FRAME_INTERVAL);
 
