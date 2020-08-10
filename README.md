@@ -99,6 +99,7 @@ You can see the supported configurations below:
 | filter_mode | Integer | 2 | Selects the algorithm for anti-aliasing: 0 uses nearest pixel sampling, 1 uses linear filtering and 2 uses anistropic filtering. If you get graphical glitches or performance issues, try to lower the value |
 | tiles_by_default | Boolean | 0 | When enabled, the tiles will be shown by default |
 | tiles_animation | Boolean | 1 | Enables tiles animation. Disabling will lower the power consumption |
+| blend_full_tiles | Boolean | 1 | Tries to blend full tiles like walls with adjacent ones. May result in blurrier tiles |
 | double_tap_lock | Boolean | 1 | When enabled it will ignore the missclicks within **double_tap_interval** range |
 | double_tap_interval | Integer | 500 | Milliseconds.The maximum time between two taps to acknowledge it as a double tap. Value is between 100 and 100000 |
 | dpad_enabled | Boolean | 1 | Enable on-screen d-pad |
@@ -136,4 +137,8 @@ However fonts must be:
 
 * Monospace
 
-* Animated tiles must be placed such that the offset between the first frame and the second one must be 256
+Additionally:
+
+* If the font have animated tiles then the offset between the first frame and the second one should be 256
+
+* the font should define a boundary box in glyph 139 for full tiles

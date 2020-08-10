@@ -32,11 +32,13 @@
 #define MAX_GLYPH_NO (TILES_LEN * 3)
 #define TILES_FLIP_TIME 900
 #define MIN_TILE G_UP_ARROW
+#define FONT_BOUND_CHAR 139
 
 typedef struct {
     double width, height, offset_x, offset_y;
     SDL_Texture *c;
     boolean animated;
+    boolean full_tile;
 } glyph_cache;
 
 typedef enum{
@@ -84,6 +86,8 @@ static boolean screen_changed = false;
 static _Atomic boolean resumed = false;
 static TTF_Font *font;
 static glyph_cache font_cache[MAX_GLYPH_NO];
+static int font_width;
+static int font_height;
 static SDL_Texture * dpad_image_select;
 static SDL_Texture * dpad_image_move;
 static SDL_Rect dpad_area;
@@ -137,6 +141,7 @@ static int check_update_interval;
 static boolean ask_for_update_check;
 static boolean tiles_by_default;
 static boolean tiles_animation;
+static boolean blend_full_tiles;
 
 boolean hasGraphics = true;
 boolean graphicsEnabled = true;
@@ -332,6 +337,7 @@ void set_conf(const char * name,const char * value){
     set_and_parse_bool_conf(dynamic_colors,true,false);
     set_and_parse_bool_conf(tiles_by_default, false, false);
     set_and_parse_bool_conf(tiles_animation, true, false);
+    set_and_parse_bool_conf(blend_full_tiles, true, false);
     set_and_parse_conf(filter_mode,2,0,2,true);
     add_section("Input Settings");
     set_and_parse_bool_conf(double_tap_lock,true,false);
@@ -593,25 +599,39 @@ void draw_glyph(enum displayGlyph c, SDL_FRect rect, uint8_t r, uint8_t g, uint8
         SDL_Color fc = {COLOR_MAX, COLOR_MAX, COLOR_MAX};
         SDL_Surface *text;
         if((key >= 2*TILES_LEN) && !TTF_GlyphIsProvided(font,key)){
-            text = TTF_RenderGlyph_Blended(font, key - TILES_LEN, fc);
+            key = key - TILES_LEN;
         }else{
-            text = TTF_RenderGlyph_Blended(font, key, fc);
             font_cache[c].animated = true;
         }
-        lc->width = text->w;
-        lc->height = text->h;
+        text = TTF_RenderGlyph_Blended(font, key, fc);
+        int minx,maxx,miny,maxy,fw,fh;
+        TTF_GlyphMetrics(font,key,&minx,&maxx,&miny,&maxy,NULL);
+        fw = maxx - minx;
+        fh = maxy - miny;
+        if((fw >= font_width) && (fh >= font_height)){
+            lc->full_tile = true;
+        }
         lc->offset_x = (rect.w - text->w) / 2;
         lc->offset_y = (rect.h - text->h) / 2;
+        lc->width = text->w;
+        lc->height = text->h;
         lc->c = SDL_CreateTextureFromSurface(renderer, text);
         SDL_FreeSurface(text);
     }
-    SDL_Rect font_rect;
-    font_rect.x = rect.x + lc->offset_x;
-    font_rect.y = rect.y + lc->offset_y;
-    font_rect.w = lc->width;
-    font_rect.h = lc->height;
+
     SDL_SetTextureColorMod(lc->c, r, g, b);
-    SDL_RenderCopy(renderer, lc->c, NULL, &font_rect);
+    if(blend_full_tiles && (lc->full_tile)){
+        SDL_Rect src = {.x = 0,.y=0,.w=font_width,.h=font_height};
+        SDL_RenderCopyF(renderer, lc->c, &src, &rect);
+    }else{
+        SDL_Rect font_rect;
+        font_rect.x = rect.x + lc->offset_x;
+        font_rect.y = rect.y + lc->offset_y;
+        font_rect.w =  lc->width;
+        font_rect.h = lc->height;
+        SDL_RenderCopy(renderer, lc->c, NULL, &font_rect);
+    }
+
 }
 
 TTF_Font *init_font_size(char *font_path, int size) {
@@ -644,6 +664,10 @@ boolean init_font() {
             TTF_CloseFont(font);
             font = new_size;
         } else {
+            int minx,maxx,miny,maxy;
+            TTF_GlyphMetrics(font,FONT_BOUND_CHAR,&minx,&maxx,&miny,&maxy,NULL);
+            font_width = maxx - minx;
+            font_height = maxy - miny;
             return true;
         }
     }
