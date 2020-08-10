@@ -442,6 +442,8 @@ void draw_glyph(enum displayGlyph c, SDL_FRect rect, uint8_t r, uint8_t g, uint8
         key = c;
     } else {
         switch(c){
+            convert_glyph(G_UP_ARROW,128+8,128+8)
+            convert_glyph(G_DOWN_ARROW,144+1,144+1)
             convert_glyph(G_PLAYER, '@', 256)
             convert_glyph(G_EASY, '&', 257)
             convert_glyph(G_FOOD, ';', 258)
