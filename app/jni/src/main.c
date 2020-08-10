@@ -756,7 +756,6 @@ void rebuild_settings_menu(int current_section){ //-1 means no section is open
         }
     }
     refreshScreen();
-    commitDraws();
     if(screen_changed) {
         SDL_SetRenderTarget(renderer, NULL);
         SDL_RenderCopy(renderer, screen_texture, NULL, NULL);
