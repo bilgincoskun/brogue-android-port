@@ -247,7 +247,7 @@ double parse_float(const char * name,const char * value,double min,double max){
 }
 
 
-#define parse_val(name,value,min,max) _Generic((min), \
+#define parse_val(var_name,name,value,min,max) _Generic((var_name), \
                     int : parse_int, \
                     boolean: parse_int, \
                     double: parse_float)(name,value,min,max)
@@ -289,7 +289,7 @@ double parse_float(const char * name,const char * value,double min,double max){
         index++; \
     } \
     else if(strcmp(#var_name,name)==0) { \
-        var_name = parse_val(name, value, min, max); \
+        var_name = parse_val(var_name, name, value, min, max); \
         return; \
     } \
 }
