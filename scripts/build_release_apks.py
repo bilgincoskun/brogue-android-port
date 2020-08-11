@@ -71,9 +71,7 @@ if __name__ == "__main__":
             answer = input("Tag already exists. Do you want to rebuild it? [Y/N]").lower()
         if(answer != 'y'):
             exit(-1)
-        if(run_command(f"git checkout v{app_ver}",print_=True)):
-            print("Cannot checkout existing tag")
-            exit(-1)
+        run_command(f"git checkout v{app_ver}",print_=True)
 
     release_folder = cur_dir/"release_apks"/app_ver
     game_code_folder = cur_dir/"game_files"
@@ -105,5 +103,4 @@ if __name__ == "__main__":
                 --ks-pass pass:{sign_info['ks_pw']} --key-pass pass:{sign_info['key_pw']} {apk_path}",print_ = True)
 
         run_command(f"apksigner verify --print-certs {apk_path}",print_=True)
-
 
