@@ -329,10 +329,10 @@ void set_conf(const char * name,const char * value){
     static int section_no = 0;
     int index=0;
     add_section("Screen Settings");
-    set_and_parse_conf(custom_cell_width,0,0,LONG_MAX,true);
-    set_and_parse_conf(custom_cell_height,0,0,LONG_MAX,true);
-    set_and_parse_conf(custom_screen_width,0,0,LONG_MAX,true);
-    set_and_parse_conf(custom_screen_height,0,0,LONG_MAX,true);
+    set_and_parse_conf(custom_cell_width,0,0,INT_MAX,true);
+    set_and_parse_conf(custom_cell_height,0,0,INT_MAX,true);
+    set_and_parse_conf(custom_screen_width,0,0,INT_MAX,true);
+    set_and_parse_conf(custom_screen_height,0,0,INT_MAX,true);
     set_and_parse_bool_conf(force_portrait,false,true);
     set_and_parse_bool_conf(dynamic_colors,true,false);
     set_and_parse_bool_conf(tiles_by_default, false, false);
@@ -344,9 +344,9 @@ void set_conf(const char * name,const char * value){
     set_and_parse_conf(double_tap_interval,500,100,1e5,false);
     set_and_parse_bool_conf(dpad_enabled,true,false);
     set_and_parse_bool_conf(allow_dpad_mode_change,true,false);
-    set_and_parse_conf(dpad_width,0,0,LONG_MAX,false);
-    set_and_parse_conf(dpad_x_pos,0,0,LONG_MAX,false);
-    set_and_parse_conf(dpad_y_pos,0,0,LONG_MAX,false);
+    set_and_parse_conf(dpad_width,0,0,INT_MAX,false);
+    set_and_parse_conf(dpad_x_pos,0,0,INT_MAX,false);
+    set_and_parse_conf(dpad_y_pos,0,0,INT_MAX,false);
     set_and_parse_bool_conf(default_dpad_mode,true,false);
     set_and_parse_conf(dpad_transparency,75,0,255,false);
     set_and_parse_conf(long_press_interval,750,100,1e5,false);
