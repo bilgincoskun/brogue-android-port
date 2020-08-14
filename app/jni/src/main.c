@@ -108,6 +108,7 @@ static boolean restart_game = false;
 static boolean settings_changed = false;
 static int tiles_frame = 0;
 static boolean requires_text_input = false;
+static boolean virtual_keyboard_active = false;
 
 //Config Values
 static double custom_cell_width;
@@ -126,7 +127,7 @@ static boolean allow_dpad_mode_change;
 static boolean default_dpad_mode;
 static int long_press_interval;
 static int dpad_transparency;
-static boolean keyboard_always_on;
+static int keyboard_visibility;
 static int zoom_mode;
 static double init_zoom;
 static boolean init_zoom_toggle;
@@ -167,6 +168,20 @@ void critical_error(const char* error_title,const char* error_message,...){
     exit(-1);
 }
 
+void start_text_input(){
+    if(keyboard_visibility){
+        virtual_keyboard_active = true;
+        SDL_StartTextInput();
+    }
+}
+
+void stop_text_input(){
+    if(keyboard_visibility != 2){
+        virtual_keyboard_active = false;
+        SDL_StopTextInput();
+    }
+}
+
 void create_assets(){
     if (SDL_CreateWindowAndRenderer(display.w, display.h, SDL_WINDOW_FULLSCREEN | SDL_WINDOW_ALWAYS_ON_TOP, &window,
                                     &renderer)) {
@@ -198,8 +213,8 @@ void create_assets(){
     settings_icon_area.x = 2*cell_w;
     settings_icon_area.y = (display.h - (settings_icon_area.h + 2*cell_h));
 
-    if(keyboard_always_on){
-        SDL_StartTextInput();
+    if(keyboard_visibility == 2){
+        start_text_input();
     }
 }
 
@@ -332,7 +347,7 @@ void set_conf(const char * name,const char * value){
     set_and_parse_bool_conf(default_dpad_mode,true,false);
     set_and_parse_conf(dpad_transparency,75,0,255,false);
     set_and_parse_conf(long_press_interval,750,100,1e5,false);
-    set_and_parse_bool_conf(keyboard_always_on,false,false);
+    set_and_parse_conf(keyboard_visibility, 1, 0, 2,false);
     add_section("Zoom Settings");
     set_and_parse_conf(zoom_mode,1,0,2,false);
     set_and_parse_bool_conf(init_zoom_toggle,false,false);
@@ -1098,13 +1113,13 @@ boolean process_events() {
                         current_event.param1 = ESCAPE_KEY;
                     }else{
                         virtual_keyboard = true;
-                        SDL_StartTextInput();
+                        start_text_input();
                     }
                 }else{
                     current_event.eventType = MOUSE_UP;
                 }
-                if(!(keyboard_always_on || virtual_keyboard || requires_text_input)){
-                    SDL_StopTextInput();
+                if(!virtual_keyboard){
+                    stop_text_input();
                 }
                 break;
             case SDL_FINGERMOTION: //For long press check
@@ -1394,16 +1409,16 @@ static boolean TouchScreenSetGraphicsEnabled(boolean state) {
 }
 
 void TouchScreenTextInputStart(){
-    if(!keyboard_always_on && !requires_text_input) {
+    if(!virtual_keyboard_active){ //Open keyboard if it is not opened by demand previously
         requires_text_input = true;
-        SDL_StartTextInput();
+        start_text_input();
     }
 }
 
 void TouchScreenTextInputStop(){
-    if(!keyboard_always_on && requires_text_input){
+    if(requires_text_input){
         requires_text_input = false;
-        SDL_StopTextInput();
+        stop_text_input();
     }
 }
 

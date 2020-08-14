@@ -114,7 +114,7 @@ You can see the supported configurations below:
 | default_dpad_mode | Boolean | 1 | Decides if the mode of d-pad at the start of the game will be selection mode (0) or movement mode (1) |
 | dpad_transparency | Integer | 75 |  Value is between 0 (non-visible) and 255 (opaque) |
 | long_press_interval | Integer | 750 | Milliseconds.The minimum time between press and release to acknowledge it as a long press. Value is between 100 and 100000 |
-| keyboard_always_on | Boolean | 0 | Opens the keyboard at the start of the game and prevents it from closing when touch input is occured. Note that playing back button still closes the keyboard |
+| keyboard_visibility | Integer | 1 | 0 disables virtual keyboard completely, 1 shows the keyboard on demand and 2 opens the keyboard at the start of the game and prevents it from closing when touch input is occured. Note that pressing back button still closes the keyboard |
 | zoom_mode | Integer | 1 | 0 disables zoom, 1 zooms to player character (default), 2 zooms to cursor (falls back to zoom_mode 1 if the cursor is not present on the screen) |
 | init_zoom_toggle | Boolean | 0 | Start the game as zoomed |
 | init_zoom | Decimal | 2.0 | Default zooming at the start of the game. Value is between 1.0 and 10.0 |
