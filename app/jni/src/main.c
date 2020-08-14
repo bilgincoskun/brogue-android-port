@@ -104,10 +104,7 @@ static SDL_Rect grid_box_zoomed;
 static boolean game_started = false;
 static rogueEvent current_event;
 static boolean zoom_toggle = false;
-static char smart_zoom_buffer[ROWS][COLS+1] = {0}; //COLS + 1 to use rows as strings
 static boolean restart_game = false;
-static int new_game_line = -1;
-static boolean in_title_menu = true;
 static boolean settings_changed = false;
 static int tiles_frame = 0;
 static boolean requires_text_input = false;
@@ -168,22 +165,6 @@ void critical_error(const char* error_title,const char* error_message,...){
     TTF_Quit();
     SDL_Quit();
     exit(-1);
-}
-
-boolean check_smart_zoom_buffer(int line_no,int word_no,...){
-    va_list word_list;
-    va_start(word_list,word_no);
-    char * word_pos = smart_zoom_buffer[line_no];
-    for(int i = 0; i < word_no; i++){
-        word_pos = strstr(word_pos,va_arg(word_list,char *));
-        if(!word_pos){
-            va_end(word_list);
-            return false;
-        }
-    }
-    va_end(word_list);
-    return true;
-
 }
 
 void create_assets(){
@@ -413,8 +394,17 @@ uint8_t convert_color(short c) {
     return max(0,min(c,COLOR_MAX));
 }
 
+boolean smart_zoom_allowed(){
+    if(!smart_zoom){
+        return true;
+    }
+    return !(gameStat.titleMenuShown || gameStat.fileDialogShown ||
+        gameStat.messageArchiveShown || gameStat.inventoryShown ||
+        gameStat.menuShown || gameStat.confirmShown);
+}
+
 boolean is_zoomed(){
-    return zoom_mode != 0 && zoom_level != 1.0 && zoom_toggle;
+    return zoom_mode != 0 && zoom_level != 1.0 && zoom_toggle && smart_zoom_allowed();
 }
 
 int suspend_resume_filter(void *userdata, SDL_Event *event){
@@ -673,35 +663,6 @@ boolean init_font() {
         }
     }
 }
-
-//Hacky solution to check if confirmation message, menu, inventory or logs are shown
-boolean check_dialog_popup(int16_t c, uint8_t x, uint8_t y){
-    //write if c >= 0, check otherwise
-    if(!smart_zoom){
-        return false;
-    }
-    if(c >= 0){
-        smart_zoom_buffer[y][x] = c;
-    }else{
-        for(int i=0;i<ROWS;i++){
-            if(check_smart_zoom_buffer(i,2,"No","Yes")){
-                return true;
-            }
-            if(check_smart_zoom_buffer(i,3,"Quit","without","saving")){
-                return true;
-            }
-            if(check_smart_zoom_buffer(i,3,"for","more","info")){
-                return true;
-            }
-            if(check_smart_zoom_buffer(i,1,"--MORE--")){
-                return true;
-            }
-        }
-    }
-    return false;
-}
-
-
 
 void to_buffer(uchar ch,
                  short xLoc, short yLoc,
@@ -1007,13 +968,13 @@ boolean process_events() {
                 raw_input_x = event.tfinger.x * display.w;
                 raw_input_y = event.tfinger.y * display.h;
                 SDL_Point p = {.x = raw_input_x,.y=raw_input_y};
-                if(!in_title_menu && SDL_PointInRect(&p,&dpad_area)){
+                if(!gameStat.titleMenuShown && SDL_PointInRect(&p, &dpad_area)){
                     on_dpad = true;
                     finger_down_time = SDL_GetTicks();
                     break;
 
                 }
-                if(in_title_menu && SDL_PointInRect(&p,&settings_icon_area)){
+                if(gameStat.titleMenuShown && SDL_PointInRect(&p, &settings_icon_area)){
                     settings_menu();
                     rogue.nextGame = NG_QUIT;
                     break;
@@ -1028,17 +989,14 @@ boolean process_events() {
                 }
                 in_left_panel = false;
                 if(smart_zoom && left_panel_smart_zoom && SDL_PointInRect(&p,&left_panel_box) && cursor_x > LEFT_EDGE_WIDTH){
-                    for(int i=LEFT_EDGE_WIDTH;i<LEFT_PANEL_WIDTH;i++){
-                        char c = smart_zoom_buffer[cursor_y][i];
-                        if(c && !isspace(c)){
-                            in_left_panel = true;
-                            if(prev_zoom_toggle == unset) {
-                                prev_zoom_toggle = zoom_toggle ? set_true : set_false;
-                            }
-                            break;
+                    if(cursor_y <= gameStat.leftPanelLength){
+                        in_left_panel = true;
+                        if(prev_zoom_toggle == unset) {
+                            prev_zoom_toggle = zoom_toggle ? set_true : set_false;
                         }
                     }
                 }
+
                 current_event.param1 = cursor_x;
                 current_event.param2 = cursor_y;
                 current_event.eventType = MOUSE_DOWN;
@@ -1231,7 +1189,7 @@ boolean process_events() {
         //Wait for 1 second to disable CTRL after pressing and another input
         current_event.controlKey = ctrl_pressed = false;
     }
-    boolean dialog_popup = check_dialog_popup(-1, 0, 0);
+    boolean dialog_popup = !smart_zoom_allowed();
     if(in_left_panel || dialog_popup){
         if(prev_zoom_toggle == unset){
            prev_zoom_toggle = zoom_toggle?set_true:set_false;
@@ -1309,23 +1267,13 @@ boolean TouchScreenPauseForMilliseconds(short milliseconds){
     if(screen_changed) {
         screen_changed = false;
         SDL_SetRenderTarget(renderer, NULL);
-        if(rogue.depthLevel == 0 || rogue.gameHasEnded || rogue.quit || player.currentHP <= 0 || rogue.nextGame == NG_HIGH_SCORES){
+        if(rogue.depthLevel == 0 || rogue.gameHasEnded || rogue.quit || player.currentHP <= 0){
             zoom_level = 1.0;
             game_started = false;
         }else if(!game_started){
             game_started = true;
             zoom_level = init_zoom;
             zoom_toggle = init_zoom_toggle;
-        }
-        if(new_game_line==-1){ //To check if it is in title menu
-            for(int i=0;i<ROWS;i++){
-                if(check_smart_zoom_buffer(i,2,"New","Game")){
-                    new_game_line = i;
-                    break;
-                }
-            }
-        }else{
-            in_title_menu = !game_started && check_smart_zoom_buffer(new_game_line,2,"New","Game");
         }
 
         if(!is_zoomed()){
@@ -1353,7 +1301,7 @@ boolean TouchScreenPauseForMilliseconds(short milliseconds){
             SDL_RenderCopy(renderer,screen_texture,&button_panel_box,&button_panel_box);
             SDL_RenderCopy(renderer,screen_texture,&grid_box_zoomed,&grid_box);
         }
-        if(in_title_menu){
+        if(gameStat.titleMenuShown){
             SDL_RenderCopy(renderer,settings_image,NULL,&settings_icon_area);
         } else if(dpad_enabled){
             SDL_RenderCopy(renderer, dpad_mode?dpad_image_move:dpad_image_select, NULL, &dpad_area);
@@ -1419,7 +1367,6 @@ void TouchScreenPlotChar(enum displayGlyph ch,
                          short foreRed, short foreGreen, short foreBlue,
                          short backRed, short backGreen, short backBlue) {
 
-    check_dialog_popup(ch, xLoc, yLoc);
     SDL_FRect rect;
     rect.x = xLoc * cell_w;
     rect.y = yLoc * cell_h;
