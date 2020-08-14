@@ -110,6 +110,7 @@ static int new_game_line = -1;
 static boolean in_title_menu = true;
 static boolean settings_changed = false;
 static int tiles_frame = 0;
+static boolean requires_text_input = false;
 
 //Config Values
 static double custom_cell_width;
@@ -1144,7 +1145,7 @@ boolean process_events() {
                 }else{
                     current_event.eventType = MOUSE_UP;
                 }
-                if(!(keyboard_always_on || virtual_keyboard)){
+                if(!(keyboard_always_on || virtual_keyboard || requires_text_input)){
                     SDL_StopTextInput();
                 }
                 break;
@@ -1445,6 +1446,20 @@ static boolean TouchScreenSetGraphicsEnabled(boolean state) {
     return state;
 }
 
+void TouchScreenTextInputStart(){
+    if(!keyboard_always_on && !requires_text_input) {
+        requires_text_input = true;
+        SDL_StartTextInput();
+    }
+}
+
+void TouchScreenTextInputStop(){
+    if(!keyboard_always_on && requires_text_input){
+        requires_text_input = false;
+        SDL_StopTextInput();
+    }
+}
+
 struct brogueConsole TouchScreenConsole = {
         .gameLoop = TouchScreenGameLoop,
         .pauseForMilliseconds = TouchScreenPauseForMilliseconds,
@@ -1453,7 +1468,8 @@ struct brogueConsole TouchScreenConsole = {
         .remap = TouchScreenRemap,
         .modifierHeld = TouchScreenModifierHeld,
         .setGraphicsEnabled = TouchScreenSetGraphicsEnabled,
-
+        .textInputStart = TouchScreenTextInputStart,
+        .textInputStop = TouchScreenTextInputStop,
 };
 
 boolean git_version_check(JNIEnv * env,jobject activity,jclass cls){
