@@ -1218,21 +1218,12 @@ boolean process_events() {
 
 
 void TouchScreenGameLoop() {
-    SDL_SetHint(SDL_HINT_RENDER_BATCHING, "1");
     if(force_portrait){
         SDL_SetHint(SDL_HINT_ORIENTATIONS,"Portrait PortraitUpsideDown");
     }
     char render_hint[2] = {filter_mode+'0',0};
     SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, render_hint);
-    if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
-        critical_error("SDL Error","Unable to initialize SDL: %s", SDL_GetError());
-    }
-    if (TTF_Init() != 0) {
-        critical_error("SDL_ttf Error","Unable to initialize SDL_ttf: %s", SDL_GetError());
-    }
-    if (SDL_GetDisplayBounds(0, &display) != 0) {
-        critical_error("SDL Error","SDL_GetDesktopDisplayMode failed: %s", SDL_GetError());
-    }
+
 
     if(force_portrait){
         int tmp = display.w;
@@ -1257,7 +1248,6 @@ void TouchScreenGameLoop() {
     if (!init_font()) {
         critical_error("Font Error","Resolution/cell size is too small for minimum allowed font size");
     }
-    SDL_SetEventFilter(suspend_resume_filter, NULL);
     do {
         restart_game = false;
         settings_changed = false;
@@ -1270,10 +1260,29 @@ void TouchScreenGameLoop() {
             create_assets();
         }
     }while(restart_game);
+
+}
+
+void init_sdl(){
+    SDL_SetHint(SDL_HINT_RENDER_BATCHING, "1");
+    if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
+        critical_error("SDL Error","Unable to initialize SDL: %s", SDL_GetError());
+    }
+    if (TTF_Init() != 0) {
+        critical_error("SDL_ttf Error","Unable to initialize SDL_ttf: %s", SDL_GetError());
+    }
+    if (SDL_GetDisplayBounds(0, &display) != 0) {
+        critical_error("SDL Error","SDL_GetDesktopDisplayMode failed: %s", SDL_GetError());
+    }
+    SDL_SetEventFilter(suspend_resume_filter, NULL);
+}
+
+void quit(){
     destroy_assets();
     TTF_CloseFont(font);
     TTF_Quit();
     SDL_Quit();
+    free(setting_list);
 }
 
 boolean TouchScreenPauseForMilliseconds(short milliseconds){
@@ -1573,8 +1582,6 @@ int main() {
         fclose(fc);
         fc = fopen("last_update_check","w");
     }
-
-
     config_folder(env,activity,cls);
     set_conf("",""); //set default values of config
     load_conf();
@@ -1600,6 +1607,7 @@ int main() {
             critical_error("Save Folder Error","Cannot create/enter the save folder");
         }
     }
+    init_sdl();
     SDL_Thread *thread = SDL_CreateThreadWithStackSize(brogue_main, "Brogue", 8 * 1024 * 1024,
                                                        NULL);
     if (thread != NULL) {
@@ -1613,6 +1621,5 @@ int main() {
         brogue_main(NULL);
 
     }
-    free(setting_list);
-    exit(0); //return causes problems
+    quit();
 }
