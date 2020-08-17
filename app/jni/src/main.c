@@ -951,7 +951,6 @@ boolean process_events() {
         destroy_assets();
         create_assets();
         refreshScreen();
-        commitDraws();
     }
     if(current_event.eventType!=EVENT_ERROR){
         return true;
