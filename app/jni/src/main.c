@@ -106,7 +106,7 @@ static rogueEvent current_event;
 static boolean zoom_toggle = false;
 static boolean restart_game = false;
 static boolean settings_changed = false;
-static int tiles_frame = 0;
+static boolean tiles_flipped = false;
 static boolean requires_text_input = false;
 static boolean virtual_keyboard_active = false;
 
@@ -438,7 +438,7 @@ int suspend_resume_filter(void *userdata, SDL_Event *event){
     if(graphicsEnabled){\
         key = tile;\
         if(tile >= TILES_LEN)\
-            key += (tiles_frame> TILES_FLIP_TIME)*TILES_LEN;\
+            key += tiles_flipped*TILES_LEN;\
     }\
     else{\
         key = ascii;\
@@ -1347,17 +1347,13 @@ void TouchScreenNextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInput, 
             shuffleTerrainColors(3, true);
             screen_changed = true;
         }
+        boolean refresh = false;
         if (graphicsEnabled && tiles_animation){
             static uint32_t prev_time = 0;
             uint32_t current_time = SDL_GetTicks();
-            uint32_t prev_tiles_frame = tiles_frame;
-            tiles_frame += current_time - prev_time;
-            prev_time = current_time;
-            boolean refresh = false;
-            if(tiles_frame > TILES_FLIP_TIME * 2){
-                tiles_frame = 0;
-                refresh = true;
-            }else if((tiles_frame >= TILES_FLIP_TIME) && (prev_tiles_frame < TILES_FLIP_TIME)){
+            if(current_time >= (prev_time+TILES_FLIP_TIME)){
+                tiles_flipped = !tiles_flipped;
+                prev_time = current_time;
                 refresh = true;
             }
             //Do not refresh screen during zoom change
@@ -1372,7 +1368,7 @@ void TouchScreenNextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInput, 
             }
             prev_zoom = zoom_level;
         }else{
-            tiles_frame = 0;
+            tiles_flipped = false;
         }
         if(screen_changed){
             commitDraws();
