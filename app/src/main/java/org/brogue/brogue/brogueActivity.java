@@ -98,13 +98,10 @@ public class brogueActivity extends SDLActivity
     }
 
     private String configFolder(){
-
         File f = new File(Environment.getExternalStorageDirectory() + "/Brogue");
-        if(!f.exists()){
-            if(!f.mkdir()){
-                return null;
-            }
+        if((f.exists() || f.mkdir()) && f.canWrite()){
+            return f.toString();
         }
-        return f.toString();
+        return null;
     }
 }

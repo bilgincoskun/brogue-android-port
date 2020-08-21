@@ -1492,7 +1492,7 @@ void open_manual(JNIEnv * env,jobject activity,jclass cls){
     (*env)->CallVoidMethod(env,activity, method_id);
 }
 
-void config_folder(JNIEnv * env,jobject activity,jclass cls){
+void config_folder(JNIEnv * env,jobject activity,jclass cls,boolean first_run){
     jmethodID method_id = (*env)->GetMethodID(env,cls, "configFolder", "()Ljava/lang/String;");
     jstring folder_ = (*env)->CallObjectMethod(env,activity, method_id);
     if(folder_!= NULL){
@@ -1500,8 +1500,11 @@ void config_folder(JNIEnv * env,jobject activity,jclass cls){
         chdir(folder);
         (*env)->ReleaseStringUTFChars(env,folder_,folder);
     }else{
-        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_WARNING,"Config Folder Error","Cannot create or enter sdcard/Brogue."
-                                             "Will save to data folder of the app",NULL);
+        if(first_run) {
+            SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_WARNING, "Config Folder Error",
+                                     "Cannot create or access sdcard/Brogue."
+                                     "Will save to data folder of the app", NULL);
+        }
         chdir(SDL_AndroidGetExternalStoragePath());
     }
 }
@@ -1524,6 +1527,7 @@ int main() {
     jobject activity = (jobject)SDL_AndroidGetActivity();
     jclass cls = (*env)->GetObjectClass(env,activity);
     jmethodID method_id;
+    boolean first_run = false;
     if(access("first_run",F_OK) == -1){
         method_id = (*env)->GetMethodID(env,cls, "needsWritePermission", "()Z");
         if((*env)->CallBooleanMethod(env,activity,method_id)){
@@ -1538,6 +1542,7 @@ int main() {
         open_manual(env,activity,cls);
         fc = fopen("first_run","w");
         fclose(fc);
+        first_run = true;
     }
 
     time_t update_check_time = 0;
@@ -1549,7 +1554,7 @@ int main() {
         fclose(fc);
         fc = fopen("last_update_check","w");
     }
-    config_folder(env,activity,cls);
+    config_folder(env,activity,cls,first_run);
     set_conf("",""); //set default values of config
     load_conf();
     graphicsEnabled = tiles_by_default;
