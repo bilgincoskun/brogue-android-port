@@ -1263,28 +1263,6 @@ void TouchScreenGameLoop() {
 
 }
 
-void init_sdl(){
-    SDL_SetHint(SDL_HINT_RENDER_BATCHING, "1");
-    if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
-        critical_error("SDL Error","Unable to initialize SDL: %s", SDL_GetError());
-    }
-    if (TTF_Init() != 0) {
-        critical_error("SDL_ttf Error","Unable to initialize SDL_ttf: %s", SDL_GetError());
-    }
-    if (SDL_GetDisplayBounds(0, &display) != 0) {
-        critical_error("SDL Error","SDL_GetDesktopDisplayMode failed: %s", SDL_GetError());
-    }
-    SDL_SetEventFilter(suspend_resume_filter, NULL);
-}
-
-void quit(){
-    destroy_assets();
-    TTF_CloseFont(font);
-    TTF_Quit();
-    SDL_Quit();
-    free(setting_list);
-}
-
 boolean TouchScreenPauseForMilliseconds(short milliseconds){
     uint32_t init_time = SDL_GetTicks();
     if(screen_changed) {
@@ -1603,7 +1581,17 @@ int main() {
             critical_error("Save Folder Error","Cannot create/enter the save folder");
         }
     }
-    init_sdl();
+    SDL_SetHint(SDL_HINT_RENDER_BATCHING, "1");
+    if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
+        critical_error("SDL Error","Unable to initialize SDL: %s", SDL_GetError());
+    }
+    if (TTF_Init() != 0) {
+        critical_error("SDL_ttf Error","Unable to initialize SDL_ttf: %s", SDL_GetError());
+    }
+    if (SDL_GetDisplayBounds(0, &display) != 0) {
+        critical_error("SDL Error","SDL_GetDesktopDisplayMode failed: %s", SDL_GetError());
+    }
+    SDL_SetEventFilter(suspend_resume_filter, NULL);
     SDL_Thread *thread = SDL_CreateThreadWithStackSize(brogue_main, "Brogue", 8 * 1024 * 1024,
                                                        NULL);
     if (thread != NULL) {
@@ -1617,5 +1605,10 @@ int main() {
         brogue_main(NULL);
 
     }
-    quit();
+    destroy_assets();
+    TTF_CloseFont(font);
+    TTF_Quit();
+    SDL_Quit();
+    free(setting_list);
+    exit(0); //return causes problems
 }
