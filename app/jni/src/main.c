@@ -80,6 +80,7 @@ static setting * setting_list = NULL;
 static SDL_Window *window;
 static SDL_Renderer *renderer;
 static SDL_Texture * screen_texture;
+static SDL_Rect screen;
 static SDL_Rect display;
 static double cell_w, cell_h;
 static boolean screen_changed = false;
@@ -818,7 +819,6 @@ void settings_menu() {
                     boolean increase = cursor_x >= s->xLoc + SETTING_NAME_MAX_LEN + SETTING_VALUE_MAX_LEN - 2;
                     boolean menu_changed = false;
                     FILE * st;
-                    boolean need_restart = false;
                     switch(s->t){
                         case section_:
                             current_section = s->default_.s;
@@ -843,11 +843,9 @@ void settings_menu() {
                                         switch(s->t){
                                             case boolean_:
                                                 if(* (( boolean * ) s->value) != s->new.b){
-                                                    need_restart = need_restart || s->need_restart;
-                                                    if(!s->need_restart) {
-                                                        *((boolean *) s->value) = s->new.b;
-                                                        settings_changed = true;
-                                                    }
+                                                    restart_game = restart_game || s->need_restart;
+                                                    *((boolean *) s->value) = s->new.b;
+                                                    settings_changed = true;
                                                 }
                                                 if(s->new.b != s->default_.b) {
                                                     fprintf(st, "%s %s\n",s->name, s->new.b ? "1" : "0");
@@ -855,11 +853,9 @@ void settings_menu() {
                                                 break;
                                             case int_:
                                                 if(* (( int * ) s->value) != s->new.i){
-                                                    need_restart = need_restart || s->need_restart;
-                                                    if(!s->need_restart) {
-                                                        *((int *) s->value) = s->new.i;
-                                                        settings_changed = true;
-                                                    }
+                                                    restart_game = restart_game || s->need_restart;
+                                                    *((int *) s->value) = s->new.i;
+                                                    settings_changed = true;
                                                 }
                                                 if(s->new.i != s->default_.i) {
                                                     fprintf(st, "%s %d\n",s->name, s->new.i);
@@ -867,11 +863,9 @@ void settings_menu() {
                                                 break;
                                             case double_:
                                                 if(* (( double * ) s->value) != s->new.d){
-                                                    need_restart = need_restart || s->need_restart;
-                                                    if(!s->need_restart) {
-                                                        *((double *) s->value) = s->new.d;
-                                                        settings_changed = true;
-                                                    }
+                                                    restart_game = restart_game || s->need_restart;
+                                                    *((double *) s->value) = s->new.d;
+                                                    settings_changed = true;
                                                 }
                                                 if(s->new.d != s->default_.d) {
                                                     fprintf(st, "%s %f\n",s->name, s->new.d);
@@ -882,16 +876,7 @@ void settings_menu() {
                                                 break;
                                         }
                                     }
-                                    if(need_restart){
-                                        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_WARNING, "Settings Warning",
-                                                "One or more changes require restart",
-                                                NULL);
-                                        restart_game = false;
-                                        settings_changed = false;
-                                        return;
-                                    }
                                     fclose(st);
-                                    restart_game = true;
                                     return;
 
                             }
@@ -1218,48 +1203,56 @@ boolean process_events() {
 
 
 void TouchScreenGameLoop() {
-    if(force_portrait){
-        SDL_SetHint(SDL_HINT_ORIENTATIONS,"Portrait PortraitUpsideDown");
-    }
-    char render_hint[2] = {filter_mode+'0',0};
-    SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, render_hint);
-
-
-    if(force_portrait){
-        int tmp = display.w;
-        display.w = display.h;
-        display.h = tmp;
-    }
-    if(custom_cell_width != 0){
-        cell_w = custom_cell_width;
-    }else {
-        cell_w = ((double) display.w) / COLS;
-    }
-    if(custom_cell_height != 0){
-       cell_h = custom_cell_height;
-    }else{
-        cell_h = ((double) display.h) / ROWS;
-    }
-    left_panel_box = (SDL_Rect) {.x = 0, .y = 0, .w = LEFT_PANEL_WIDTH * cell_w, .h = ROWS * cell_h};
-    log_panel_box = (SDL_Rect) {.x = LEFT_PANEL_WIDTH * cell_w, .y = 0, .w = (COLS - LEFT_PANEL_WIDTH) * cell_w, .h = TOP_LOG_HEIGIHT * cell_h};
-    button_panel_box = (SDL_Rect) {.x = LEFT_PANEL_WIDTH * cell_w, .y = (ROWS - BOTTOM_BUTTONS_HEIGHT)*cell_h, .w = (COLS - LEFT_PANEL_WIDTH) * cell_w, .h = BOTTOM_BUTTONS_HEIGHT * cell_h};
-    grid_box = grid_box_zoomed = (SDL_Rect) {.x = LEFT_PANEL_WIDTH * cell_w,.y = TOP_LOG_HEIGIHT * cell_h,.w = (COLS - LEFT_PANEL_WIDTH) * cell_w,.h=(ROWS - TOP_LOG_HEIGIHT - BOTTOM_BUTTONS_HEIGHT)*cell_h};
-    create_assets();
-    if (!init_font()) {
-        critical_error("Font Error","Resolution/cell size is too small for minimum allowed font size");
-    }
+    restart_game = true;
+    settings_changed = false;
     do {
-        restart_game = false;
-        settings_changed = false;
+        if(restart_game) {
+            display = screen;
+            if (force_portrait) {
+                SDL_SetHintWithPriority(SDL_HINT_ORIENTATIONS, "Portrait PortraitUpsideDown",SDL_HINT_OVERRIDE);
+                int tmp = display.w;
+                display.w = display.h;
+                display.h = tmp;
+            }else{
+                SDL_SetHintWithPriority(SDL_HINT_ORIENTATIONS, "LandscapeLeft LandscapeRight",SDL_HINT_OVERRIDE);
+            }
+            char render_hint[2] = {filter_mode + '0', 0};
+            SDL_SetHintWithPriority(SDL_HINT_RENDER_SCALE_QUALITY, render_hint,SDL_HINT_OVERRIDE);
+            if (custom_cell_width != 0) {
+                cell_w = custom_cell_width;
+            } else {
+                cell_w = ((double) display.w) / COLS;
+            }
+            if (custom_cell_height != 0) {
+                cell_h = custom_cell_height;
+            } else {
+                cell_h = ((double) display.h) / ROWS;
+            }
+            left_panel_box = (SDL_Rect) {.x = 0, .y = 0, .w = LEFT_PANEL_WIDTH * cell_w, .h = ROWS *
+                                                                                              cell_h};
+            log_panel_box = (SDL_Rect) {.x = LEFT_PANEL_WIDTH * cell_w, .y = 0, .w =
+            (COLS - LEFT_PANEL_WIDTH) * cell_w, .h = TOP_LOG_HEIGIHT * cell_h};
+            button_panel_box = (SDL_Rect) {.x = LEFT_PANEL_WIDTH * cell_w, .y =
+            (ROWS - BOTTOM_BUTTONS_HEIGHT) * cell_h, .w = (COLS - LEFT_PANEL_WIDTH) * cell_w, .h =
+            BOTTOM_BUTTONS_HEIGHT * cell_h};
+            grid_box = grid_box_zoomed = (SDL_Rect) {.x = LEFT_PANEL_WIDTH * cell_w, .y =
+            TOP_LOG_HEIGIHT * cell_h, .w = (COLS - LEFT_PANEL_WIDTH) * cell_w, .h=
+            (ROWS - TOP_LOG_HEIGIHT - BOTTOM_BUTTONS_HEIGHT) * cell_h};
+            create_assets();
+            if (!init_font()) {
+                critical_error("Font Error",
+                               "Resolution/cell size is too small for minimum allowed font size");
+            }
+        }else if(settings_changed){
+            create_assets();
+        }
+        settings_changed = restart_game = false;
         rogue.nextGame = NG_NOTHING;
         rogue.nextGamePath[0] = '\0';
         rogue.nextGameSeed = 0;
         rogueMain();
-        if(settings_changed){
-            destroy_assets();
-            create_assets();
-        }
-    }while(restart_game);
+        destroy_assets();
+    }while(settings_changed || restart_game);
 
 }
 
@@ -1588,7 +1581,7 @@ int main() {
     if (TTF_Init() != 0) {
         critical_error("SDL_ttf Error","Unable to initialize SDL_ttf: %s", SDL_GetError());
     }
-    if (SDL_GetDisplayBounds(0, &display) != 0) {
+    if (SDL_GetDisplayBounds(0, &screen) != 0) {
         critical_error("SDL Error","SDL_GetDesktopDisplayMode failed: %s", SDL_GetError());
     }
     SDL_SetEventFilter(suspend_resume_filter, NULL);
@@ -1605,7 +1598,6 @@ int main() {
         brogue_main(NULL);
 
     }
-    destroy_assets();
     TTF_CloseFont(font);
     TTF_Quit();
     SDL_Quit();
