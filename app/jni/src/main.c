@@ -988,7 +988,7 @@ boolean process_events() {
                 }
                 in_left_panel = false;
                 if(smart_zoom && left_panel_smart_zoom && SDL_PointInRect(&p,&left_panel_box) && cursor_x > LEFT_EDGE_WIDTH){
-                    if(cursor_y <= gameStat.leftPanelLength){
+                    if(cursor_y <= gameStat.sideBarLength){
                         in_left_panel = true;
                         if(prev_zoom_toggle == unset) {
                             prev_zoom_toggle = zoom_toggle ? set_true : set_false;
