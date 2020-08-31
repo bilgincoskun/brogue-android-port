@@ -87,6 +87,7 @@ static boolean screen_changed = false;
 static _Atomic boolean resumed = false;
 static TTF_Font *font;
 static glyph_cache font_cache[MAX_GLYPH_NO];
+static uint16_t glyph_index_table[TILES_LEN][3]; //ASCII, tile frame 1, tile frame 2
 static int font_width;
 static int font_height;
 static SDL_Texture * dpad_image_select;
@@ -435,178 +436,26 @@ int suspend_resume_filter(void *userdata, SDL_Event *event){
     return 1;
 }
 
-#define convert_glyph(glyph,ascii,tile) case glyph:\
-    if(graphicsEnabled){\
-        key = tile;\
-        if(tile >= TILES_LEN)\
-            key += tiles_flipped*TILES_LEN;\
-    }\
-    else{\
-        key = ascii;\
-    }\
-    break;
-
 void draw_glyph(enum displayGlyph c, SDL_FRect rect, uint8_t r, uint8_t g, uint8_t b) {
     if (c <= ' ') { //Empty Cell Optimization
         return;
     }
+    int mode = graphicsEnabled*(1+tiles_flipped);
     uint16_t key;
     if (c < MIN_TILE) {
         key = c;
     } else {
-        switch(c){
-            convert_glyph(G_UP_ARROW,128+8,128+8)
-            convert_glyph(G_DOWN_ARROW,144+1,144+1)
-            convert_glyph(G_PLAYER, '@', 256)
-            convert_glyph(G_EASY, '&', 257)
-            convert_glyph(G_FOOD, ';', 258)
-            convert_glyph(G_GOLD, '*', 259)
-            convert_glyph(G_ARMOR, '[', 260)
-            convert_glyph(G_WEAPON, 128+8, 261)
-            convert_glyph(G_POTION, '!', 262)
-            convert_glyph(G_SCROLL, 128+6, 263)
-            convert_glyph(G_RING, 128+7, 264)
-            convert_glyph(G_STAFF, '\\', 265)
-            convert_glyph(G_WAND, '~', 266)
-            convert_glyph(G_CHARM, 144+9, 267)
-            convert_glyph(G_ANCIENT_SPIRIT, 'M', 268)
-            convert_glyph(G_BAT, 'v', 269)
-            convert_glyph(G_BLOAT, 'b', 270)
-            convert_glyph(G_BOG_MONSTER, 'B', 271)
-            convert_glyph(G_CENTAUR, 'C', 272)
-            convert_glyph(G_CENTIPEDE, 'c', 273)
-            convert_glyph(G_DAR_BATTLEMAGE, 'd', 274)
-            convert_glyph(G_DAR_BLADEMASTER, 'd', 275)
-            convert_glyph(G_DAR_PRIESTESS, 'd', 276)
-            convert_glyph(G_DRAGON, 'D', 277)
-            convert_glyph(G_EEL, 'e', 278)
-            convert_glyph(G_EGG, 128+9, 279)
-            convert_glyph(G_FLAMEDANCER, 'F', 280)
-            convert_glyph(G_FURY, 'f', 281)
-            convert_glyph(G_GOBLIN, 'g', 282)
-            convert_glyph(G_GOBLIN_CHIEFTAN, 'g', 283)
-            convert_glyph(G_GOBLIN_MAGIC, 'g', 284)
-            convert_glyph(G_GOLEM, 'G', 285)
-            convert_glyph(G_GUARDIAN, 223, 286)
-            convert_glyph(G_IFRIT, 'I', 287)
-            convert_glyph(G_IMP, 'i', 288)
-            convert_glyph(G_JACKAL, 'j', 289)
-            convert_glyph(G_JELLY, 'J', 290)
-            convert_glyph(G_KOBOLD, 'k', 291)
-            convert_glyph(G_KRAKEN, 'K', 292)
-            convert_glyph(G_LICH, 'L', 293)
-            convert_glyph(G_MONKEY, 'm', 294)
-            convert_glyph(G_MOUND, 'a', 295)
-            convert_glyph(G_NAGA, 'N', 296)
-            convert_glyph(G_OGRE, 'O', 297)
-            convert_glyph(G_OGRE_MAGIC, 'O', 298)
-            convert_glyph(G_PHANTOM, 'P', 299)
-            convert_glyph(G_PHOENIX, 'P', 300)
-            convert_glyph(G_PIXIE, 'p', 301)
-            convert_glyph(G_RAT, 'r', 302)
-            convert_glyph(G_REVENANT, 'R', 303)
-            convert_glyph(G_SALAMANDER, 'S', 304)
-            convert_glyph(G_SPIDER, 's', 305)
-            convert_glyph(G_TENTACLE_HORROR, 'H', 306)
-            convert_glyph(G_TOAD, 't', 307)
-            convert_glyph(G_TOTEM, 128+10, 308)
-            convert_glyph(G_TROLL, 'T', 309)
-            convert_glyph(G_TURRET, 128+9, 310)
-            convert_glyph(G_UNDERWORM, 'U', 311)
-            convert_glyph(G_UNICORN, 218, 312)
-            convert_glyph(G_VAMPIRE, 'V', 313)
-            convert_glyph(G_WARDEN, 'Y', 314)
-            convert_glyph(G_WINGED_GUARDIAN, 223, 315)
-            convert_glyph(G_WISP, 'w', 316)
-            convert_glyph(G_WRAITH, 'W', 317)
-            convert_glyph(G_ZOMBIE, 'Z', 318)
-            convert_glyph(G_GOOD_MAGIC, 128 + 13, 319)
-            convert_glyph(G_GOOD_ITEM, 128 + 13, 320)
-            convert_glyph(G_BAD_MAGIC, 128 + 12, 321)
-            convert_glyph(G_BAD_ITEM, 128 + 12, 322)
-            convert_glyph(G_AMULET, 128+5, 323)
-            convert_glyph(G_AMULET_ITEM, 128+5, 324)
-            convert_glyph(G_FLOOR, '.', 325)
-            convert_glyph(G_FLOOR_ALT, '.', 326)
-            convert_glyph(G_LIQUID, '~', 327)
-            convert_glyph(G_CHASM, 128+1, 328)
-            convert_glyph(G_HOLE, 128+1, 329)
-            convert_glyph(G_FIRE, 128 + 3, 330)
-            convert_glyph(G_TORCH, '#', 331)
-            convert_glyph(G_FALLEN_TORCH, '#', 332)
-            convert_glyph(G_ASHES, '\'', 333)
-            convert_glyph(G_RUBBLE, ',', 334)
-            convert_glyph(G_BONES, ',', 335)
-            convert_glyph(G_CARPET, '.', 336)
-            convert_glyph(G_BOG, ',', 337)
-            convert_glyph(G_BEDROLL, '=', 338)
-            convert_glyph(G_GRASS, '"', 339)
-            convert_glyph(G_FOLIAGE, 128+4, 340)
-            convert_glyph(G_BLOODWORT_STALK, 128+4, 341)
-            convert_glyph(G_BLOODWORT_POD, '*', 342)
-            convert_glyph(G_SACRED_GLYPH, 128+1, 343)
-            convert_glyph(G_GLOWING_GLYPH, 128+1, 344)
-            convert_glyph(G_MAGIC_GLYPH, 128+1, 345)
-            convert_glyph(G_STATUE, 223, 346)
-            convert_glyph(G_CRACKED_STATUE, 223, 347)
-            convert_glyph(G_WALL, '#', 348)
-            convert_glyph(G_WALL_TOP, '#', 349)
-            convert_glyph(G_GRANITE, '#', 350)
-            convert_glyph(G_CRYSTAL_WALL, '#', 351)
-            convert_glyph(G_CRYSTAL, '#', 352)
-            convert_glyph(G_ELECTRIC_CRYSTAL, 164, 353)
-            convert_glyph(G_OPEN_DOOR, '\'', 354)
-            convert_glyph(G_CLOSED_DOOR, '+', 355)
-            convert_glyph(G_OPEN_IRON_DOOR, '\'', 356)
-            convert_glyph(G_CLOSED_IRON_DOOR, '+', 357)
-            convert_glyph(G_PORTCULLIS, '#', 358)
-            convert_glyph(G_DOORWAY, 144+6, 359)
-            convert_glyph(G_UP_STAIRS, '<', 360)
-            convert_glyph(G_DOWN_STAIRS, '>', 361)
-            convert_glyph(G_BRIDGE, '=', 362)
-            convert_glyph(G_BARRICADE, '#', 363)
-            convert_glyph(G_KEY, '-', 364)
-            convert_glyph(G_DEWAR, '&', 365)
-            convert_glyph(G_CLOSED_CAGE, '#', 366)
-            convert_glyph(G_OPEN_CAGE, '|', 367)
-            convert_glyph(G_ALTAR, '|', 368)
-            convert_glyph(G_LEVER, '/', 369)
-            convert_glyph(G_LEVER_PULLED, '\\', 370)
-            convert_glyph(G_TRAP, 128 + 2, 371)
-            convert_glyph(G_PRESSURE_PLATE_INACTIVE, 128 + 2, 372)
-            convert_glyph(G_TRAP_GAS, 128 + 2, 373)
-            convert_glyph(G_TRAP_PARALYSIS, 128 + 2, 374)
-            convert_glyph(G_TRAP_CONFUSION, 128 + 2, 375)
-            convert_glyph(G_TRAP_FIRE, 128 + 2, 376)
-            convert_glyph(G_TRAP_FLOOD, 128 + 2, 377)
-            convert_glyph(G_TRAP_NET, 128 + 2, 378)
-            convert_glyph(G_PRESSURE_PLATE, 128 + 2, 379)
-            convert_glyph(G_TRAP_ALARM, 128 + 2, 380)
-            convert_glyph(G_VENT, '=', 381)
-            convert_glyph(G_WEB, ':', 382)
-            convert_glyph(G_NET, ':', 383)
-            convert_glyph(G_VINE, ':', 384)
-            convert_glyph(G_GEM, 128+9, 385)
-            convert_glyph(G_PEDESTAL, '|', 386)
-            convert_glyph(G_CLOSED_COFFIN, '|', 387)
-            convert_glyph(G_OPEN_COFFIN, '|', 388)
-            convert_glyph(G_CHAIN_LEFT, '-', 389)
-            convert_glyph(G_CHAIN_TOP, '|', 390)
-            convert_glyph(G_CHAIN_TOP_LEFT, '\\', 391)
-            convert_glyph(G_CHAIN_BOTTOM_LEFT, '/', 392)
-            convert_glyph(G_CHAIN_RIGHT, '-', 393)
-            convert_glyph(G_CHAIN_BOTTOM, '|', 394)
-            convert_glyph(G_CHAIN_BOTTOM_RIGHT, '\\', 395)
-            convert_glyph(G_CHAIN_TOP_RIGHT, '/', 396)
-            default: key = '?';
-        }
+        key = glyph_index_table[c - MIN_TILE][mode];
     }
     glyph_cache *lc = &font_cache[key];
     if (lc->c == NULL) {
         SDL_Color fc = {COLOR_MAX, COLOR_MAX, COLOR_MAX};
         SDL_Surface *text;
         if((key >= 2*TILES_LEN) && !TTF_GlyphIsProvided(font,key)){
-            key = key - TILES_LEN;
+            //fallback to first frame
+            glyph_index_table[c - MIN_TILE][mode] -= TILES_LEN;
+            draw_glyph(c,rect,r,g,b);
+            return;
         }else{
             font_cache[c].animated = true;
         }
@@ -652,6 +501,156 @@ TTF_Font *init_font_size(char *font_path, int size) {
     TTF_CloseFont(current_font);
     return NULL;
 }
+#define init_glyph_index(glyph,ascii,tile) \
+    glyph_index_table[glyph-MIN_TILE][0] = ascii; \
+    glyph_index_table[glyph-MIN_TILE][1] = tile; \
+    glyph_index_table[glyph-MIN_TILE][2] = tile + TILES_LEN;
+
+void init_glyph_index_table(){
+    init_glyph_index(G_UP_ARROW, 128 + 8, 128 + 8)
+    init_glyph_index(G_DOWN_ARROW, 144 + 1, 144 + 1)
+    init_glyph_index(G_PLAYER, '@', 256)
+    init_glyph_index(G_EASY, '&', 257)
+    init_glyph_index(G_FOOD, ';', 258)
+    init_glyph_index(G_GOLD, '*', 259)
+    init_glyph_index(G_ARMOR, '[', 260)
+    init_glyph_index(G_WEAPON, 128 + 8, 261)
+    init_glyph_index(G_POTION, '!', 262)
+    init_glyph_index(G_SCROLL, 128 + 6, 263)
+    init_glyph_index(G_RING, 128 + 7, 264)
+    init_glyph_index(G_STAFF, '\\', 265)
+    init_glyph_index(G_WAND, '~', 266)
+    init_glyph_index(G_CHARM, 144 + 9, 267)
+    init_glyph_index(G_ANCIENT_SPIRIT, 'M', 268)
+    init_glyph_index(G_BAT, 'v', 269)
+    init_glyph_index(G_BLOAT, 'b', 270)
+    init_glyph_index(G_BOG_MONSTER, 'B', 271)
+    init_glyph_index(G_CENTAUR, 'C', 272)
+    init_glyph_index(G_CENTIPEDE, 'c', 273)
+    init_glyph_index(G_DAR_BATTLEMAGE, 'd', 274)
+    init_glyph_index(G_DAR_BLADEMASTER, 'd', 275)
+    init_glyph_index(G_DAR_PRIESTESS, 'd', 276)
+    init_glyph_index(G_DRAGON, 'D', 277)
+    init_glyph_index(G_EEL, 'e', 278)
+    init_glyph_index(G_EGG, 128 + 9, 279)
+    init_glyph_index(G_FLAMEDANCER, 'F', 280)
+    init_glyph_index(G_FURY, 'f', 281)
+    init_glyph_index(G_GOBLIN, 'g', 282)
+    init_glyph_index(G_GOBLIN_CHIEFTAN, 'g', 283)
+    init_glyph_index(G_GOBLIN_MAGIC, 'g', 284)
+    init_glyph_index(G_GOLEM, 'G', 285)
+    init_glyph_index(G_GUARDIAN, 223, 286)
+    init_glyph_index(G_IFRIT, 'I', 287)
+    init_glyph_index(G_IMP, 'i', 288)
+    init_glyph_index(G_JACKAL, 'j', 289)
+    init_glyph_index(G_JELLY, 'J', 290)
+    init_glyph_index(G_KOBOLD, 'k', 291)
+    init_glyph_index(G_KRAKEN, 'K', 292)
+    init_glyph_index(G_LICH, 'L', 293)
+    init_glyph_index(G_MONKEY, 'm', 294)
+    init_glyph_index(G_MOUND, 'a', 295)
+    init_glyph_index(G_NAGA, 'N', 296)
+    init_glyph_index(G_OGRE, 'O', 297)
+    init_glyph_index(G_OGRE_MAGIC, 'O', 298)
+    init_glyph_index(G_PHANTOM, 'P', 299)
+    init_glyph_index(G_PHOENIX, 'P', 300)
+    init_glyph_index(G_PIXIE, 'p', 301)
+    init_glyph_index(G_RAT, 'r', 302)
+    init_glyph_index(G_REVENANT, 'R', 303)
+    init_glyph_index(G_SALAMANDER, 'S', 304)
+    init_glyph_index(G_SPIDER, 's', 305)
+    init_glyph_index(G_TENTACLE_HORROR, 'H', 306)
+    init_glyph_index(G_TOAD, 't', 307)
+    init_glyph_index(G_TOTEM, 128 + 10, 308)
+    init_glyph_index(G_TROLL, 'T', 309)
+    init_glyph_index(G_TURRET, 128 + 9, 310)
+    init_glyph_index(G_UNDERWORM, 'U', 311)
+    init_glyph_index(G_UNICORN, 218, 312)
+    init_glyph_index(G_VAMPIRE, 'V', 313)
+    init_glyph_index(G_WARDEN, 'Y', 314)
+    init_glyph_index(G_WINGED_GUARDIAN, 223, 315)
+    init_glyph_index(G_WISP, 'w', 316)
+    init_glyph_index(G_WRAITH, 'W', 317)
+    init_glyph_index(G_ZOMBIE, 'Z', 318)
+    init_glyph_index(G_GOOD_MAGIC, 128 + 13, 319)
+    init_glyph_index(G_GOOD_ITEM, 128 + 13, 320)
+    init_glyph_index(G_BAD_MAGIC, 128 + 12, 321)
+    init_glyph_index(G_BAD_ITEM, 128 + 12, 322)
+    init_glyph_index(G_AMULET, 128 + 5, 323)
+    init_glyph_index(G_AMULET_ITEM, 128 + 5, 324)
+    init_glyph_index(G_FLOOR, '.', 325)
+    init_glyph_index(G_FLOOR_ALT, '.', 326)
+    init_glyph_index(G_LIQUID, '~', 327)
+    init_glyph_index(G_CHASM, 128 + 1, 328)
+    init_glyph_index(G_HOLE, 128 + 1, 329)
+    init_glyph_index(G_FIRE, 128 + 3, 330)
+    init_glyph_index(G_TORCH, '#', 331)
+    init_glyph_index(G_FALLEN_TORCH, '#', 332)
+    init_glyph_index(G_ASHES, '\'', 333)
+    init_glyph_index(G_RUBBLE, ',', 334)
+    init_glyph_index(G_BONES, ',', 335)
+    init_glyph_index(G_CARPET, '.', 336)
+    init_glyph_index(G_BOG, ',', 337)
+    init_glyph_index(G_BEDROLL, '=', 338)
+    init_glyph_index(G_GRASS, '"', 339)
+    init_glyph_index(G_FOLIAGE, 128 + 4, 340)
+    init_glyph_index(G_BLOODWORT_STALK, 128 + 4, 341)
+    init_glyph_index(G_BLOODWORT_POD, '*', 342)
+    init_glyph_index(G_SACRED_GLYPH, 128 + 1, 343)
+    init_glyph_index(G_GLOWING_GLYPH, 128 + 1, 344)
+    init_glyph_index(G_MAGIC_GLYPH, 128 + 1, 345)
+    init_glyph_index(G_STATUE, 223, 346)
+    init_glyph_index(G_CRACKED_STATUE, 223, 347)
+    init_glyph_index(G_WALL, '#', 348)
+    init_glyph_index(G_WALL_TOP, '#', 349)
+    init_glyph_index(G_GRANITE, '#', 350)
+    init_glyph_index(G_CRYSTAL_WALL, '#', 351)
+    init_glyph_index(G_CRYSTAL, '#', 352)
+    init_glyph_index(G_ELECTRIC_CRYSTAL, 164, 353)
+    init_glyph_index(G_OPEN_DOOR, '\'', 354)
+    init_glyph_index(G_CLOSED_DOOR, '+', 355)
+    init_glyph_index(G_OPEN_IRON_DOOR, '\'', 356)
+    init_glyph_index(G_CLOSED_IRON_DOOR, '+', 357)
+    init_glyph_index(G_PORTCULLIS, '#', 358)
+    init_glyph_index(G_DOORWAY, 144 + 6, 359)
+    init_glyph_index(G_UP_STAIRS, '<', 360)
+    init_glyph_index(G_DOWN_STAIRS, '>', 361)
+    init_glyph_index(G_BRIDGE, '=', 362)
+    init_glyph_index(G_BARRICADE, '#', 363)
+    init_glyph_index(G_KEY, '-', 364)
+    init_glyph_index(G_DEWAR, '&', 365)
+    init_glyph_index(G_CLOSED_CAGE, '#', 366)
+    init_glyph_index(G_OPEN_CAGE, '|', 367)
+    init_glyph_index(G_ALTAR, '|', 368)
+    init_glyph_index(G_LEVER, '/', 369)
+    init_glyph_index(G_LEVER_PULLED, '\\', 370)
+    init_glyph_index(G_TRAP, 128 + 2, 371)
+    init_glyph_index(G_PRESSURE_PLATE_INACTIVE, 128 + 2, 372)
+    init_glyph_index(G_TRAP_GAS, 128 + 2, 373)
+    init_glyph_index(G_TRAP_PARALYSIS, 128 + 2, 374)
+    init_glyph_index(G_TRAP_CONFUSION, 128 + 2, 375)
+    init_glyph_index(G_TRAP_FIRE, 128 + 2, 376)
+    init_glyph_index(G_TRAP_FLOOD, 128 + 2, 377)
+    init_glyph_index(G_TRAP_NET, 128 + 2, 378)
+    init_glyph_index(G_PRESSURE_PLATE, 128 + 2, 379)
+    init_glyph_index(G_TRAP_ALARM, 128 + 2, 380)
+    init_glyph_index(G_VENT, '=', 381)
+    init_glyph_index(G_WEB, ':', 382)
+    init_glyph_index(G_NET, ':', 383)
+    init_glyph_index(G_VINE, ':', 384)
+    init_glyph_index(G_GEM, 128 + 9, 385)
+    init_glyph_index(G_PEDESTAL, '|', 386)
+    init_glyph_index(G_CLOSED_COFFIN, '|', 387)
+    init_glyph_index(G_OPEN_COFFIN, '|', 388)
+    init_glyph_index(G_CHAIN_LEFT, '-', 389)
+    init_glyph_index(G_CHAIN_TOP, '|', 390)
+    init_glyph_index(G_CHAIN_TOP_LEFT, '\\', 391)
+    init_glyph_index(G_CHAIN_BOTTOM_LEFT, '/', 392)
+    init_glyph_index(G_CHAIN_RIGHT, '-', 393)
+    init_glyph_index(G_CHAIN_BOTTOM, '|', 394)
+    init_glyph_index(G_CHAIN_BOTTOM_RIGHT, '\\', 395)
+    init_glyph_index(G_CHAIN_TOP_RIGHT, '/', 396)
+}
 
 boolean init_font() {
     char font_path[PATH_MAX];
@@ -675,6 +674,7 @@ boolean init_font() {
             TTF_GlyphMetrics(font,FONT_BOUND_CHAR,&minx,&maxx,&miny,&maxy,NULL);
             font_width = maxx - minx;
             font_height = maxy - miny;
+            init_glyph_index_table();
             return true;
         }
     }
