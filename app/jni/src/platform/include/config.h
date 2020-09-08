@@ -68,9 +68,13 @@ boolean blend_full_tiles;
 extern boolean dpad_mode;
 extern int setting_len;
 extern setting *setting_list;
+extern boolean restart_game;
+extern boolean settings_changed;
 
 void set_conf(const char *name, const char *value);
 
 void load_conf();
+
+void settings_menu();
 
 #endif

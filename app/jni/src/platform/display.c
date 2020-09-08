@@ -23,6 +23,7 @@ SDL_Rect log_panel_box;
 SDL_Rect button_panel_box;
 SDL_Rect grid_box;
 SDL_Rect grid_box_zoomed;
+SDL_Rect display;
 
 extern playerCharacter rogue;
 extern creature player;

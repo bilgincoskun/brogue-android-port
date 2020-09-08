@@ -28,6 +28,7 @@ extern SDL_Texture * dpad_image_move;
 extern SDL_Rect dpad_area;
 extern SDL_Texture * settings_image;
 extern SDL_Rect settings_icon_area;
+extern SDL_Rect display;
 
 
 boolean init_font();
