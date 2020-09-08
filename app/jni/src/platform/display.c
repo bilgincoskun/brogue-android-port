@@ -11,13 +11,13 @@ boolean screen_changed = false;
 double zoom_level = 1.0;
 boolean zoom_toggle = false;
 boolean game_started = false;
-SDL_Texture * screen_texture;
-SDL_Texture * dpad_image_select;
-SDL_Texture * dpad_image_move;
+SDL_Texture *screen_texture;
+SDL_Texture *dpad_image_select;
+SDL_Texture *dpad_image_move;
 SDL_Rect dpad_area;
-SDL_Texture * settings_image;
+SDL_Texture *settings_image;
 SDL_Rect settings_icon_area;
-SDL_Texture * screen_texture;
+SDL_Texture *screen_texture;
 SDL_Rect left_panel_box;
 SDL_Rect log_panel_box;
 SDL_Rect button_panel_box;
@@ -27,7 +27,7 @@ SDL_Rect grid_box_zoomed;
 extern playerCharacter rogue;
 extern creature player;
 
-#define init_glyph_index(glyph,ascii,tile) \
+#define init_glyph_index(glyph, ascii, tile) \
     glyph_index_table[glyph-MIN_TILE][0] = ascii; \
     glyph_index_table[glyph-MIN_TILE][1] = tile; \
     glyph_index_table[glyph-MIN_TILE][2] = tile + TILES_LEN;
@@ -35,6 +35,8 @@ extern creature player;
 #define TILES_LEN 256
 #define MAX_GLYPH_NO (TILES_LEN * 3)
 #define MIN_TILE G_UP_ARROW
+#define TILES_FLIP_TIME 900
+
 typedef struct {
     double width, height, offset_x, offset_y;
     SDL_Texture *c;
@@ -48,37 +50,37 @@ static int font_width;
 static int font_height;
 
 
-boolean tiles_flipped = false;
+boolean tiles_flipped = false; //ASCII, tile frame 1, tile frame 2
 
 void draw_glyph(enum displayGlyph c, struct SDL_FRect rect, uint8_t r, uint8_t g, uint8_t b) {
     if (c <= ' ') { //Empty Cell Optimization
         return;
     }
-    int mode = graphicsEnabled*(1+tiles_flipped);
+    int mode = graphicsEnabled * (1 + tiles_flipped);
     uint16_t key;
     if (c < MIN_TILE) {
         key = c;
     } else {
         key = glyph_index_table[c - MIN_TILE][mode];
     }
-    glyph_cache * lc = &font_cache[key];
+    glyph_cache *lc = &font_cache[key];
     if (lc->c == NULL) {
         struct SDL_Color fc = {COLOR_MAX, COLOR_MAX, COLOR_MAX};
         struct SDL_Surface *text;
-        if((key >= 2*TILES_LEN) && !TTF_GlyphIsProvided(font,key)){
+        if ((key >= 2 * TILES_LEN) && !TTF_GlyphIsProvided(font, key)) {
             //fallback to first frame
             glyph_index_table[c - MIN_TILE][mode] -= TILES_LEN;
-            draw_glyph(c,rect,r,g,b);
+            draw_glyph(c, rect, r, g, b);
             return;
-        }else{
+        } else {
             font_cache[c].animated = true;
         }
         text = TTF_RenderGlyph_Blended(font, key, fc);
-        int minx,maxx,miny,maxy,fw,fh;
-        TTF_GlyphMetrics(font,key,&minx,&maxx,&miny,&maxy,NULL);
+        int minx, maxx, miny, maxy, fw, fh;
+        TTF_GlyphMetrics(font, key, &minx, &maxx, &miny, &maxy, NULL);
         fw = maxx - minx;
         fh = maxy - miny;
-        if((fw >= font_width) && (fh >= font_height)){
+        if ((fw >= font_width) && (fh >= font_height)) {
             lc->full_tile = true;
         }
         lc->offset_x = (rect.w - text->w) / 2;
@@ -90,14 +92,14 @@ void draw_glyph(enum displayGlyph c, struct SDL_FRect rect, uint8_t r, uint8_t g
     }
 
     SDL_SetTextureColorMod(lc->c, r, g, b);
-    if(blend_full_tiles && (lc->full_tile)){
-        struct SDL_Rect src = {.x = 0,.y=0,.w=font_width,.h=font_height};
+    if (blend_full_tiles && (lc->full_tile)) {
+        struct SDL_Rect src = {.x = 0, .y=0, .w=font_width, .h=font_height};
         SDL_RenderCopyF(renderer, lc->c, &src, &rect);
-    }else{
+    } else {
         struct SDL_Rect font_rect;
         font_rect.x = rect.x + lc->offset_x;
         font_rect.y = rect.y + lc->offset_y;
-        font_rect.w =  lc->width;
+        font_rect.w = lc->width;
         font_rect.h = lc->height;
         SDL_RenderCopy(renderer, lc->c, NULL, &font_rect);
     }
@@ -106,9 +108,10 @@ void draw_glyph(enum displayGlyph c, struct SDL_FRect rect, uint8_t r, uint8_t g
 
 struct _TTF_Font *init_font_size(char *font_path, int size) {
     struct _TTF_Font *current_font = TTF_OpenFont(font_path, size);
-    if (TTF_FontLineSkip(current_font) <= (cell_h - 2)){
+    if (TTF_FontLineSkip(current_font) <= (cell_h - 2)) {
         int advance;
-        if(TTF_GlyphMetrics(current_font,'a',NULL,NULL,NULL,NULL,&advance) == 0 && advance <= (cell_w -2)){
+        if (TTF_GlyphMetrics(current_font, 'a', NULL, NULL, NULL, NULL, &advance) == 0 &&
+            advance <= (cell_w - 2)) {
             return current_font;
         }
     }
@@ -116,7 +119,7 @@ struct _TTF_Font *init_font_size(char *font_path, int size) {
     return NULL;
 }
 
-void init_glyph_index_table(){
+void init_glyph_index_table() {
     init_glyph_index(G_UP_ARROW, 128 + 8, 128 + 8)
     init_glyph_index(G_DOWN_ARROW, 144 + 1, 144 + 1)
     init_glyph_index(G_PLAYER, '@', 256)
@@ -281,8 +284,8 @@ boolean init_font() {
             TTF_CloseFont(font);
             font = new_size;
         } else {
-            int minx,maxx,miny,maxy;
-            TTF_GlyphMetrics(font,FONT_BOUND_CHAR,&minx,&maxx,&miny,&maxy,NULL);
+            int minx, maxx, miny, maxy;
+            TTF_GlyphMetrics(font, FONT_BOUND_CHAR, &minx, &maxx, &miny, &maxy, NULL);
             font_width = maxx - minx;
             font_height = maxy - miny;
             init_glyph_index_table();
@@ -291,17 +294,12 @@ boolean init_font() {
     }
 }
 
-void destroy_font(){
+void destroy_font() {
     TTF_CloseFont(font);
 }
 
-
-boolean is_glyph_animated(enum displayGlyph c){
-    return font_cache[c].animated;
-}
-
-boolean smart_zoom_allowed(){
-    if(!smart_zoom){
+boolean smart_zoom_allowed() {
+    if (!smart_zoom) {
         return true;
     }
     return !(gameStat.titleMenuShown || gameStat.fileDialogShown ||
@@ -309,56 +307,93 @@ boolean smart_zoom_allowed(){
              gameStat.menuShown || gameStat.confirmShown);
 }
 
-boolean is_zoomed(){
+boolean is_zoomed() {
     return zoom_mode != 0 && zoom_level != 1.0 && zoom_toggle && smart_zoom_allowed();
 }
 
-void draw_screen(){
-    if(screen_changed) {
+void draw_screen() {
+    if (screen_changed) {
         screen_changed = false;
         SDL_SetRenderTarget(renderer, NULL);
-        if(rogue.depthLevel == 0 || rogue.gameHasEnded || rogue.quit || player.currentHP <= 0){
+        if (rogue.depthLevel == 0 || rogue.gameHasEnded || rogue.quit || player.currentHP <= 0) {
             zoom_level = 1.0;
             game_started = false;
-        }else if(!game_started){
+        } else if (!game_started) {
             game_started = true;
             zoom_level = init_zoom;
             zoom_toggle = init_zoom_toggle;
         }
 
-        if(!is_zoomed()){
+        if (!is_zoomed()) {
             SDL_RenderCopy(renderer, screen_texture, NULL, NULL);
 
-        }else{
+        } else {
             double width = (COLS - LEFT_PANEL_WIDTH) * cell_w / zoom_level;
-            double height = (ROWS - TOP_LOG_HEIGIHT - BOTTOM_BUTTONS_HEIGHT)*cell_h/zoom_level;
-            int x,y;
-            if(zoom_mode == 2 && rogue.cursorLoc[0] >= 0 && rogue.cursorLoc[1] >= 0 &&
-               !rogue.automationActive && !rogue.autoPlayingLevel && rogue.disturbed){
+            double height = (ROWS - TOP_LOG_HEIGIHT - BOTTOM_BUTTONS_HEIGHT) * cell_h / zoom_level;
+            int x, y;
+            if (zoom_mode == 2 && rogue.cursorLoc[0] >= 0 && rogue.cursorLoc[1] >= 0 &&
+                !rogue.automationActive && !rogue.autoPlayingLevel && rogue.disturbed) {
                 x = rogue.cursorLoc[0];
                 y = rogue.cursorLoc[1];
-            }else{
+            } else {
                 x = player.xLoc;
                 y = player.yLoc;
             }
-            int center_x = x*cell_w+left_panel_box.w - width/2;
-            int center_y = y*cell_h+log_panel_box.h-height/2;
-            center_x = max(left_panel_box.w,min(center_x,left_panel_box.w+grid_box.w - width));
-            center_y = max(log_panel_box.h,min(center_y,log_panel_box.h+grid_box.h - height));
-            grid_box_zoomed = (SDL_Rect) {.x = center_x,.y = center_y,.w = width,.h= height};
-            SDL_RenderCopy(renderer,screen_texture,&left_panel_box,&left_panel_box);
-            SDL_RenderCopy(renderer,screen_texture,&log_panel_box,&log_panel_box);
-            SDL_RenderCopy(renderer,screen_texture,&button_panel_box,&button_panel_box);
-            SDL_RenderCopy(renderer,screen_texture,&grid_box_zoomed,&grid_box);
+            int center_x = x * cell_w + left_panel_box.w - width / 2;
+            int center_y = y * cell_h + log_panel_box.h - height / 2;
+            center_x = max(left_panel_box.w, min(center_x, left_panel_box.w + grid_box.w - width));
+            center_y = max(log_panel_box.h, min(center_y, log_panel_box.h + grid_box.h - height));
+            grid_box_zoomed = (SDL_Rect) {.x = center_x, .y = center_y, .w = width, .h= height};
+            SDL_RenderCopy(renderer, screen_texture, &left_panel_box, &left_panel_box);
+            SDL_RenderCopy(renderer, screen_texture, &log_panel_box, &log_panel_box);
+            SDL_RenderCopy(renderer, screen_texture, &button_panel_box, &button_panel_box);
+            SDL_RenderCopy(renderer, screen_texture, &grid_box_zoomed, &grid_box);
         }
-        if(gameStat.titleMenuShown){
-            SDL_RenderCopy(renderer,settings_image,NULL,&settings_icon_area);
-        } else if(dpad_enabled){
-            SDL_RenderCopy(renderer, dpad_mode?dpad_image_move:dpad_image_select, NULL, &dpad_area);
+        if (gameStat.titleMenuShown) {
+            SDL_RenderCopy(renderer, settings_image, NULL, &settings_icon_area);
+        } else if (dpad_enabled) {
+            SDL_RenderCopy(renderer, dpad_mode ? dpad_image_move : dpad_image_select, NULL,
+                           &dpad_area);
         }
 
         SDL_RenderPresent(renderer);
         SDL_SetRenderTarget(renderer, screen_texture);
+    }
+
+}
+
+void refresh_animations(boolean colorsDance) {
+    boolean screen_changed = false;
+    if (dynamic_colors && colorsDance) {
+        shuffleTerrainColors(3, true);
+        screen_changed = true;
+    }
+    boolean refresh = false;
+    if (graphicsEnabled && tiles_animation) {
+        static uint32_t prev_time = 0;
+        uint32_t current_time = SDL_GetTicks();
+        if (current_time >= (prev_time + TILES_FLIP_TIME)) {
+            tiles_flipped = !tiles_flipped;
+            prev_time = current_time;
+            refresh = true;
+        }
+        //Do not refresh screen during zoom change
+        static double prev_zoom = 0.0;
+        if (refresh && prev_zoom == zoom_level) {
+            for (int i = 0; i < COLS; i++) {
+                for (int j = 0; j < ROWS; j++) {
+                    displayBuffer[i][j].needsUpdate = font_cache[
+                            displayBuffer[i][j].character].animated;
+                }
+            }
+            screen_changed = true;
+        }
+        prev_zoom = zoom_level;
+    } else {
+        tiles_flipped = false;
+    }
+    if (screen_changed) {
+        commitDraws();
     }
 
 }

@@ -18,7 +18,6 @@
 #define ZOOM_CHANGED_INTERVAL 300
 #define ZOOM_TOGGLED_INTERVAL 100
 #define DAY_TO_TIMESTAMP 86400
-#define TILES_FLIP_TIME 900
 
 typedef enum{
    set_false,
@@ -721,38 +720,8 @@ boolean TouchScreenPauseForMilliseconds(short milliseconds){
 
 void TouchScreenNextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInput, boolean colorsDance) {
     while(!process_events()){
-        boolean screen_changed = false;
-        if (dynamic_colors && colorsDance) {
-            shuffleTerrainColors(3, true);
-            screen_changed = true;
-        }
-        boolean refresh = false;
-        if (graphicsEnabled && tiles_animation){
-            static uint32_t prev_time = 0;
-            uint32_t current_time = SDL_GetTicks();
-            if(current_time >= (prev_time+TILES_FLIP_TIME)){
-                tiles_flipped = !tiles_flipped;
-                prev_time = current_time;
-                refresh = true;
-            }
-            //Do not refresh screen during zoom change
-            static double prev_zoom = 0.0;
-            if(refresh && prev_zoom == zoom_level){
-                for(int i=0; i<COLS; i++ ) {
-                    for(int j=0; j<ROWS; j++ ) {
-                        displayBuffer[i][j].needsUpdate = is_glyph_animated(displayBuffer[i][j].character);
-                    }
-                }
-                screen_changed = true;
-            }
-            prev_zoom = zoom_level;
-        }else{
-            tiles_flipped = false;
-        }
-        if(screen_changed){
-            commitDraws();
-        }
-        TouchScreenPauseForMilliseconds(FRAME_INTERVAL);
+        refresh_animations(colorsDance);
+       TouchScreenPauseForMilliseconds(FRAME_INTERVAL);
 
     }
     *returnEvent = current_event;

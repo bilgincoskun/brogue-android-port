@@ -12,7 +12,6 @@
 
 extern SDL_Renderer *renderer;
 extern boolean graphicsEnabled;
-extern boolean tiles_flipped; //ASCII, tile frame 1, tile frame 2
 extern double cell_w, cell_h;
 extern boolean screen_changed;
 extern double zoom_level;
@@ -34,8 +33,8 @@ extern SDL_Rect settings_icon_area;
 boolean init_font();
 void destroy_font();
 void draw_glyph(enum displayGlyph c, struct SDL_FRect rect, __uint8_t r, __uint8_t g, __uint8_t b);
-boolean is_glyph_animated(enum displayGlyph c);
 void draw_screen();
+void refresh_animations(boolean colorsDance);
 boolean smart_zoom_allowed();
 boolean is_zoomed();
 
