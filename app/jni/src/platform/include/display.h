@@ -32,6 +32,7 @@ extern SDL_Rect display;
 
 
 boolean init_font();
+void init_glyphs();
 void destroy_font();
 void draw_glyph(enum displayGlyph c, struct SDL_FRect rect, __uint8_t r, __uint8_t g, __uint8_t b);
 void draw_screen();

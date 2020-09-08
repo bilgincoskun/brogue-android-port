@@ -266,8 +266,11 @@ void init_glyph_index_table() {
     init_glyph_index(G_CHAIN_TOP_RIGHT, '/', 396)
 }
 
-boolean init_font() {
+void init_glyphs(){
     memset(font_cache, 0, MAX_GLYPH_NO * sizeof(glyph_cache));
+}
+
+boolean init_font() {
     char font_path[PATH_MAX];
     (void) realpath("../custom.ttf", font_path);
     if (access(font_path, F_OK) == -1) {
