@@ -172,13 +172,15 @@ void TouchScreenGameLoop() {
   } while (settings_changed || restart_game);
 }
 
-void resume(){
+boolean resume(){
   if (resumed) {
     resumed = false;
     destroy_assets();
     create_assets();
     refreshScreen();
+    return true;
   }
+  return false;
 }
 
 boolean TouchScreenPauseForMilliseconds(short milliseconds) {

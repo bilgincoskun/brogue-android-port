@@ -4,7 +4,7 @@
 
 extern cellDisplayBuffer displayBuffer[COLS][ROWS];
 
-void resume();
+boolean resume();
 
 void to_buffer(uchar ch, short xLoc, short yLoc, short foreRed, short foreGreen,
                short foreBlue, short backRed, short backGreen, short backBlue) {
@@ -122,6 +122,9 @@ void settings_menu() {
   }
   rebuild_settings_menu(current_section);
   while (true) {
+    if(resume()){
+      rebuild_settings_menu(current_section);
+    }
     SDL_Event event;
     while (SDL_PollEvent(&event)) {
       if (event.type == SDL_FINGERDOWN) {
