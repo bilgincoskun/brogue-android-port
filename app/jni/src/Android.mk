@@ -11,8 +11,10 @@ LOCAL_C_INCLUDES += $(LOCAL_PATH)/include
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/../SDL_ttf
 # Add your application source files here...
 LOCAL_SRC_FILES :=  main.c
+LOCAL_C_INCLUDES += $(LOCAL_PATH)/platform/include
 
 LOCAL_SRC_FILES += $(wildcard $(LOCAL_PATH)/brogue/*.c)
+LOCAL_SRC_FILES += $(wildcard $(LOCAL_PATH)/platform/*.c)
 
 LOCAL_SHARED_LIBRARIES := SDL2 SDL2_ttf
 
