@@ -6,13 +6,7 @@ Under Assets section there are files with apk extension (each for a different Br
 
 You can install the game by downloading the preferred version to your Android device and running it.
 
-Currently there are 3 Brogue versions supported which can be installed side by side:
-
-* Original v1.7.5 version
-
-* 1.7.5 with bug fixes from [here](https://github.com/flend/brogue-windows/)
-
-* Community Edition from [here](https://github.com/tmewett/BrogueCE)
+Currently [Community Edition](https://github.com/tmewett/BrogueCE) is supported.
 
 Note that apks require two additional permissions which both are optional:
 
