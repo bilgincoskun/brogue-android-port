@@ -264,6 +264,10 @@ void init_glyph_index_table() {
     init_glyph_index(G_CHAIN_BOTTOM, '|', 394)
     init_glyph_index(G_CHAIN_BOTTOM_RIGHT, '\\', 395)
     init_glyph_index(G_CHAIN_TOP_RIGHT, '/', 396)
+    init_glyph_index(G_LICHEN, '"', 339)
+    init_glyph_index(G_ORB_ALTAR, '|', 368)
+    init_glyph_index(G_SAC_ALTAR, '|', 368)
+    init_glyph_index(G_PIPES, '+', '+')
 }
 
 void init_glyphs(){
