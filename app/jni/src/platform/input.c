@@ -219,7 +219,7 @@ boolean process_events() {
           if (rogue.playbackMode) {
             current_event.param1 = ACKNOWLEDGE_KEY;
           } else {
-            current_event.param1 = ENTER_KEY;
+            current_event.param1 = '\012'; //ENTER_KEY
           }
 
         } else if (current_event.param2 > (ROWS - 3)) {

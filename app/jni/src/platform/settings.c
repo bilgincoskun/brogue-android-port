@@ -6,7 +6,7 @@ extern cellDisplayBuffer displayBuffer[COLS][ROWS];
 
 boolean resume();
 
-void to_buffer(uchar ch, short xLoc, short yLoc, short foreRed, short foreGreen,
+void to_buffer(unsigned short ch, short xLoc, short yLoc, short foreRed, short foreGreen,
                short foreBlue, short backRed, short backGreen, short backBlue) {
   displayBuffer[xLoc][yLoc] = (struct cellDisplayBuffer){
       .character = ch,
