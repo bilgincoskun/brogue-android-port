@@ -7,7 +7,7 @@ cd "$tmp_dir"
 game_folder="game_files"
 
 echo "Downloading SDL2"
-wget -qO- https://www.libsdl.org/release/SDL2-2.0.14.tar.gz | tar xz
+wget -qO- https://www.libsdl.org/release/SDL2-2.0.16.tar.gz | tar xz
 mv SDL2* SDL
 
 echo "Downloading SDL2_ttf"
