@@ -3,7 +3,9 @@
 #include <ctype.h>
 #include "config.h"
 
-extern void critical_error(const char *error_title, const char *error_message, ...);
+extern void general_error(const char *error_title, const char *error_message, ...);
+
+#define invalid_config_error(error_title,...) general_error(true,error_title,__VA_ARGS__)
 
 #define MAX_LINE_LENGTH 200
 
@@ -42,11 +44,11 @@ long parse_int(const char *name, const char *value, long min, long max) {
     char *endpoint;
     long result = strtol(value, &endpoint, 10);
     if ((result == 0 && endpoint == value) || (*endpoint != '\0')) {
-        critical_error("Parsing Error", "Value of '%s' is not a valid integer", name);
+        invalid_config_error("Parsing Error", "Value of '%s' is not a valid integer", name);
     }
     if (result < min || result > max) {
-        critical_error("Invalid Value Error", "Value of '%s' is not in the range of %d  and %d",
-                       name, min, max);
+        invalid_config_error("Invalid Value Error", "Value of '%s' is not in the range of %d  and %d",
+                             name, min, max);
     }
     return result;
 }
@@ -55,11 +57,11 @@ double parse_float(const char *name, const char *value, double min, double max) 
     char *endpoint;
     double result = strtof(value, &endpoint);
     if ((result == 0 && endpoint == value) || (*endpoint != '\0')) {
-        critical_error("Parsing Error", "Value of '%s' is not a valid decimal", name);
+        invalid_config_error("Parsing Error", "Value of '%s' is not a valid decimal", name);
     }
     if (result < min || result > max) {
-        critical_error("Invalid Value Error", "Value of '%s' is not in the range of %f  and %f",
-                       name, min, max);
+        invalid_config_error("Invalid Value Error", "Value of '%s' is not in the range of %f  and %f",
+                             name, min, max);
     }
     return result;
 }
@@ -157,8 +159,8 @@ void set_conf(const char *name, const char *value) {
     add_button("  Cancel", CANCEL_BUTTON_ID, COLS - 8, ROWS - 5);
     add_button("      OK", OK_BUTTON_ID, COLS - 8, ROWS - 2);
     if (!first_run) {
-        critical_error("Unknown Configuration",
-                       "Configuration '%s' in settings file is not recognized", name);
+        invalid_config_error("Unknown Configuration",
+                             "Configuration '%s' in settings file is not recognized", name);
     } else if (count_len) {
         count_len = false;
         setting_list = malloc(sizeof(setting) * setting_len);

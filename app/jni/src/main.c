@@ -35,28 +35,31 @@ void destroy_assets() {
   SDL_DestroyWindow(window);
 }
 
-void critical_error(const char *error_title, const char *error_message, ...) {
+void general_error(boolean critical,const char *error_title, const char *error_message, ...) {
   char buffer[MAX_ERROR_LENGTH];
   va_list a;
   va_start(a, error_message);
   vsnprintf(buffer, MAX_ERROR_LENGTH, error_message, a);
   SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, error_title, buffer, NULL);
   va_end(a);
-  destroy_assets();
-  destroy_font();
-  TTF_Quit();
-  SDL_Quit();
-  exit(-1);
+  if(critical) {
+    destroy_assets();
+    destroy_font();
+    TTF_Quit();
+    SDL_Quit();
+    exit(-1);
+  }
 }
 
+#define invalid_config_error(error_title,...) general_error(true,error_title,__VA_ARGS__)
 
 void create_assets() {
   if (SDL_CreateWindowAndRenderer(display.w, display.h,
                                   SDL_WINDOW_FULLSCREEN |
                                       SDL_WINDOW_ALWAYS_ON_TOP,
                                   &window, &renderer)) {
-    critical_error("SDL Error", "Couldn't create window and renderer: %s",
-                   SDL_GetError());
+    invalid_config_error("SDL Error", "Couldn't create window and renderer: %s",
+                         SDL_GetError());
   }
   screen_texture =
       SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888,
@@ -158,7 +161,7 @@ void TouchScreenGameLoop() {
           .h = (ROWS - TOP_LOG_HEIGIHT - BOTTOM_BUTTONS_HEIGHT) * cell_h};
       create_assets();
       if (!init_font()) {
-        critical_error(
+        invalid_config_error(
             "Font Error",
             "Resolution/cell size is too small for minimum allowed font size");
       }
@@ -458,25 +461,25 @@ int main() {
   (*env)->DeleteLocalRef(env, cls);
   if (chdir(BROGUE_VERSION_STRING) == -1) {
     if (errno != ENOENT) {
-      critical_error("Save Folder Error",
-                     "Cannot create/enter the save folder");
+      invalid_config_error("Save Folder Error",
+                           "Cannot create/enter the save folder");
     }
     if (mkdir(BROGUE_VERSION_STRING, 0770) || chdir(BROGUE_VERSION_STRING)) {
-      critical_error("Save Folder Error",
-                     "Cannot create/enter the save folder");
+      invalid_config_error("Save Folder Error",
+                           "Cannot create/enter the save folder");
     }
   }
   SDL_SetHint(SDL_HINT_RENDER_BATCHING, "1");
   if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
-    critical_error("SDL Error", "Unable to initialize SDL: %s", SDL_GetError());
+    invalid_config_error("SDL Error", "Unable to initialize SDL: %s", SDL_GetError());
   }
   if (TTF_Init() != 0) {
-    critical_error("SDL_ttf Error", "Unable to initialize SDL_ttf: %s",
-                   SDL_GetError());
+    invalid_config_error("SDL_ttf Error", "Unable to initialize SDL_ttf: %s",
+                         SDL_GetError());
   }
   if (SDL_GetDisplayBounds(0, &screen) != 0) {
-    critical_error("SDL Error", "SDL_GetDesktopDisplayMode failed: %s",
-                   SDL_GetError());
+    invalid_config_error("SDL Error", "SDL_GetDesktopDisplayMode failed: %s",
+                         SDL_GetError());
   }
   SDL_SetEventFilter(suspend_resume_filter, NULL);
   SDL_Thread *thread = SDL_CreateThreadWithStackSize(brogue_main, "Brogue",
