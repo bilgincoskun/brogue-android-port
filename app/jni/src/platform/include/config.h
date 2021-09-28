@@ -75,6 +75,8 @@ void set_conf(const char *name, const char *value);
 
 void load_conf();
 
+void save_conf();
+
 void settings_menu();
 
 #endif

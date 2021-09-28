@@ -151,7 +151,6 @@ void settings_menu() {
           boolean increase = cursor_x >= s->xLoc + SETTING_NAME_MAX_LEN +
                                              SETTING_VALUE_MAX_LEN - 2;
           boolean menu_changed = false;
-          FILE *st;
           switch (s->t) {
           case section_:
             current_section = s->default_.s;
@@ -170,46 +169,7 @@ void settings_menu() {
             case CANCEL_BUTTON_ID:
               return;
             case OK_BUTTON_ID:
-              st = fopen("../" SETTINGS_FILE, "w");
-              for (int i = 0; i < setting_len; i++) {
-                setting *s = &setting_list[i];
-                switch (s->t) {
-                case boolean_:
-                  if (*((boolean *)s->value) != s->new.b) {
-                    restart_game = restart_game || s->need_restart;
-                    *((boolean *)s->value) = s->new.b;
-                    settings_changed = true;
-                  }
-                  if (s->new.b != s->default_.b) {
-                    fprintf(st, "%s %s\n", s->name, s->new.b ? "1" : "0");
-                  }
-                  break;
-                case int_:
-                  if (*((int *)s->value) != s->new.i) {
-                    restart_game = restart_game || s->need_restart;
-                    *((int *)s->value) = s->new.i;
-                    settings_changed = true;
-                  }
-                  if (s->new.i != s->default_.i) {
-                    fprintf(st, "%s %d\n", s->name, s->new.i);
-                  }
-                  break;
-                case double_:
-                  if (*((double *)s->value) != s->new.d) {
-                    restart_game = restart_game || s->need_restart;
-                    *((double *)s->value) = s->new.d;
-                    settings_changed = true;
-                  }
-                  if (s->new.d != s->default_.d) {
-                    fprintf(st, "%s %f\n", s->name, s->new.d);
-                  }
-                  break;
-                case section_:
-                case button_:
-                  break;
-                }
-              }
-              fclose(st);
+              save_conf();
               return;
             }
             break;
