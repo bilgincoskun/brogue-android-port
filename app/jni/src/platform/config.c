@@ -5,7 +5,7 @@
 
 extern void general_error(const char *error_title, const char *error_message, ...);
 
-#define invalid_config_error(error_title,...) general_error(true,error_title,__VA_ARGS__)
+#define invalid_config_error(error_title,...) general_error(false,error_title,__VA_ARGS__)
 
 #define MAX_LINE_LENGTH 200
 
@@ -40,36 +40,40 @@ boolean dpad_mode = true;
     } \
 }
 
-long parse_int(const char *name, const char *value, long min, long max) {
+long parse_int(const char *name, const char *value, long min, long max,long default_) {
     char *endpoint;
     long result = strtol(value, &endpoint, 10);
     if ((result == 0 && endpoint == value) || (*endpoint != '\0')) {
         invalid_config_error("Parsing Error", "Value of '%s' is not a valid integer", name);
+        result = default_;
     }
     if (result < min || result > max) {
         invalid_config_error("Invalid Value Error", "Value of '%s' is not in the range of %d  and %d",
                              name, min, max);
+        result = default_;
     }
     return result;
 }
 
-double parse_float(const char *name, const char *value, double min, double max) {
+double parse_float(const char *name, const char *value, double min, double max,double default_) {
     char *endpoint;
     double result = strtof(value, &endpoint);
     if ((result == 0 && endpoint == value) || (*endpoint != '\0')) {
         invalid_config_error("Parsing Error", "Value of '%s' is not a valid decimal", name);
+        result = default_;
     }
     if (result < min || result > max) {
         invalid_config_error("Invalid Value Error", "Value of '%s' is not in the range of %f  and %f",
                              name, min, max);
+        result = default_;
     }
     return result;
 }
 
-#define parse_val(var_name, name, value, min, max) _Generic((var_name), \
+#define parse_val(var_name, name, value, min, max,default_) _Generic((var_name), \
                     int : parse_int, \
                     boolean: parse_int, \
-                    double: parse_float)(name,value,min,max)
+                    double: parse_float)(name,value,min,max,default_)
 
 #define type_val(var) _Generic((var),\
     boolean:boolean_,\
@@ -109,7 +113,7 @@ double parse_float(const char *name, const char *value, double min, double max) 
         index++; \
     } \
     else if(strcmp(#var_name,name)==0) { \
-        var_name = parse_val(var_name, name, value, min, max); \
+        var_name = parse_val(var_name, name, value, min, max,default); \
         return; \
     } \
 }
