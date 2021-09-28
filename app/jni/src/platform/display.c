@@ -3,8 +3,8 @@
 #include "config.h"
 #include <unistd.h>
 #include "IncludeGlobals.h"
+#include "platform.h"
 
-boolean graphicsEnabled = true;
 SDL_Renderer *renderer;
 double cell_w, cell_h;
 boolean screen_changed = false;
@@ -57,6 +57,7 @@ void draw_glyph(enum displayGlyph c, struct SDL_FRect rect, uint8_t r, uint8_t g
     if (c <= ' ') { //Empty Cell Optimization
         return;
     }
+    boolean graphicsEnabled = (graphicsMode == TILES_GRAPHICS) || (graphicsMode == HYBRID_GRAPHICS && isEnvironmentGlyph(c));
     int mode = graphicsEnabled * (1 + tiles_flipped);
     uint16_t key;
     if (c < MIN_TILE) {
@@ -377,6 +378,7 @@ void refresh_animations(boolean colorsDance) {
         screen_changed = true;
     }
     boolean refresh = false;
+    boolean graphicsEnabled = (graphicsMode == TILES_GRAPHICS) || (graphicsMode == HYBRID_GRAPHICS);
     if (graphicsEnabled && tiles_animation) {
         static uint32_t prev_time = 0;
         uint32_t current_time = SDL_GetTicks();

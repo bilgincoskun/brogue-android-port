@@ -11,7 +11,6 @@
 #define BOTTOM_BUTTONS_HEIGHT 2
 
 extern SDL_Renderer *renderer;
-extern boolean graphicsEnabled;
 extern double cell_w, cell_h;
 extern boolean screen_changed;
 extern double zoom_level;

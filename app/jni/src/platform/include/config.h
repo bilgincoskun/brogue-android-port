@@ -61,7 +61,7 @@ int filter_mode;
 boolean check_update;
 int check_update_interval;
 boolean ask_for_update_check;
-boolean tiles_by_default;
+int default_graphics_mode;
 boolean tiles_animation;
 boolean blend_full_tiles;
 

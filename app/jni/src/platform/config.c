@@ -126,7 +126,7 @@ void set_conf(const char *name, const char *value) {
     set_and_parse_conf(custom_screen_height, 0, 0, INT_MAX, true);
     set_and_parse_bool_conf(force_portrait, false, true);
     set_and_parse_bool_conf(dynamic_colors, true, false);
-    set_and_parse_bool_conf(tiles_by_default, false, false);
+    set_and_parse_conf(default_graphics_mode,0,0,2,false);
     set_and_parse_bool_conf(tiles_animation, true, false);
     set_and_parse_bool_conf(blend_full_tiles, true, false);
     set_and_parse_conf(filter_mode, 2, 0, 2, true);

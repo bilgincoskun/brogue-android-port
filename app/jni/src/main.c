@@ -27,6 +27,8 @@ static _Atomic boolean resumed = false;
 
 boolean hasGraphics = true;
 
+enum graphicsModes graphicsMode = TEXT_GRAPHICS;
+
 void destroy_assets() {
   SDL_SetRenderTarget(renderer, NULL);
   SDL_DestroyRenderer(renderer);
@@ -231,10 +233,10 @@ boolean TouchScreenModifierHeld(int modifier) {
   return modifier == 1 && ctrl_pressed;
 }
 
-static boolean TouchScreenSetGraphicsEnabled(boolean state) {
-  graphicsEnabled = state;
+static enum graphicsModes TouchScreenSetGraphicsMode(enum graphicsModes mode){
+  graphicsMode = mode;
   refreshScreen();
-  return state;
+  return mode;
 }
 
 void TouchScreenTextInputStart() {
@@ -259,7 +261,7 @@ struct brogueConsole TouchScreenConsole = {
     .plotChar = TouchScreenPlotChar,
     .remap = TouchScreenRemap,
     .modifierHeld = TouchScreenModifierHeld,
-    .setGraphicsEnabled = TouchScreenSetGraphicsEnabled,
+    .setGraphicsMode = TouchScreenSetGraphicsMode,
     .textInputStart = TouchScreenTextInputStart,
     .textInputStop = TouchScreenTextInputStop,
 };
@@ -427,7 +429,18 @@ int main() {
   config_folder(env, activity, cls, first_run);
   set_conf("", ""); // set default values of config
   load_conf();
-  graphicsEnabled = tiles_by_default;
+  switch(default_graphics_mode){
+      case 0:
+        graphicsMode = TEXT_GRAPHICS;
+        break;
+      case 1:
+        graphicsMode = TILES_GRAPHICS;
+        break;
+      case 2:
+        graphicsMode = HYBRID_GRAPHICS;
+        break;
+
+  }
   if (check_update) {
     time_t new_time;
     time(&new_time);

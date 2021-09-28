@@ -95,7 +95,7 @@ You can see the supported configurations below:
 | force_portrait | Boolean | 0 | By default the app will start in landscape mode. If this option enabled it will force application to use portrait mode |
 | dynamic_colors | Boolean | 1 | Dynamic colors on water,lava etc.  Disabling will lower the power consumption |
 | filter_mode | Integer | 2 | Selects the algorithm for anti-aliasing: 0 uses nearest pixel sampling, 1 uses linear filtering and 2 uses anistropic filtering. If you get graphical glitches or performance issues, try to lower the value |
-| tiles_by_default | Boolean | 0 | When enabled, the tiles will be shown by default |
+| default_graphics_mode | Integer | 0 | 0 enables text-only, 1 enables tiles and 2 enables hybrid graphics by default |
 | tiles_animation | Boolean | 1 | Enables tiles animation. Disabling will lower the power consumption |
 | blend_full_tiles | Boolean | 1 | Tries to blend full tiles like walls with adjacent ones. May result in blurrier tiles |
 | double_tap_lock | Boolean | 1 | When enabled it will ignore the missclicks within **double_tap_interval** range |
