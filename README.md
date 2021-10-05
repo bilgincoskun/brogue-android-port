@@ -123,7 +123,7 @@ You can see the supported configurations below:
 These files are stored in **[App Folder]/\[Brogue Version]** which is accessible by the user.
 
 # Graphics
-By default the port uses ACII. To always use tileset, you can use tiles_by_default settting. You can also use in-game menu to enable tiles. Note that changes from in-game menu setting is not persistent.
+By default the port uses ASCII. To always use tileset, you can use default_graphics_mode settting. You can also use in-game menu to enable tiles. Note that changes from in-game menu setting is not persistent.
 
 Default graphics use modified [Dejavu Sans Mono](https://dejavu-fonts.github.io/) with missing characters added/modified from Dejavu Sans for the text. For the tiles, tileset based on [Oryx Design Lab Tiles](https://www.oryxdesignlab.com/news/2018/11/8/brogue-tiles-v175-is-released) is used with some additions/changes.
 
