@@ -380,13 +380,12 @@ void config_folder(JNIEnv *env, jobject activity, jclass cls,
   }
 }
 
-int brogue_main(void *data) {
+void brogue_main() {
   currentConsole = TouchScreenConsole;
   rogue.nextGame = NG_NOTHING;
   rogue.nextGamePath[0] = '\0';
   rogue.nextGameSeed = 0;
   currentConsole.gameLoop();
-  return 0;
 }
 
 boolean serverMode = false;
@@ -482,21 +481,7 @@ int main() {
                          SDL_GetError());
   }
   SDL_SetEventFilter(suspend_resume_filter, NULL);
-  SDL_Thread *thread = SDL_CreateThreadWithStackSize(brogue_main, "Brogue",
-                                                     8 * 1024 * 1024, NULL);
-  if (thread != NULL) {
-    int result;
-    SDL_WaitThread(thread, &result);
-  } else {
-    SDL_ShowSimpleMessageBox(
-        SDL_MESSAGEBOX_WARNING, "Thread Error",
-        "Cannot create a thread with sufficient stack size. "
-        "The game will start nonetheless but be aware that some seeds may "
-        "cause the game "
-        "to crash in this mode.",
-        NULL);
-    brogue_main(NULL);
-  }
+  brogue_main();
   destroy_font();
   TTF_Quit();
   SDL_Quit();
