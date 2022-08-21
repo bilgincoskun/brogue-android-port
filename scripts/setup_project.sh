@@ -6,12 +6,15 @@ mkdir -p "$tmp_dir"
 cd "$tmp_dir"
 game_folder="game_files"
 
+SDL2_VER=2.0.16
+SDL2_TTF_VER=2.0.15
+
 echo "Downloading SDL2"
-wget -qO- https://www.libsdl.org/release/SDL2-2.0.16.tar.gz | tar xz
+wget -qO- https://www.libsdl.org/release/SDL2-$SDL2_VER.tar.gz | tar xz
 mv SDL2* SDL
 
 echo "Downloading SDL2_ttf"
-wget -qO- https://www.libsdl.org/projects/SDL_ttf/release/SDL2_ttf-2.0.15.tar.gz | tar xz
+wget -qO- https://www.libsdl.org/projects/SDL_ttf/release/SDL2_ttf-$SDL2_TTF_VER.tar.gz | tar xz
 mv SDL2_ttf* SDL_ttf
 
 mv SDL/android-project/app/src/main/java/org/libsdl "$cur_dir"/app/src/main/java/org/
