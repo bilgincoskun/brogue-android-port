@@ -340,13 +340,13 @@ void draw_screen() {
             double width = (COLS - LEFT_PANEL_WIDTH) * cell_w / zoom_level;
             double height = (ROWS - TOP_LOG_HEIGIHT - BOTTOM_BUTTONS_HEIGHT) * cell_h / zoom_level;
             int x, y;
-            if (zoom_mode == 2 && rogue.cursorLoc[0] >= 0 && rogue.cursorLoc[1] >= 0 &&
+            if (zoom_mode == 2 && rogue.cursorLoc.x >= 0 && rogue.cursorLoc.y >= 0 &&
                 !rogue.automationActive && !rogue.autoPlayingLevel && rogue.disturbed) {
-                x = rogue.cursorLoc[0];
-                y = rogue.cursorLoc[1];
+                x = rogue.cursorLoc.x;
+                y = rogue.cursorLoc.y;
             } else {
-                x = player.xLoc;
-                y = player.yLoc;
+                x = player.loc.x;
+                y = player.loc.y;
             }
             int center_x = x * cell_w + left_panel_box.w - width / 2;
             int center_y = y * cell_h + log_panel_box.h - height / 2;
