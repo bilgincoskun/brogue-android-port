@@ -6,7 +6,7 @@ mkdir -p "$tmp_dir"
 cd "$tmp_dir"
 game_folder="game_files"
 
-SDL2_VER=2.24.0
+SDL2_VER=2.0.22
 SDL2_TTF_VER=2.20.1
 
 echo "Downloading SDL2"
