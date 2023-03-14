@@ -6,8 +6,8 @@ mkdir -p "$tmp_dir"
 cd "$tmp_dir"
 game_folder="game_files"
 
-SDL2_VER=2.0.22
-SDL2_TTF_VER=2.20.1
+SDL2_VER=2.26.4
+SDL2_TTF_VER=2.20.2
 
 echo "Downloading SDL2"
 wget -qO- https://www.libsdl.org/release/SDL2-$SDL2_VER.tar.gz | tar xz
